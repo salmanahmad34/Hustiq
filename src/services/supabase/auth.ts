@@ -152,10 +152,10 @@ export const signInUser = async (email: string, password: string) => {
   verifySupabaseConfiguration()
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
+    const payload = { email, password }
+    console.log('[auth.ts] Payload being passed to signInWithPassword:', payload)
+    
+    const { data, error } = await supabase.auth.signInWithPassword(payload)
 
     if (error) throw error
     return data
