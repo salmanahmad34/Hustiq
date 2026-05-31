@@ -85,7 +85,7 @@ const router = createBrowserRouter([
             element: withSuspense(SignupPage),
           },
           {
-            path: 'auth/callback',
+            path: '/auth/callback',
             element: withSuspense(OAuthCallback),
           },
         ],
@@ -93,49 +93,50 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: '/dashboard',
     element: <ProtectedRoute />,
     children: [
       {
         element: <DashboardLayout />,
         children: [
           {
-            path: ROUTES.DASHBOARD,
+            index: true,
             element: withSuspense(DashboardIndex),
           },
           {
-            path: ROUTES.NOTIFICATIONS,
+            path: 'notifications',
             element: withSuspense(NotificationsPage),
           },
           {
-            path: ROUTES.MESSAGES,
+            path: 'messages',
             element: withSuspense(MessagesPage),
           },
           {
-            path: ROUTES.PROFILE,
+            path: 'profile',
             element: withSuspense(ProfilePage),
           },
           {
-            path: ROUTES.JOBS,
+            path: 'jobs',
             element: withSuspense(JobsPage),
           },
           {
-            path: ROUTES.SAVED,
+            path: 'saved',
             element: withSuspense(SavedJobsPage),
           },
           {
-            path: ROUTES.PREMIUM,
+            path: 'premium',
             element: withSuspense(PremiumPage),
           },
           {
-            path: ROUTES.WALLET,
+            path: 'wallet',
             element: withSuspense(WalletPage),
           },
           {
-            path: ROUTES.RECOMMENDATIONS,
+            path: 'recommendations',
             element: withSuspense(RecommendationsPage),
           },
           {
-            path: ROUTES.GROWTH,
+            path: 'growth',
             element: withSuspense(GrowthPage),
           },
         ],
