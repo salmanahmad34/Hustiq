@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageSquare, User, Briefcase, Zap, Bookmark, Wallet, Sparkles, Award } from 'lucide-react'
+import { Home, MessageSquare, User, Briefcase, Zap, Bookmark, Wallet, Sparkles, Award, Compass } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -14,7 +14,7 @@ import { BetaFeedbackModal } from '@/components/shared/BetaFeedbackModal'
 
 const STUDENT_NAV = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
-  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Sparkles },
+  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageSquare },
   { name: 'Jobs', href: ROUTES.JOBS, icon: Briefcase },
   { name: 'Saved', href: ROUTES.SAVED, icon: Bookmark },
@@ -26,7 +26,7 @@ const STUDENT_NAV = [
 
 const PROVIDER_NAV = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
-  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Sparkles },
+  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageSquare },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Growth', href: ROUTES.GROWTH, icon: Award },

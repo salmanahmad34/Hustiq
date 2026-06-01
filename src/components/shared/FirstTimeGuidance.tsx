@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Square, X, Compass, ChevronRight, CheckCircle2, Award } from 'lucide-react'
+import { Sparkles, Square, X, ChevronRight, CheckCircle2, Award } from 'lucide-react'
+import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { useAuth } from '@/store/useAuth'
 
 interface GuideItem {
@@ -124,7 +125,7 @@ export const FirstTimeGuidance = () => {
   }
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-4 z-[999] max-w-sm w-[calc(100vw-2rem)] select-none">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 left-4 z-[999] max-w-sm w-[calc(100vw-2rem)] select-none">
       <AnimatePresence>
         {!isOpen ? (
           <motion.button
@@ -134,7 +135,7 @@ export const FirstTimeGuidance = () => {
             whileTap={{ scale: 0.95 }}
             className="flex items-center gap-2 px-4 py-3 bg-foreground text-background font-bold rounded-2xl shadow-xl hover:shadow-primary/25 border border-foreground/10 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
           >
-            <Compass className="w-5 h-5 animate-pulse text-primary dark:text-foreground" />
+            <ZivaroBrandIcon size="md" className="animate-pulse text-primary dark:text-foreground" />
             <span className="text-xs tracking-wider uppercase">Setup Guide</span>
             {progressPercent < 100 ? (
               <span className="bg-primary/20 text-primary dark:bg-background/25 dark:text-foreground text-[10px] px-2 py-0.5 rounded-full font-black">

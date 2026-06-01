@@ -204,10 +204,10 @@ export const DashboardPage = () => {
             <SectionHeader title="Nearby Right Now 📍" subtitle="Gigs happening within 3km of you." />
             <HorizontalFeed>
               {nearbyJobs.map(job => (
-                <JobCard key={job.id} job={job} variant="default" />
+                <JobCard key={job.id} job={job} variant="default" className="w-[280px] min-[360px]:w-[340px] sm:w-[460px] shrink-0 snap-center sm:snap-align-none" />
               ))}
               {nearbyJobs.map(job => (
-                <JobCard key={job.id + 'dup'} job={job} variant="default" />
+                <JobCard key={job.id + 'dup'} job={job} variant="default" className="w-[280px] min-[360px]:w-[340px] sm:w-[460px] shrink-0 snap-center sm:snap-align-none" />
               ))}
             </HorizontalFeed>
             

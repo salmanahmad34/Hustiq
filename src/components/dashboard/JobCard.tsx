@@ -30,6 +30,7 @@ export interface Job {
 interface JobCardProps {
   job: Job
   variant?: 'default' | 'urgent' | 'featured' | 'compact'
+  className?: string
 }
 
 const itemVariants = {
@@ -37,7 +38,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } }
 } as const
 
-export const JobCard = memo(({ job, variant = 'default' }: JobCardProps) => {
+export const JobCard = memo(({ job, variant = 'default', className }: JobCardProps) => {
   const { open: openDetails } = useJobDetails()
   const { open: openQuickApply } = useQuickApply()
   const isApplied = useAppliedJobs((state) => state.isApplied(job.id))
@@ -208,7 +209,8 @@ export const JobCard = memo(({ job, variant = 'default' }: JobCardProps) => {
         isApplied ? "opacity-75 grayscale-[15%] shadow-none hover:shadow-sm" : "shadow-sm hover:shadow-xl",
         isUrgentVariant 
           ? "rounded-[2.5rem] p-5 min-[360px]:p-6 sm:p-8 gap-4 sm:gap-6 w-[280px] min-[360px]:w-[340px] sm:w-[460px] shrink-0 snap-center sm:snap-align-none" 
-          : "rounded-[2rem] p-5 sm:p-6 gap-5 w-full mb-6"
+          : "rounded-[2rem] p-5 sm:p-6 gap-5 w-full mb-6",
+        className
       )}
     >
       {/* Background Glow (Hardware Accelerated Opacity) */}

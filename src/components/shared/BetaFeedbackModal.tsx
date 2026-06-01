@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Heart, Sparkles, AlertTriangle, CheckCircle, X, Send } from 'lucide-react'
+import { MessageSquare, Heart, Lightbulb, AlertTriangle, CheckCircle, X, Send } from 'lucide-react'
 import { trackFeedbackSubmitted } from '@/services/analytics'
 
 type Tab = 'sentiment' | 'feature' | 'bug'
@@ -107,7 +107,7 @@ export const BetaFeedbackModal = () => {
   return (
     <>
       {/* Floating Feedback Bubble */}
-      <div className="fixed bottom-6 right-6 z-[9999]">
+      <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 right-6 z-[9999]">
         <motion.button
           onClick={() => {
             resetForm()
@@ -149,7 +149,7 @@ export const BetaFeedbackModal = () => {
               {/* Close button */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="absolute top-6 right-6 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors z-[10]"
+                className="absolute top-6 right-6 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors z-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -220,7 +220,7 @@ export const BetaFeedbackModal = () => {
                               : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Lightbulb className="w-3.5 h-3.5" />
                           Suggestion
                         </button>
                         <button
