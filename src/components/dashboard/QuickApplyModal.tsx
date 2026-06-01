@@ -148,7 +148,7 @@ export const QuickApplyModal = () => {
                 </div>
 
                 <button 
-                  onClick={submitApplication}
+                  onClick={() => submitApplication(note)}
                   className="w-full bg-foreground text-background font-bold py-4 rounded-2xl hover:bg-primary hover:text-primary-foreground hover:shadow-xl hover:shadow-primary/20 transition-all active:scale-95 text-base flex items-center justify-center gap-2 group"
                 >
                   Confirm Application

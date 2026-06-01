@@ -294,7 +294,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         .from('profiles')
         .insert({
           id: userId,
-          role: 'student', // default role
+          role: metadata.role || 'student', // use metadata role or default
           name: fallbackName,
           onboarding_completed: metadata.onboarding_completed || false,
           metadata: metadata
@@ -308,7 +308,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         return {
           id: userId,
           email,
-          role: 'student',
+          role: metadata.role || 'student',
           name: fallbackName,
           onboarding_completed: metadata.onboarding_completed || false,
           metadata: metadata

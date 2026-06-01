@@ -15,7 +15,7 @@ import {
   Check, 
   Trash2, 
   BellOff, 
-  Sparkles, 
+
   Sliders, 
   CheckSquare,
   ArrowRight
@@ -394,7 +394,7 @@ export const NotificationsPage = () => {
             className="glass-card p-5 rounded-2xl border border-border/50 shadow-soft-lg flex flex-col gap-4"
           >
             <div className="flex items-center gap-2 border-b border-border/30 pb-3">
-              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              <Info className="w-4 h-4 text-primary animate-pulse" />
               <h3 className="font-bold text-base text-foreground tracking-tight">Realtime Simulator</h3>
             </div>
             
@@ -459,7 +459,7 @@ export const NotificationsPage = () => {
             </div>
 
             <div className="bg-primary/5 border border-primary/10 p-3.5 rounded-xl text-[10px] text-primary leading-normal flex items-start gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+              <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
               <span>Simulated events will automatically trigger the unread bell indicator and arrive directly inside the timeline.</span>
             </div>
           </motion.div>

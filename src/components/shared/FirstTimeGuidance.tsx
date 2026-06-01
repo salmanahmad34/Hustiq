@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Square, X, ChevronRight, CheckCircle2, Award } from 'lucide-react'
+import { Compass, Square, X, ChevronRight, CheckCircle2, Award } from 'lucide-react'
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { useAuth } from '@/store/useAuth'
 
@@ -157,7 +157,7 @@ export const FirstTimeGuidance = () => {
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <Sparkles className="w-4 h-4" />
+                  <Compass className="w-4 h-4" />
                 </div>
                 <h4 className="text-sm font-black text-foreground">Getting Started</h4>
               </div>

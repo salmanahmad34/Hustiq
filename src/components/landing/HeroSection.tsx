@@ -15,7 +15,7 @@ const JOB_CARDS = [
     style: { top: '10%', left: '0%' }
   },
   {
-    id: 2,
+    erid: 2,
     title: 'Moving Help',
     distance: '0.5 km away',
     time: '2 hours',
@@ -91,25 +91,25 @@ export const HeroSection = () => {
               Explore Nearby Gigs
             </button>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex items-center justify-center lg:justify-start gap-4 pt-6 text-sm text-muted-foreground"
           >
-             <div className="flex -space-x-2">
-                {[1,2,3,4].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-tr from-primary/40 to-accent/40" />
-                  </div>
-                ))}
-             </div>
-             {isLoading ? (
-               <div className="h-5 w-40 bg-muted/50 rounded animate-pulse" />
-             ) : (
-               <p>Joined by <strong className="text-foreground">{stats?.activeStudents.toLocaleString()}+</strong> students</p>
-             )}
+            <div className="flex -space-x-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-tr from-primary/40 to-accent/40" />
+                </div>
+              ))}
+            </div>
+            {isLoading ? (
+              <div className="h-5 w-40 bg-muted/50 rounded animate-pulse" />
+            ) : (
+              <p>Joined by <strong className="text-foreground">{stats?.activeStudents.toLocaleString()}+</strong> students</p>
+            )}
           </motion.div>
         </div>
 
@@ -156,7 +156,7 @@ export const HeroSection = () => {
                 </div>
               </motion.div>
             ))}
-            
+
             {/* Center decorative element */}
             <motion.div
               animate={{ rotate: 360 }}

@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-/*
 import {
   signInUser,
   signInWithGoogle,
@@ -12,10 +11,9 @@ import {
   updateProfile,
   isSupabaseConfigured as checkSupabaseConfig
 } from '@/services/supabase/auth'
-*/
-// import type { UserSession, Profile } from '@/types/database'
-import type { UserSession, Profile } from '@/types/database' // KEEP type imports as they might be used in state interface
-// import { logger } from '@/lib/logger'
+import type { UserSession, Profile } from '@/types/database'
+import { logger } from '@/lib/logger'
+
 
 // ============================================
 // AUTH STATE INTERFACE
@@ -58,24 +56,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // LOGIN ACTION
       // ============================================
-      login: async (email: string, _password: string) => {
-        // TEMP DEMO MODE
-        set({
-          isAuthenticated: true,
-          user: {
-            id: 'demo-user-123',
-            email: email || 'demo@zivaro.com',
-            role: 'student',
-            name: 'Demo User',
-            onboarding_completed: true,
-            metadata: {}
-          },
-          isLoading: false,
-          error: null
-        })
-        return
-
-        /*
+      login: async (email: string, password: string) => {
         set({ isLoading: true, error: null })
         try {
           if (!checkSupabaseConfig()) {
@@ -110,30 +91,12 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false })
         }
-        */
       },
 
       // ============================================
       // GOOGLE LOGIN ACTION
       // ============================================
       googleLogin: async () => {
-        // TEMP DEMO MODE
-        set({
-          isAuthenticated: true,
-          user: {
-            id: 'demo-user-123',
-            email: 'google@zivaro.com',
-            role: 'student',
-            name: 'Google Demo User',
-            onboarding_completed: true,
-            metadata: {}
-          },
-          isLoading: false,
-          error: null
-        })
-        return
-
-        /*
         set({ isLoading: true, error: null })
         try {
           if (!checkSupabaseConfig()) {
@@ -146,31 +109,13 @@ export const useAuth = create<AuthState>()(
           set({ error: errorMessage, isLoading: false })
           throw err
         }
-        */
         // No finally block to reset isLoading here since the browser redirects away
       },
 
       // ============================================
       // SIGNUP ACTION
       // ============================================
-      signup: async (email: string, _password: string, name: string, role: 'student' | 'provider') => {
-        // TEMP DEMO MODE
-        set({
-          isAuthenticated: true,
-          user: {
-            id: 'demo-user-123',
-            email: email,
-            role: role,
-            name: name,
-            onboarding_completed: true,
-            metadata: {}
-          },
-          isLoading: false,
-          error: null
-        })
-        return
-
-        /*
+      signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
           if (!checkSupabaseConfig()) {
@@ -206,23 +151,12 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false })
         }
-        */
       },
 
       // ============================================
       // LOGOUT ACTION
       // ============================================
       logout: async () => {
-        // TEMP DEMO MODE
-        set({
-          isAuthenticated: false,
-          user: null,
-          error: null,
-          isLoading: false
-        })
-        return
-
-        /*
         set({ isLoading: true, error: null })
         try {
           if (checkSupabaseConfig()) {
@@ -241,30 +175,12 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false })
         }
-        */
       },
 
       // ============================================
       // SESSION RECOVERY ACTION
       // ============================================
       recoverUserSession: async () => {
-        // TEMP DEMO MODE
-        set({
-          isAuthenticated: true,
-          user: {
-            id: 'demo-user-123',
-            email: 'demo@zivaro.com',
-            role: 'student',
-            name: 'Demo User',
-            onboarding_completed: true,
-            metadata: {}
-          },
-          isRecovering: false,
-          error: null
-        })
-        return
-
-        /*
         console.log('[useAuth] Starting recoverUserSession. Current state:', {
           isAuthenticated: get().isAuthenticated,
           isRecovering: true,
@@ -335,17 +251,12 @@ export const useAuth = create<AuthState>()(
           })
           set({ isRecovering: false })
         }
-        */
       },
 
       // ============================================
       // REFRESH PROFILE ACTION
       // ============================================
       refreshProfile: async () => {
-        // TEMP DEMO MODE
-        return
-
-        /*
         const state = get()
         if (!state.user) return
 
@@ -367,23 +278,12 @@ export const useAuth = create<AuthState>()(
         } catch (err) {
           logger.error('Error refreshing profile:', err)
         }
-        */
       },
 
       // ============================================
       // UPDATE PROFILE ACTION
       // ============================================
       updateUserProfile: async (updates: Partial<Profile>) => {
-        // TEMP DEMO MODE
-        const state = get()
-        if (state.user) {
-          set({
-            user: { ...state.user, ...updates }
-          })
-        }
-        return
-
-        /*
         const state = get()
         if (!state.user) {
           throw new Error('No user session')
@@ -415,7 +315,6 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false })
         }
-        */
       },
 
       // ============================================

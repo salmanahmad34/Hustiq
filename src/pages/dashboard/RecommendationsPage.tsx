@@ -1,7 +1,7 @@
 import { useState, type MouseEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Sparkles, 
+  Target,
   MapPin, 
   Clock, 
   X, 
@@ -85,7 +85,7 @@ export const RecommendationsPage = () => {
 
         <div className="relative z-10 space-y-2.5 max-w-2xl">
           <div className="flex items-center gap-2 bg-primary/10 border border-primary/25 text-primary font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full w-max">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Target className="w-3.5 h-3.5" />
             <span>Smart Recommendations Active</span>
           </div>
           
@@ -102,7 +102,7 @@ export const RecommendationsPage = () => {
 
         <div className="shrink-0 relative z-10 p-4 bg-card border border-border/40 rounded-2xl flex items-center gap-3.5 shadow-sm">
           <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
-            <Sparkles className="w-5.5 h-5.5 animate-spin duration-3000" />
+            <Target className="w-5.5 h-5.5 animate-spin duration-3000" />
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider font-extrabold text-muted-foreground">Match Engine</div>
@@ -126,7 +126,7 @@ export const RecommendationsPage = () => {
             {recommendedForYouJobs.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-border/40 pb-2">
-                  <Sparkles className="w-5 h-5 text-primary shrink-0" />
+                  <Target className="w-5 h-5 text-primary shrink-0" />
                   <h2 className="text-xl font-bold text-foreground">Recommended For You</h2>
                 </div>
                 
@@ -473,7 +473,7 @@ export const RecommendationsPage = () => {
             {recommendedCandidates.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-border/40 pb-2">
-                  <Sparkles className="w-5 h-5 text-primary shrink-0" />
+                  <Target className="w-5 h-5 text-primary shrink-0" />
                   <h2 className="text-xl font-bold text-foreground">Recommended Candidates</h2>
                 </div>
 

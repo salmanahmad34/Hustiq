@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Trophy, 
   Flame, 
-  Sparkles, 
+
   Lock, 
   CheckCircle2, 
   Zap, 
@@ -261,7 +261,7 @@ export const GrowthPage = () => {
         <div className="lg:col-span-2 flex flex-col gap-6 w-full">
           <div className="flex items-center justify-between border-b border-border/40 pb-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary shrink-0" />
+              <Trophy className="w-5 h-5 text-primary shrink-0" />
               <h2 className="text-xl font-bold text-foreground">Growth Milestones</h2>
             </div>
             
@@ -371,7 +371,7 @@ export const GrowthPage = () => {
             <div className="absolute -top-12 -right-12 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-primary shrink-0" />
+              <Trophy className="w-5 h-5 text-primary shrink-0" />
               <h3 className="text-lg font-black text-foreground leading-tight">Growth Insights</h3>
             </div>
             

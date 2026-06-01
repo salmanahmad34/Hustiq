@@ -11,6 +11,7 @@ import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { NetworkStatusDetector } from '@/components/shared/NetworkStatusDetector'
 import { SessionErrorRecovery } from '@/components/shared/SessionErrorRecovery'
 import { BetaFeedbackModal } from '@/components/shared/BetaFeedbackModal'
+import { ToastContainer } from '@/components/ui/ToastContainer'
 
 const STUDENT_NAV = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
@@ -47,6 +48,7 @@ export const DashboardLayout = () => {
       <NetworkStatusDetector />
       {error && <SessionErrorRecovery error={error} onDismiss={clearError} />}
       <BetaFeedbackModal />
+      <ToastContainer />
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border/40 bg-card px-4 py-6">
         <div className="flex items-center gap-2.5 px-2 mb-8">
