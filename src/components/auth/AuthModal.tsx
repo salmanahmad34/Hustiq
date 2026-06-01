@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Mail, Lock, ArrowRight } from 'lucide-react'
+import { X, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { useAuthModal } from '@/store/useAuthModal'
 import { useProfileSetupModal } from '@/store/useProfileSetupModal'
 import { useAuth } from '@/store/useAuth'
@@ -11,6 +11,7 @@ export const AuthModal = () => {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const openProfileSetupModal = useProfileSetupModal(state => state.openModal)
 
@@ -159,19 +160,35 @@ export const AuthModal = () => {
                   />
                 </div>
 
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-muted-foreground/70" />
+                <div className="space-y-1.5">
+                  {mode === 'login' && (
+                    <div className="flex justify-between items-center pl-1 pr-1">
+                      <span className="text-xs font-medium text-transparent select-none">Password</span>
+                      <a href="#" className="text-xs font-bold text-primary hover:underline">Forgot password?</a>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Lock className="w-5 h-5 text-muted-foreground/70" />
+                    </div>
+                    <input 
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50"
+                      disabled={isLoading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/70 hover:text-foreground transition-colors focus:outline-none"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
-                  <input 
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50"
-                    disabled={isLoading}
-                    required
-                  />
                 </div>
 
                 <motion.button
