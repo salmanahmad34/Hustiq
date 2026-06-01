@@ -106,7 +106,7 @@ const router = createBrowserRouter([
             element: withSuspense(SignupPage),
           },
           {
-            path: '/auth/callback',
+            path: 'auth/callback',
             element: withSuspense(OAuthCallback),
           },
         ],
