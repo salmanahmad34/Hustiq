@@ -1,10 +1,21 @@
+import { type CSSProperties } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, MapPin, Clock, IndianRupee } from 'lucide-react'
 import { useLiveStats } from '@/hooks/useLiveStats'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 
-const JOB_CARDS = [
+interface JobCard {
+  id: number;
+  title: string;
+  distance: string;
+  time: string;
+  rate: string;
+  delay: number;
+  style: CSSProperties;
+}
+
+const JOB_CARDS: JobCard[] = [
   {
     id: 1,
     title: 'Event Staff Needed',
@@ -15,7 +26,7 @@ const JOB_CARDS = [
     style: { top: '10%', left: '0%' }
   },
   {
-    erid: 2,
+    id: 2,
     title: 'Moving Help',
     distance: '0.5 km away',
     time: '2 hours',
