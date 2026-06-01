@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageSquare, User, Briefcase, Zap, Bookmark, Wallet, Award, Compass } from 'lucide-react'
+import { Home, MessageCircle, MessageSquare, User, Briefcase, Zap, Bookmark, Wallet, Award, Compass } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -16,8 +16,8 @@ import { ToastContainer } from '@/components/ui/ToastContainer'
 const STUDENT_NAV = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
-  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageSquare },
   { name: 'Jobs', href: ROUTES.JOBS, icon: Briefcase },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Saved', href: ROUTES.SAVED, icon: Bookmark },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Growth', href: ROUTES.GROWTH, icon: Award },
@@ -28,7 +28,7 @@ const STUDENT_NAV = [
 const PROVIDER_NAV = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
-  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageSquare },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Growth', href: ROUTES.GROWTH, icon: Award },
   { name: 'Profile', href: ROUTES.PROFILE, icon: User },
@@ -102,24 +102,68 @@ export const DashboardLayout = () => {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-md flex items-center justify-around px-2 pb-[env(safe-area-inset-bottom)] h-[calc(4rem+env(safe-area-inset-bottom))]">
-        {navItems.slice(0, 5).map((item) => {
-          const Icon = item.icon
-          const isActive = location.pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center space-y-1 w-full h-full",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium">{item.name}</span>
-            </Link>
-          )
-        })}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] pointer-events-none">
+        <div className="bg-background/85 backdrop-blur-2xl border-t border-border/50 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-3xl flex items-center justify-around px-2 h-[72px] pointer-events-auto relative">
+          {navItems.slice(0, 5).map((item, index) => {
+            const Icon = item.icon
+            const isActive = location.pathname === item.href
+            const isCenter = index === 2
+
+            if (isCenter) {
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="flex flex-col items-center justify-start w-16 h-full relative group z-10"
+                >
+                  <div className={cn(
+                    "absolute -top-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_16px_-4px_rgba(var(--primary),0.4)] transition-transform duration-300 active:scale-95",
+                    isActive ? "bg-primary text-primary-foreground" : "bg-primary text-primary-foreground opacity-95 hover:scale-105"
+                  )}>
+                    <Icon className="w-6 h-6" fill={isActive ? "currentColor" : "none"} strokeWidth={isActive ? 2.5 : 2} />
+                  </div>
+                  <span className={cn(
+                    "absolute top-[44px] text-[10px] font-bold transition-colors whitespace-nowrap",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {item.name}
+                  </span>
+                  <div className={cn(
+                    "absolute bottom-2 w-4 h-1 rounded-full bg-primary transition-all duration-300",
+                    isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                  )} />
+                </Link>
+              )
+            }
+
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="flex flex-col items-center justify-start w-16 h-full relative group pt-3.5"
+              >
+                <Icon 
+                  className={cn(
+                    "w-6 h-6 transition-all duration-300",
+                    isActive ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
+                  )} 
+                  fill={isActive ? "currentColor" : "none"} 
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+                <span className={cn(
+                  "text-[10px] font-semibold transition-colors duration-300 whitespace-nowrap mt-1.5",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {item.name}
+                </span>
+                <div className={cn(
+                  "absolute bottom-2 w-4 h-1 rounded-full bg-primary transition-all duration-300",
+                  isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                )} />
+              </Link>
+            )
+          })}
+        </div>
       </nav>
     </div>
   )
