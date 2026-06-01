@@ -1,10 +1,10 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { ROUTES } from '@/constants/routes'
-import { useAuth } from '@/store/useAuth'
+import { /* Navigate, */ Outlet /*, useLocation */ } from 'react-router-dom'
+// import { ROUTES } from '@/constants/routes'
+// import { useAuth } from '@/store/useAuth'
 
 export const PublicRoute = () => {
-  const { isAuthenticated, isRecovering } = useAuth()
-  const location = useLocation()
+  // const { isAuthenticated, isRecovering } = useAuth()
+  // const location = useLocation()
 
   // TEMP DEMO MODE
   // REMOVE BEFORE PRODUCTION
