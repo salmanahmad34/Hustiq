@@ -11,21 +11,42 @@ import { AuthLayout } from '@/components/layout/AuthLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicRoute } from '@/routes/PublicRoute'
 
+// Production-safe chunk load error handler
+const lazyWithRetry = (componentImport: () => Promise<any>) =>
+  lazy(async () => {
+    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+      window.sessionStorage.getItem('page-has-been-force-refreshed') || 'false'
+    )
+
+    try {
+      const component = await componentImport()
+      window.sessionStorage.setItem('page-has-been-force-refreshed', 'false')
+      return component
+    } catch (error) {
+      if (!pageHasAlreadyBeenForceRefreshed) {
+        // Assume the chunk is stale due to a new deployment, force a reload to get new chunks
+        window.sessionStorage.setItem('page-has-been-force-refreshed', 'true')
+        window.location.reload()
+      }
+      throw error
+    }
+  })
+
 // Pages (Lazy Loaded)
-const LandingPage = lazy(() => import('@/pages/public/LandingPage').then(m => ({ default: m.LandingPage })))
-const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
-const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
-const OAuthCallback = lazy(() => import('@/pages/auth/OAuthCallback').then(m => ({ default: m.OAuthCallback })))
-const DashboardIndex = lazy(() => import('@/pages/dashboard/DashboardIndex').then(m => ({ default: m.DashboardIndex })))
-const NotificationsPage = lazy(() => import('@/pages/dashboard/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
-const MessagesPage = lazy(() => import('@/pages/dashboard/MessagesPage').then(m => ({ default: m.MessagesPage })))
-const ProfilePage = lazy(() => import('@/pages/dashboard/ProfilePage').then(m => ({ default: m.ProfilePage })))
-const JobsPage = lazy(() => import('@/pages/dashboard/JobsPage').then(m => ({ default: m.JobsPage })))
-const SavedJobsPage = lazy(() => import('@/pages/dashboard/SavedJobsPage').then(m => ({ default: m.SavedJobsPage })))
-const PremiumPage = lazy(() => import('@/pages/dashboard/PremiumPage').then(m => ({ default: m.PremiumPage })))
-const WalletPage = lazy(() => import('@/pages/dashboard/WalletPage').then(m => ({ default: m.WalletPage })))
-const RecommendationsPage = lazy(() => import('@/pages/dashboard/RecommendationsPage').then(m => ({ default: m.RecommendationsPage })))
-const GrowthPage = lazy(() => import('@/pages/dashboard/GrowthPage').then(m => ({ default: m.GrowthPage })))
+const LandingPage = lazyWithRetry(() => import('@/pages/public/LandingPage').then(m => ({ default: m.LandingPage })))
+const LoginPage = lazyWithRetry(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
+const SignupPage = lazyWithRetry(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
+const OAuthCallback = lazyWithRetry(() => import('@/pages/auth/OAuthCallback').then(m => ({ default: m.OAuthCallback })))
+const DashboardIndex = lazyWithRetry(() => import('@/pages/dashboard/DashboardIndex').then(m => ({ default: m.DashboardIndex })))
+const NotificationsPage = lazyWithRetry(() => import('@/pages/dashboard/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
+const MessagesPage = lazyWithRetry(() => import('@/pages/dashboard/MessagesPage').then(m => ({ default: m.MessagesPage })))
+const ProfilePage = lazyWithRetry(() => import('@/pages/dashboard/ProfilePage').then(m => ({ default: m.ProfilePage })))
+const JobsPage = lazyWithRetry(() => import('@/pages/dashboard/JobsPage').then(m => ({ default: m.JobsPage })))
+const SavedJobsPage = lazyWithRetry(() => import('@/pages/dashboard/SavedJobsPage').then(m => ({ default: m.SavedJobsPage })))
+const PremiumPage = lazyWithRetry(() => import('@/pages/dashboard/PremiumPage').then(m => ({ default: m.PremiumPage })))
+const WalletPage = lazyWithRetry(() => import('@/pages/dashboard/WalletPage').then(m => ({ default: m.WalletPage })))
+const RecommendationsPage = lazyWithRetry(() => import('@/pages/dashboard/RecommendationsPage').then(m => ({ default: m.RecommendationsPage })))
+const GrowthPage = lazyWithRetry(() => import('@/pages/dashboard/GrowthPage').then(m => ({ default: m.GrowthPage })))
 
 const PageLoader = () => (
   <div className="w-full h-full min-h-[50vh] flex flex-col items-center justify-center gap-4">
