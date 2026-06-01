@@ -36,7 +36,6 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
 const LandingPage = lazyWithRetry(() => import('@/pages/public/LandingPage').then(m => ({ default: m.LandingPage })))
 const LoginPage = lazyWithRetry(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
 const SignupPage = lazyWithRetry(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
-const OAuthCallback = lazyWithRetry(() => import('@/pages/auth/OAuthCallback').then(m => ({ default: m.OAuthCallback })))
 const DashboardIndex = lazyWithRetry(() => import('@/pages/dashboard/DashboardIndex').then(m => ({ default: m.DashboardIndex })))
 const NotificationsPage = lazyWithRetry(() => import('@/pages/dashboard/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
 const MessagesPage = lazyWithRetry(() => import('@/pages/dashboard/MessagesPage').then(m => ({ default: m.MessagesPage })))
@@ -108,10 +107,6 @@ const router = createBrowserRouter([
         ],
       },
     ],
-  },
-  {
-    path: 'auth/callback',
-    element: withSuspense(OAuthCallback),
   },
   {
     path: '/dashboard',

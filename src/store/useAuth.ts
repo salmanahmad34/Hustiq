@@ -1,16 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import {
-  signInUser,
-  signInWithGoogle,
-  signUpUser,
-  signOutUser,
-  recoverSession,
-  buildUserSession,
-  getProfile,
-  updateProfile,
-  isSupabaseConfigured as checkSupabaseConfig
-} from '@/services/supabase/auth'
 import type { UserSession, Profile } from '@/types/database'
 import { logger } from '@/lib/logger'
 
@@ -28,8 +17,7 @@ interface AuthState {
   error: string | null
 
   // Actions
-  login: (email: string, password: string) => Promise<void>
-  googleLogin: () => Promise<void>
+  login: (email: string, password?: string, role?: 'student' | 'provider') => Promise<void>
   signup: (email: string, password: string, name: string, role: 'student' | 'provider') => Promise<void>
   logout: () => Promise<void>
   recoverUserSession: () => Promise<void>
@@ -56,30 +44,23 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // LOGIN ACTION
       // ============================================
-      login: async (email: string, password: string) => {
+      login: async (email: string, _password?: string, mockRole?: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
-          if (!checkSupabaseConfig()) {
-            throw new Error('Supabase is not configured. Please check your environment variables.')
-          }
-
-          // Sign in with Supabase
-          const data = await signInUser(email, password)
-
-          if (data.user) {
-            // Build complete user session with profile data
-            const userSession = await buildUserSession(data.user.id, data.user.email || '')
-
-            if (!userSession) {
-              throw new Error('Failed to load user profile')
-            }
-
-            set({
-              isAuthenticated: true,
-              user: userSession,
-              error: null
-            })
-          }
+          // Mock login flow
+          await new Promise(resolve => setTimeout(resolve, 800))
+          set({
+            isAuthenticated: true,
+            user: {
+              id: 'demo-user-123',
+              email: email || 'demo@zivaro.com',
+              role: mockRole || 'student',
+              name: 'Demo User',
+              onboarding_completed: true,
+              metadata: {}
+            },
+            error: null
+          })
         } catch (err: any) {
           const errorMessage = err.message || 'Login failed'
           set({
@@ -94,52 +75,25 @@ export const useAuth = create<AuthState>()(
       },
 
       // ============================================
-      // GOOGLE LOGIN ACTION
-      // ============================================
-      googleLogin: async () => {
-        set({ isLoading: true, error: null })
-        try {
-          if (!checkSupabaseConfig()) {
-            throw new Error('Supabase is not configured. Please check your environment variables.')
-          }
-          const { error } = await signInWithGoogle()
-          if (error) throw error
-        } catch (err: any) {
-          const errorMessage = err.message || 'Google login failed'
-          set({ error: errorMessage, isLoading: false })
-          throw err
-        }
-        // No finally block to reset isLoading here since the browser redirects away
-      },
-
-      // ============================================
       // SIGNUP ACTION
       // ============================================
-      signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
+      signup: async (email: string, _password: string, name: string, role: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
-          if (!checkSupabaseConfig()) {
-            throw new Error('Supabase is not configured. Please check your environment variables.')
-          }
-
-          // Sign up with Supabase
-          // This triggers the database trigger which creates a profile automatically
-          const data = await signUpUser(email, password, name, role)
-
-          if (data.user) {
-            // Build user session
-            const userSession = await buildUserSession(data.user.id, data.user.email || '')
-
-            if (!userSession) {
-              throw new Error('Failed to create user profile')
-            }
-
-            set({
-              isAuthenticated: true,
-              user: userSession,
-              error: null
-            })
-          }
+          // Mock signup flow
+          await new Promise(resolve => setTimeout(resolve, 800))
+          set({
+            isAuthenticated: true,
+            user: {
+              id: 'demo-user-123',
+              email: email,
+              role: role,
+              name: name,
+              onboarding_completed: true,
+              metadata: {}
+            },
+            error: null
+          })
         } catch (err: any) {
           const errorMessage = err.message || 'Signup failed'
           set({
@@ -159,10 +113,7 @@ export const useAuth = create<AuthState>()(
       logout: async () => {
         set({ isLoading: true, error: null })
         try {
-          if (checkSupabaseConfig()) {
-            await signOutUser()
-          }
-
+          await new Promise(resolve => setTimeout(resolve, 300))
           set({
             isAuthenticated: false,
             user: null,
@@ -181,74 +132,21 @@ export const useAuth = create<AuthState>()(
       // SESSION RECOVERY ACTION
       // ============================================
       recoverUserSession: async () => {
-        console.log('[useAuth] Starting recoverUserSession. Current state:', {
-          isAuthenticated: get().isAuthenticated,
-          isRecovering: true,
-          user: get().user
-        })
         set({ isRecovering: true, error: null })
         try {
-          if (!checkSupabaseConfig()) {
-            set({ isAuthenticated: false, isRecovering: false })
-            return
-          }
-
-          const session = await recoverSession()
-          console.log('[useAuth] Recovered session from Supabase:', session ? 'Exists' : 'Null', session)
-
-          if (session?.user) {
-            console.log('[useAuth] Session user found:', session.user)
-            // Build complete user session
-            const userSession = await buildUserSession(session.user.id, session.user.email || '')
-            console.log('[useAuth] Built user profile session:', userSession)
-
-            if (userSession) {
-              set({
-                isAuthenticated: true,
-                user: userSession,
-                error: null
-              })
-              console.log('[useAuth] Successfully authenticated user with profile')
-            } else {
-              // Session exists but profile couldn't be loaded (e.g. DB trigger delay during OAuth signup)
-              console.warn('[useAuth] Profile not found in database. Using JWT fallback.')
-              
-              const fallbackSession = {
-                id: session.user.id,
-                email: session.user.email || '',
-                role: 'student' as any,
-                name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                onboarding_completed: session.user.user_metadata?.onboarding_completed || false,
-                metadata: session.user.user_metadata || {}
-              }
-              
-              set({
-                isAuthenticated: true,
-                user: fallbackSession,
-                error: null
-              })
-              console.log('[useAuth] State updated with fallback session')
-            }
-          } else {
-            console.log('[useAuth] No active session in Supabase')
-            // No active session
-            set({
-              isAuthenticated: false,
-              user: null
-            })
+          // Just verify if the state holds a user from local storage (Zustand persist)
+          const state = get()
+          if (!state.user) {
+            set({ isAuthenticated: false })
           }
         } catch (err: any) {
           logger.error('Session recovery error:', err)
           set({
             isAuthenticated: false,
             user: null,
-            error: null // Don't show recovery errors to user
+            error: null
           })
         } finally {
-          console.log('[useAuth] Finished recoverUserSession. Final state:', {
-            isAuthenticated: get().isAuthenticated,
-            isRecovering: false
-          })
           set({ isRecovering: false })
         }
       },
@@ -257,27 +155,7 @@ export const useAuth = create<AuthState>()(
       // REFRESH PROFILE ACTION
       // ============================================
       refreshProfile: async () => {
-        const state = get()
-        if (!state.user) return
-
-        try {
-          if (!checkSupabaseConfig()) return
-
-          const profile = await getProfile(state.user.id)
-          if (profile) {
-            set({
-              user: {
-                ...state.user,
-                name: profile.name || state.user.name,
-                role: profile.role,
-                onboarding_completed: profile.onboarding_completed,
-                metadata: profile.metadata
-              }
-            })
-          }
-        } catch (err) {
-          logger.error('Error refreshing profile:', err)
-        }
+        // Mock refresh - do nothing
       },
 
       // ============================================
@@ -291,23 +169,10 @@ export const useAuth = create<AuthState>()(
 
         set({ isLoading: true, error: null })
         try {
-          if (!checkSupabaseConfig()) {
-            throw new Error('Supabase is not configured')
-          }
-
-          const updated = await updateProfile(state.user.id, updates)
-
-          if (updated) {
-            set({
-              user: {
-                ...state.user,
-                name: updated.name || state.user.name,
-                role: updated.role,
-                onboarding_completed: updated.onboarding_completed,
-                metadata: updated.metadata
-              }
-            })
-          }
+          await new Promise(resolve => setTimeout(resolve, 500))
+          set({
+            user: { ...state.user, ...updates }
+          })
         } catch (err: any) {
           const errorMessage = err.message || 'Failed to update profile'
           set({ error: errorMessage })
