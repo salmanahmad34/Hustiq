@@ -15,7 +15,7 @@ import {
 */
 // import type { UserSession, Profile } from '@/types/database'
 import type { UserSession, Profile } from '@/types/database' // KEEP type imports as they might be used in state interface
-import { logger } from '@/lib/logger'
+// import { logger } from '@/lib/logger'
 
 // ============================================
 // AUTH STATE INTERFACE
@@ -58,7 +58,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // LOGIN ACTION
       // ============================================
-      login: async (email: string, password: string) => {
+      login: async (email: string, _password: string) => {
         // TEMP DEMO MODE
         set({
           isAuthenticated: true,
@@ -153,7 +153,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // SIGNUP ACTION
       // ============================================
-      signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
+      signup: async (email: string, _password: string, name: string, role: 'student' | 'provider') => {
         // TEMP DEMO MODE
         set({
           isAuthenticated: true,
@@ -206,6 +206,7 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false })
         }
+        */
       },
 
       // ============================================
