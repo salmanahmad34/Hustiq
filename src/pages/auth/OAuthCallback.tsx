@@ -15,12 +15,28 @@ export const OAuthCallback = () => {
 
     const handleOAuthCallback = async () => {
       try {
-        // Supabase client automatically processes the hash fragment from URL
-        // and establishes the session. We just need to recover it in our store.
-        
-        // Wait a small bit for Supabase to complete local storage sync if needed
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
+        // Wait for Supabase to process the URL hash and establish the session
+        let { data: { session } } = await supabase.auth.getSession()
+
+        if (!session) {
+          console.log('[OAuthCallback] Session not immediately available, waiting for onAuthStateChange...')
+          await new Promise<void>((resolve) => {
+            const { data: authListener } = supabase.auth.onAuthStateChange((event, s) => {
+              if (s || event === 'SIGNED_IN') {
+                session = s
+                authListener.subscription.unsubscribe()
+                resolve()
+              }
+            })
+            
+            // 5 second fallback timeout
+            setTimeout(() => {
+              authListener.subscription.unsubscribe()
+              resolve()
+            }, 5000)
+          })
+        }
+
         await recoverUserSession()
 
         // Clean the URL hash securely after recovery

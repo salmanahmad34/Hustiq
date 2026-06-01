@@ -179,10 +179,8 @@ export const signInUser = async (email: string, password: string) => {
  * Determines the correct OAuth redirect URL based on environment
  */
 const getRedirectUrl = () => {
-  // 1. If VITE_SITE_URL is explicitly set in the environment (e.g., Render dashboard), use it.
-  // 2. Otherwise, fall back to window.location.origin dynamically.
-  // This guarantees no hardcoded localhost fallbacks exist in the code.
-  let origin = import.meta.env.VITE_SITE_URL || window.location.origin
+  // 1. Rely directly on window.location.origin to avoid any hardcoded environment URL mismatches.
+  let origin = window.location.origin
 
   // Ensure origin doesn't end with a trailing slash to prevent double slashes
   origin = origin.replace(/\/$/, '')

@@ -20,7 +20,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Supabase Client Instance
  * Initialized with environment variables from .env
  */
-export const supabase = createClient<Database>(safeUrl, safeKey)
+export const supabase = createClient<Database>(safeUrl, safeKey, {
+  auth: {
+    detectSessionInUrl: true,
+    // flowType: 'pkce', // Uncomment if PKCE is forced in Supabase dashboard
+  }
+})
 
 /**
  * Helper to check if Supabase is properly configured
