@@ -129,7 +129,7 @@ export const HeroSection = () => {
           <div className="relative w-full h-full max-w-md">
             {JOB_CARDS.map((card) => (
               <motion.div
-                key={card.id}
+                key={card.id ?? Math.random()}
                 initial={{ opacity: 0, y: 50, x: 20 }}
                 animate={{ opacity: 1, y: [0, -15, 0], x: 0 }}
                 transition={{
@@ -144,7 +144,7 @@ export const HeroSection = () => {
                   }
                 }}
                 className={`absolute w-64 sm:w-72 glass-card rounded-2xl p-5 hover:border-primary/30 transition-colors cursor-pointer shadow-soft-lg`}
-                style={{ ...card.style, zIndex: 10 + card.id }}
+                style={{ ...card.style, zIndex: 10 + (card.id ?? 0) }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
