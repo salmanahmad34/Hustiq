@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageSquare, User, Briefcase, Zap, Bookmark, Wallet, Sparkles, Award, Compass } from 'lucide-react'
+import { Home, MessageSquare, User, Briefcase, Zap, Bookmark, Wallet, Award, Compass } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
