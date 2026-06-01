@@ -152,8 +152,18 @@ export const signInUser = async (email: string, password: string) => {
   verifySupabaseConfiguration()
 
   try {
-    const payload = { email, password }
-    console.log('[auth.ts] Payload being passed to signInWithPassword:', payload)
+    const exactEmail = typeof email === 'object' ? (email as any).email || '' : String(email)
+    const exactPassword = typeof password === 'object' ? '' : String(password)
+
+    const payload = { 
+      email: exactEmail, 
+      password: exactPassword 
+    }
+    
+    console.log('temporary console.log before signInWithPassword:', { 
+      email: payload.email, 
+      password: payload.password 
+    })
     
     const { data, error } = await supabase.auth.signInWithPassword(payload)
 

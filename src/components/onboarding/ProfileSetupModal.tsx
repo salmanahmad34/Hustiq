@@ -15,7 +15,6 @@ const TOTAL_STEPS = 3
 export const ProfileSetupModal = () => {
   const { isOpen, step, formData, updateData, closeModal, nextStep, prevStep, reset } = useProfileSetupModal()
   const selectedRole = useOnboardingModal(state => state.selectedRole)
-  const { login } = useAuth()
   const navigate = useNavigate()
 
   // Prevent background scrolling
@@ -39,12 +38,18 @@ export const ProfileSetupModal = () => {
     const userId = `usr-${Date.now()}`
       
     // 2. Inject directly into the persistent auth store
-    login({
-      id: userId,
-      email: `${name.toLowerCase().replace(/\s/g, '')}@zivaro.com`,
-      name,
-      role,
-      avatarPlaceholder: name.charAt(0).toUpperCase()
+    useAuth.setState({
+      isAuthenticated: true,
+      user: {
+        id: userId,
+        email: `${name.toLowerCase().replace(/\s/g, '')}@zivaro.com`,
+        name,
+        role,
+        avatarPlaceholder: name.charAt(0).toUpperCase(),
+        onboarding_completed: true,
+        metadata: {}
+      } as any,
+      error: null
     })
 
     // Track analytics event

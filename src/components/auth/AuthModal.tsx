@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Mail, Lock, ArrowRight } from 'lucide-react'
 import { useAuthModal } from '@/store/useAuthModal'
@@ -7,16 +7,30 @@ import { useAuth } from '@/store/useAuth'
 
 export const AuthModal = () => {
   const { isOpen, mode, closeModal, toggleMode } = useAuthModal()
-  const { googleLogin, isLoading, error } = useAuth()
+  const { googleLogin, login, isLoading, error } = useAuth()
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const openProfileSetupModal = useProfileSetupModal(state => state.openModal)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    closeModal()
-    setTimeout(() => {
-      openProfileSetupModal()
-    }, 150)
+    if (isLoading) return
+
+    if (mode === 'login') {
+      try {
+        await login(email, password)
+        closeModal()
+      } catch (err) {
+        // error handled by useAuth
+      }
+    } else {
+      closeModal()
+      setTimeout(() => {
+        openProfileSetupModal()
+      }, 150)
+    }
   }
 
   // Prevent background scrolling when modal is open
@@ -135,7 +149,9 @@ export const AuthModal = () => {
                     <Mail className="w-5 h-5 text-muted-foreground/70" />
                   </div>
                   <input 
-                    type="email" 
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
                     className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50"
                     disabled={isLoading}
@@ -148,7 +164,9 @@ export const AuthModal = () => {
                     <Lock className="w-5 h-5 text-muted-foreground/70" />
                   </div>
                   <input 
-                    type="password" 
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50"
                     disabled={isLoading}
