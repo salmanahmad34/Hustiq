@@ -22,6 +22,13 @@ export const LoginPage = () => {
 
   const handleRealLogin = async (e: FormEvent) => {
     e.preventDefault()
+
+    // TEMP DEMO MODE
+    // REMOVE BEFORE PRODUCTION
+    navigate(ROUTES.DASHBOARD)
+    return
+
+    /*
     if (isLoading) return
 
     setFormError(null)
@@ -38,6 +45,7 @@ export const LoginPage = () => {
     } catch (err: any) {
       // Error handled by store/errors
     }
+    */
   }
 
   const handleMockLogin = async (role: 'student' | 'provider') => {

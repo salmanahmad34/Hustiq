@@ -11,6 +11,11 @@ export const ProtectedRoute = () => {
   console.log('[ProtectedRoute] Current Pathname:', location.pathname)
   console.log('[ProtectedRoute] Matched Routes:', matches)
 
+  // TEMP DEMO MODE
+  // REMOVE BEFORE PRODUCTION
+  return <Outlet />
+
+  /*
   // Show nothing while recovering session
   if (isRecovering) {
     return (
@@ -31,4 +36,5 @@ export const ProtectedRoute = () => {
 
   // Render protected routes
   return <Outlet />
+  */
 }

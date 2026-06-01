@@ -28,6 +28,13 @@ export const SignupPage = () => {
 
   const handleRealSignup = async (e: FormEvent) => {
     e.preventDefault()
+
+    // TEMP DEMO MODE
+    // REMOVE BEFORE PRODUCTION
+    navigate(ROUTES.DASHBOARD)
+    return
+
+    /*
     if (isLoading) return
 
     setFormError(null)
@@ -59,6 +66,7 @@ export const SignupPage = () => {
     } catch (err: any) {
       // Handled by store/errors
     }
+    */
   }
 
   const handleMockSignup = async (selectedRole: 'student' | 'provider') => {
