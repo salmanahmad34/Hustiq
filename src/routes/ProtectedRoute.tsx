@@ -1,11 +1,10 @@
-import { Navigate, Outlet, useLocation, useMatches } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/store/useAuth'
 
 export const ProtectedRoute = () => {
   const { isAuthenticated, isRecovering } = useAuth()
   const location = useLocation()
-  const matches = useMatches()
 
   console.log('auth state', {
     isAuthenticated,

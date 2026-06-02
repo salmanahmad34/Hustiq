@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate, useLocation, useMatches, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 
 // Layouts
@@ -81,14 +81,12 @@ const NotFoundDiagnostic = () => {
 
 const RouteDiagnostic = () => {
   const location = useLocation()
-  const matches = useMatches()
 
   useEffect(() => {
     if (import.meta.env.DEV) {
       console.log('[Router Diagnostic] Current Path:', location.pathname)
-      console.log('[Router Diagnostic] Matched Routes:', matches)
     }
-  }, [location, matches])
+  }, [location])
 
   return <Outlet />
 }
