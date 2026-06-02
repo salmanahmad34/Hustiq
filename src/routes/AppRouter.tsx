@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import { createBrowserRouter, RouterProvider, Navigate, useLocation, useMatches, Outlet } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 
 // Layouts
@@ -79,94 +79,115 @@ const NotFoundDiagnostic = () => {
   )
 }
 
+const RouteDiagnostic = () => {
+  const location = useLocation()
+  const matches = useMatches()
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('[Router Diagnostic] Current Path:', location.pathname)
+      console.log('[Router Diagnostic] Matched Routes:', matches)
+    }
+  }, [location, matches])
+
+  return <Outlet />
+}
+
 const router = createBrowserRouter([
   {
-    path: ROUTES.HOME,
-    element: <LandingLayout />,
+    path: '/',
+    element: <RouteDiagnostic />,
+    // We removed errorElement here so chunk load errors propagate to ErrorBoundary instead of showing 404
     children: [
       {
-        index: true,
-        element: withSuspense(LandingPage),
-      },
-    ],
-  },
-  {
-    element: <PublicRoute />,
-    children: [
-      {
-        element: <AuthLayout />,
-        children: [
-          {
-            path: ROUTES.LOGIN,
-            element: withSuspense(LoginPage),
-          },
-          {
-            path: ROUTES.SIGNUP,
-            element: withSuspense(SignupPage),
-          },
-        ],
-      },
-    ],
-  },
-  {
-    path: '/dashboard',
-    element: <ProtectedRoute />,
-    children: [
-      {
-        element: <DashboardLayout />,
+        path: ROUTES.HOME,
+        element: <LandingLayout />,
         children: [
           {
             index: true,
-            element: withSuspense(DashboardIndex),
-          },
-          {
-            path: 'notifications',
-            element: withSuspense(NotificationsPage),
-          },
-          {
-            path: 'messages',
-            element: withSuspense(MessagesPage),
-          },
-          {
-            path: 'profile',
-            element: withSuspense(ProfilePage),
-          },
-          {
-            path: 'jobs',
-            element: withSuspense(JobsPage),
-          },
-          {
-            path: 'saved',
-            element: withSuspense(SavedJobsPage),
-          },
-          {
-            path: 'premium',
-            element: withSuspense(PremiumPage),
-          },
-          {
-            path: 'wallet',
-            element: withSuspense(WalletPage),
-          },
-          {
-            path: 'recommendations',
-            element: withSuspense(RecommendationsPage),
-          },
-          {
-            path: 'growth',
-            element: withSuspense(GrowthPage),
+            element: withSuspense(LandingPage),
           },
         ],
       },
-    ],
-  },
-  {
-    path: '*',
-    element: <NotFoundDiagnostic />,
+      {
+        element: <PublicRoute />,
+        children: [
+          {
+            element: <AuthLayout />,
+            children: [
+              {
+                path: ROUTES.LOGIN,
+                element: withSuspense(LoginPage),
+              },
+              {
+                path: ROUTES.SIGNUP,
+                element: withSuspense(SignupPage),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <DashboardLayout />,
+            children: [
+              {
+                path: ROUTES.DASHBOARD,
+                element: withSuspense(DashboardIndex),
+              },
+              {
+                path: ROUTES.NOTIFICATIONS,
+                element: withSuspense(NotificationsPage),
+              },
+              {
+                path: ROUTES.MESSAGES,
+                element: withSuspense(MessagesPage),
+              },
+              {
+                path: ROUTES.PROFILE,
+                element: withSuspense(ProfilePage),
+              },
+              {
+                path: ROUTES.JOBS,
+                element: withSuspense(JobsPage),
+              },
+              {
+                path: ROUTES.SAVED,
+                element: withSuspense(SavedJobsPage),
+              },
+              {
+                path: ROUTES.PREMIUM,
+                element: withSuspense(PremiumPage),
+              },
+              {
+                path: ROUTES.WALLET,
+                element: withSuspense(WalletPage),
+              },
+              {
+                path: ROUTES.RECOMMENDATIONS,
+                element: withSuspense(RecommendationsPage),
+              },
+              {
+                path: ROUTES.GROWTH,
+                element: withSuspense(GrowthPage),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: '/auth/callback',
+        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+      },
+      {
+        path: '*',
+        element: <NotFoundDiagnostic />,
+      }
+    ]
   }
-], {
-  // YEH BASENAME ADD KARNA ZAROORI THA! Iske bina GitHub pages blank dikhayega
-  basename: import.meta.env.BASE_URL
-})
+])
 
 export const AppRouter = () => {
   return <RouterProvider router={router} />

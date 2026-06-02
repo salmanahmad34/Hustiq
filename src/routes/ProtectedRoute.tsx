@@ -7,9 +7,11 @@ export const ProtectedRoute = () => {
   const location = useLocation()
   const matches = useMatches()
 
-  console.log('[ProtectedRoute] Auth State:', { isAuthenticated, isRecovering })
-  console.log('[ProtectedRoute] Current Pathname:', location.pathname)
-  console.log('[ProtectedRoute] Matched Routes:', matches)
+  console.log('auth state', {
+    isAuthenticated,
+    isRecovering,
+    pathname: location.pathname
+  })
 
   // Show nothing while recovering session
   if (isRecovering) {

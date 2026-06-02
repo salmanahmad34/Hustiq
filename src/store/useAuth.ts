@@ -38,7 +38,7 @@ export const useAuth = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      isRecovering: false,
+      isRecovering: true,
       error: null,
 
       // ============================================
@@ -136,7 +136,15 @@ export const useAuth = create<AuthState>()(
         try {
           // Just verify if the state holds a user from local storage (Zustand persist)
           const state = get()
-          if (!state.user) {
+          
+          console.log('[Auth Recovery]', {
+            user: state.user,
+            isAuthenticated: state.isAuthenticated
+          })
+
+          if (state.user) {
+            set({ isAuthenticated: true })
+          } else {
             set({ isAuthenticated: false })
           }
         } catch (err: any) {

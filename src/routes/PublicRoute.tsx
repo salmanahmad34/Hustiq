@@ -6,6 +6,12 @@ export const PublicRoute = () => {
   const { isAuthenticated, isRecovering } = useAuth()
   const location = useLocation()
 
+  console.log('auth state', {
+    isAuthenticated,
+    isRecovering,
+    pathname: location.pathname
+  })
+
   // Always allow access to OAuth callback to process the token
   // If we don't do this, Supabase might set isAuthenticated syncly 
   // and redirect to dashboard before the callback finishes its onboarding check.

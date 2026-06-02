@@ -20,6 +20,7 @@ import {
   CheckSquare,
   ArrowRight
 } from 'lucide-react'
+import { ROUTES } from '@/constants/routes'
 import { cn } from '@/lib/utils'
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 
@@ -95,7 +96,7 @@ export const NotificationsPage = () => {
         isPriority: false,
         category: 'today',
         role: 'student',
-        actionPath: '/dashboard/wallet',
+        actionPath: ROUTES.WALLET,
         actionText: 'Track Payout'
       })
     } else if (simType === 'offer_received') {
@@ -106,7 +107,7 @@ export const NotificationsPage = () => {
         isPriority: true,
         category: 'today',
         role: 'student',
-        actionPath: '/dashboard/jobs',
+        actionPath: ROUTES.JOBS,
         actionText: 'Review Offer'
       })
     } else if (simType === 'message_received_s') {
@@ -117,7 +118,7 @@ export const NotificationsPage = () => {
         isPriority: false,
         category: 'today',
         role: 'student',
-        actionPath: '/dashboard/messages',
+        actionPath: ROUTES.MESSAGES,
         actionText: 'Open Chat'
       })
     } else if (simType === 'applicant_received') {
@@ -139,7 +140,7 @@ export const NotificationsPage = () => {
         isPriority: false,
         category: 'today',
         role: 'provider',
-        actionPath: '/dashboard/wallet',
+        actionPath: ROUTES.WALLET,
         actionText: 'View Ledger'
       })
     } else if (simType === 'shift_expiry') {

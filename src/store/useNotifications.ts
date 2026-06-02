@@ -57,7 +57,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: true,
     category: 'today',
     role: 'student',
-    actionPath: '/dashboard/jobs',
+    actionPath: '/jobs',
     actionText: 'View Offer'
   },
   {
@@ -70,7 +70,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: false,
     category: 'today',
     role: 'student',
-    actionPath: '/dashboard/jobs',
+    actionPath: '/jobs',
     actionText: 'Track Status'
   },
   {
@@ -83,7 +83,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: false,
     category: 'today',
     role: 'student',
-    actionPath: '/dashboard/wallet',
+    actionPath: '/wallet',
     actionText: 'Open Wallet'
   },
   {
@@ -96,7 +96,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: false,
     category: 'earlier',
     role: 'student',
-    actionPath: '/dashboard/messages',
+    actionPath: '/messages',
     actionText: 'Reply'
   },
   {
@@ -109,7 +109,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: false,
     category: 'earlier',
     role: 'student',
-    actionPath: '/dashboard/jobs',
+    actionPath: '/jobs',
     actionText: 'Apply Now'
   },
 
@@ -137,7 +137,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: false,
     category: 'today',
     role: 'provider',
-    actionPath: '/dashboard/messages',
+    actionPath: '/messages',
     actionText: 'View Message'
   },
   {
@@ -150,7 +150,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     isPriority: false,
     category: 'earlier',
     role: 'provider',
-    actionPath: '/dashboard/wallet',
+    actionPath: '/wallet',
     actionText: 'View Spending'
   },
   {
