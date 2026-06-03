@@ -2,12 +2,8 @@ import path from "path"
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Set GITHUB_PAGES=true when deploying to GitHub Pages
-const isGitHubPages = process.env.GITHUB_PAGES === 'true';
-const basePath = isGitHubPages ? '/Hustiq/' : '/';
-
 export default defineConfig({
-  base: basePath,
+  base: '/Hustiq/',
   plugins: [react()],
   resolve: {
     alias: {
