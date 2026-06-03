@@ -32,7 +32,8 @@ export const useAppliedJobs = create<AppliedJobsState>((set, get) => ({
   })),
   isApplied: (id) => !!get().appliedJobs[id],
   loadAppliedJobs: async (userId, role) => {
-    if (!isSupabaseConfigured() || userId.startsWith('mock-')) return
+    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+    if (!isSupabaseConfigured() || isMock) return
 
     try {
       const data = await fetchApplicationsFromDb(userId, role)

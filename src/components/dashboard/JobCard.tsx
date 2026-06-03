@@ -25,6 +25,7 @@ export interface Job {
   postedTime: string
   tags: string[]
   logoPlaceholder: string
+  provider_id?: string
 }
 
 interface JobCardProps {

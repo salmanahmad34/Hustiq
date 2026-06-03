@@ -29,31 +29,55 @@ export const ProfileSetupModal = () => {
     }
   }, [isOpen])
 
-  const handleFinish = () => {
-    // 1. Construct the mock session from onboarding data
+  const handleFinish = async () => {
+    const activeUser = useAuth.getState().user
+    const isRealSession = activeUser && !activeUser.id.startsWith('00000000-')
+
     const role = selectedRole === 'provider' ? 'provider' : 'student'
     const name = selectedRole === 'provider' 
-      ? (formData.businessName || 'Zivaro Business')
-      : (formData.fullName || 'Zivaro Student')
-    const userId = `usr-${Date.now()}`
-      
-    // 2. Inject directly into the persistent auth store
-    useAuth.setState({
-      isAuthenticated: true,
-      user: {
-        id: userId,
-        email: `${name.toLowerCase().replace(/\s/g, '')}@zivaro.com`,
-        name,
-        role,
-        avatarPlaceholder: name.charAt(0).toUpperCase(),
-        onboarding_completed: true,
-        metadata: {}
-      } as any,
-      error: null
-    })
+      ? (formData.businessName || 'HustiQ Business')
+      : (formData.fullName || 'HustiQ Student')
 
-    // Track analytics event
-    trackSignupCompleted(userId, role, name)
+    const metadata = {
+      city: formData.city || '',
+      bio: formData.bio || '',
+      skills: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+      availability: formData.availability || '',
+      hiringNeeds: formData.hiringNeeds || ''
+    }
+
+    if (isRealSession && activeUser) {
+      try {
+        await useAuth.getState().updateUserProfile({
+          name,
+          onboarding_completed: true,
+          metadata
+        })
+        trackSignupCompleted(activeUser.id, role, name)
+      } catch (err) {
+        console.error('Failed to complete onboarding in Supabase:', err)
+      }
+    } else {
+      // Mock session fallback
+      const userId = role === 'provider' 
+        ? '00000000-0000-0000-0000-000000000002' 
+        : '00000000-0000-0000-0000-000000000001'
+        
+      useAuth.setState({
+        isAuthenticated: true,
+        user: {
+          id: userId,
+          email: `${name.toLowerCase().replace(/\s/g, '')}@hustiq.com`,
+          name,
+          role,
+          avatarPlaceholder: name.charAt(0).toUpperCase(),
+          onboarding_completed: true,
+          metadata
+        } as any,
+        error: null
+      })
+      trackSignupCompleted(userId, role, name)
+    }
 
     // 3. Close modal and securely route
     closeModal()

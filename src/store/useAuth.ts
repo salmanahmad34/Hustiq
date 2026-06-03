@@ -2,6 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserSession, Profile } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { 
+  signInUser, 
+  signUpUser, 
+  signOutUser, 
+  recoverSession, 
+  buildUserSession, 
+  updateProfile as updateProfileInDb 
+} from '@/services/supabase/auth'
 
 
 // ============================================
@@ -44,21 +52,41 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // LOGIN ACTION
       // ============================================
-      login: async (email: string, _password?: string, mockRole?: 'student' | 'provider') => {
+      login: async (email: string, password?: string, mockRole?: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
-          // Mock login flow
-          await new Promise(resolve => setTimeout(resolve, 800))
+          // If no password is provided, handle as mock login with valid UUID to prevent db errors
+          if (!password) {
+            await new Promise(resolve => setTimeout(resolve, 600))
+            const mockId = mockRole === 'provider' 
+              ? '00000000-0000-0000-0000-000000000002' 
+              : '00000000-0000-0000-0000-000000000001'
+            set({
+              isAuthenticated: true,
+              user: {
+                id: mockId,
+                email: email || 'demo@hustiq.com',
+                role: mockRole || 'student',
+                name: mockRole === 'provider' ? 'Third Wave Coffee' : 'Demo Student',
+                onboarding_completed: true,
+                metadata: {}
+              },
+              error: null
+            })
+            return
+          }
+
+          // Real Supabase Login
+          const data = await signInUser(email, password)
+          if (!data || !data.user) throw new Error('No user data returned from Supabase')
+
+          // Build full user session from profile
+          const userSession = await buildUserSession(data.user.id, data.user.email || '')
+          if (!userSession) throw new Error('Failed to retrieve user profile from database')
+
           set({
             isAuthenticated: true,
-            user: {
-              id: 'demo-user-123',
-              email: email || 'demo@zivaro.com',
-              role: mockRole || 'student',
-              name: 'Demo User',
-              onboarding_completed: true,
-              metadata: {}
-            },
+            user: userSession,
             error: null
           })
         } catch (err: any) {
@@ -77,19 +105,22 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // SIGNUP ACTION
       // ============================================
-      signup: async (email: string, _password: string, name: string, role: 'student' | 'provider') => {
+      signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
-          // Mock signup flow
-          await new Promise(resolve => setTimeout(resolve, 800))
+          // Real Supabase Signup
+          const data = await signUpUser(email, password, name, role)
+          if (!data || !data.user) throw new Error('Signup failed')
+
+          // Set user session
           set({
             isAuthenticated: true,
             user: {
-              id: 'demo-user-123',
-              email: email,
+              id: data.user.id,
+              email: data.user.email || email,
               role: role,
               name: name,
-              onboarding_completed: true,
+              onboarding_completed: false,
               metadata: {}
             },
             error: null
@@ -113,7 +144,15 @@ export const useAuth = create<AuthState>()(
       logout: async () => {
         set({ isLoading: true, error: null })
         try {
-          await new Promise(resolve => setTimeout(resolve, 300))
+          const state = get()
+          const isRealSession = state.user && !state.user.id.startsWith('00000000-')
+          
+          if (isRealSession) {
+            await signOutUser()
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 300))
+          }
+
           set({
             isAuthenticated: false,
             user: null,
@@ -134,14 +173,21 @@ export const useAuth = create<AuthState>()(
       recoverUserSession: async () => {
         set({ isRecovering: true, error: null })
         try {
-          // Just verify if the state holds a user from local storage (Zustand persist)
-          const state = get()
+          const session = await recoverSession()
           
-          console.log('[Auth Recovery]', {
-            user: state.user,
-            isAuthenticated: state.isAuthenticated
-          })
+          if (session && session.user) {
+            const userSession = await buildUserSession(session.user.id, session.user.email || '')
+            if (userSession) {
+              set({
+                isAuthenticated: true,
+                user: userSession
+              })
+              return
+            }
+          }
 
+          // Fallback to Zustand persisted local state
+          const state = get()
           if (state.user) {
             set({ isAuthenticated: true })
           } else {
@@ -163,7 +209,17 @@ export const useAuth = create<AuthState>()(
       // REFRESH PROFILE ACTION
       // ============================================
       refreshProfile: async () => {
-        // Mock refresh - do nothing
+        const state = get()
+        if (!state.user || state.user.id.startsWith('00000000-')) return
+
+        try {
+          const userSession = await buildUserSession(state.user.id, state.user.email)
+          if (userSession) {
+            set({ user: userSession })
+          }
+        } catch (err) {
+          console.error('Failed to refresh profile:', err)
+        }
       },
 
       // ============================================
@@ -177,7 +233,14 @@ export const useAuth = create<AuthState>()(
 
         set({ isLoading: true, error: null })
         try {
-          await new Promise(resolve => setTimeout(resolve, 500))
+          const isRealSession = !state.user.id.startsWith('00000000-')
+          
+          if (isRealSession) {
+            await updateProfileInDb(state.user.id, updates)
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+
           set({
             user: { ...state.user, ...updates }
           })

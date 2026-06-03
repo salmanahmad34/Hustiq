@@ -7,6 +7,7 @@ import type {
   Application,
   ApplicationInsert,
   ApplicationUpdate,
+  ApplicationWithDetails,
   SavedJob,
   SavedJobInsert,
   Message,
@@ -154,18 +155,18 @@ export const deleteJob = async (jobId: string): Promise<boolean> => {
 /**
  * Fetch applications for a student
  */
-export const fetchStudentApplications = async (studentId: string): Promise<Application[]> => {
+export const fetchStudentApplications = async (studentId: string): Promise<ApplicationWithDetails[]> => {
   if (!isSupabaseConfigured()) return []
 
   try {
     const { data, error } = await supabase
       .from('applications')
-      .select('*')
+      .select('*, job:job_id(*), student:student_id(*)')
       .eq('student_id', studentId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data || []) as Application[]
+    return (data || []) as ApplicationWithDetails[]
   } catch (error) {
     console.error('Error fetching student applications:', error)
     return []
@@ -175,7 +176,7 @@ export const fetchStudentApplications = async (studentId: string): Promise<Appli
 /**
  * Fetch applications received by a provider for their jobs
  */
-export const fetchProviderApplications = async (providerId: string): Promise<Application[]> => {
+export const fetchProviderApplications = async (providerId: string): Promise<ApplicationWithDetails[]> => {
   if (!isSupabaseConfigured()) return []
 
   try {
@@ -193,12 +194,12 @@ export const fetchProviderApplications = async (providerId: string): Promise<App
     // Then get all applications for those jobs
     const { data, error } = await supabase
       .from('applications')
-      .select('*')
+      .select('*, job:job_id(*), student:student_id(*)')
       .in('job_id', jobIds)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data || []) as Application[]
+    return (data || []) as ApplicationWithDetails[]
   } catch (error) {
     console.error('Error fetching provider applications:', error)
     return []
@@ -373,7 +374,7 @@ export const fetchConversation = async (userId: string, recipientId: string): Pr
   try {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select('*, sender:sender_id(*), recipient:recipient_id(*)')
       .or(
         `and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`
       )
@@ -396,7 +397,7 @@ export const fetchConversations = async (userId: string): Promise<Message[]> => 
   try {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select('*, sender:sender_id(*), recipient:recipient_id(*)')
       .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
       .order('created_at', { ascending: false })
 

@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ApplicationCard } from '@/components/dashboard/ApplicationCard'
 import { type Job } from '@/components/dashboard/JobCard'
 import { type ApplicationStatus } from '@/store/useAppliedJobs'
 import { cn } from '@/lib/utils'
+import { useApplications } from '@/store/useApplications'
+import { useAuth } from '@/store/useAuth'
 
 interface TrackedApplication {
   id: string
@@ -115,10 +117,50 @@ const MOCK_APPLICATIONS: TrackedApplication[] = [
 
 export const JobsPage = () => {
   const [activeTab, setActiveTab] = useState<ApplicationStatus | 'all'>('all')
+  const { user } = useAuth()
+  const { applications, fetchStudentApplications } = useApplications()
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchStudentApplications(user.id)
+    }
+  }, [user?.id, fetchStudentApplications])
+
+  const displayApps = useMemo(() => {
+    const dbApps: TrackedApplication[] = (applications || []).map((app: any) => {
+      const jobInfo = app.job || {}
+      return {
+        id: app.id,
+        status: app.status as ApplicationStatus,
+        appliedDate: app.applied_date || new Date(app.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+        responseEstimate: app.response_estimate || 'Pending review',
+        job: {
+          id: jobInfo.id || app.job_id,
+          title: jobInfo.title || 'General Gig',
+          businessName: jobInfo.business_name || 'HustiQ Employer',
+          description: jobInfo.description || '',
+          payout: jobInfo.payout || 0,
+          payoutType: jobInfo.payout_type || 'hr',
+          isUrgent: jobInfo.is_urgent || false,
+          isPremium: jobInfo.is_premium || false,
+          location: jobInfo.location || '',
+          distance: jobInfo.distance || '1.5km',
+          timing: jobInfo.timing || '',
+          postedTime: jobInfo.posted_time || '',
+          tags: jobInfo.tags || [],
+          logoPlaceholder: jobInfo.logo_placeholder || '💼'
+        }
+      }
+    })
+
+    // Combine with MOCK_APPLICATIONS for demo completeness, checking matching job IDs
+    const combined = [...dbApps, ...MOCK_APPLICATIONS.filter(ma => !dbApps.some(da => da.job.id === ma.job.id))]
+    return combined
+  }, [applications])
 
   const filteredApps = activeTab === 'all' 
-    ? MOCK_APPLICATIONS 
-    : MOCK_APPLICATIONS.filter(app => app.status === activeTab)
+    ? displayApps 
+    : displayApps.filter(app => app.status === activeTab)
 
   return (
     <div className="flex flex-col h-full w-full pb-20 md:pb-0">

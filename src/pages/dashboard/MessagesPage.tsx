@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { ChatArea, type Conversation } from '@/components/dashboard/ChatArea'
 import { cn } from '@/lib/utils'
+import { useMessages } from '@/store/useMessagesStore'
+import { useAuth } from '@/store/useAuth'
+import { useSearchParams } from 'react-router-dom'
+import { isSupabaseConfigured } from '@/services/supabase/auth'
 
 const MOCK_CONVERSATIONS: Conversation[] = [
   {
@@ -53,6 +57,21 @@ const MOCK_CONVERSATIONS: Conversation[] = [
 ]
 
 export const MessagesPage = () => {
+  const [searchParams] = useSearchParams()
+  const recipientParam = searchParams.get('recipientId')
+
+  const { user } = useAuth()
+  const {
+    messages,
+    conversations,
+    fetchConversations,
+    fetchConversation,
+    sendMessage,
+    subscribeToMessages,
+    unsubscribeFromMessages,
+    setActiveRecipientId
+  } = useMessages()
+
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -64,7 +83,182 @@ export const MessagesPage = () => {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const activeConversation = MOCK_CONVERSATIONS.find(c => c.id === activeId) || null
+  // Load conversations and subscribe to real-time events
+  useEffect(() => {
+    if (user?.id) {
+      fetchConversations(user.id)
+      subscribeToMessages(user.id)
+    }
+    return () => {
+      unsubscribeFromMessages()
+    }
+  }, [user?.id, fetchConversations, subscribeToMessages, unsubscribeFromMessages])
+
+  // Set recipient active status when URL search parameters or user clicks load it
+  useEffect(() => {
+    if (recipientParam) {
+      setActiveId(recipientParam)
+      setActiveRecipientId(recipientParam)
+    } else {
+      setActiveRecipientId(activeId)
+    }
+  }, [recipientParam, activeId, setActiveRecipientId])
+
+  // Fetch individual conversation history when activeId changes
+  useEffect(() => {
+    if (user?.id && activeId) {
+      const isMock = user.id.startsWith('00000000-') || activeId.startsWith('sim-')
+      if (isSupabaseConfigured() && !isMock) {
+        fetchConversation(user.id, activeId)
+      } else {
+        // Fallback for Demo session - load local mock conversations if they match activeId
+        const match = MOCK_CONVERSATIONS.find(c => c.id === activeId)
+        if (match) {
+          useMessages.setState({
+            messages: match.messages.map(m => ({
+              id: m.id,
+              sender_id: m.senderId === 'me' ? user.id : activeId,
+              recipient_id: m.senderId === 'me' ? activeId : user.id,
+              content: m.content,
+              is_read: true,
+              created_at: new Date().toISOString()
+            }))
+          })
+        } else {
+          useMessages.setState({ messages: [] })
+        }
+      }
+    }
+  }, [user?.id, activeId, fetchConversation])
+
+  const displayConversations = useMemo(() => {
+    if (!user?.id) return []
+
+    // Group real database conversations
+    const groupedMap = new Map<string, any>()
+    conversations.forEach((msg: any) => {
+      const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
+      if (!groupedMap.has(otherUserId)) {
+        groupedMap.set(otherUserId, msg)
+      }
+    })
+
+    const list: Conversation[] = []
+    groupedMap.forEach((msg, otherUserId) => {
+      const otherProfile = msg.sender_id === user.id ? msg.recipient : msg.sender
+      const otherName = otherProfile?.name || 'Contact ' + otherUserId.substring(0, 5)
+      const isProvider = otherProfile?.role === 'provider'
+      const otherAvatar = otherProfile?.metadata?.avatar || (isProvider ? '☕' : '👨🏽‍🎓')
+
+      const diffMs = Date.now() - new Date(msg.created_at).getTime()
+      const diffMins = Math.floor(diffMs / (1000 * 60))
+      const diffHrs = Math.floor(diffMins / 60)
+      const timeText = diffMins < 1 ? 'Just now' : diffMins < 60 ? `${diffMins}m ago` : diffHrs < 24 ? `${diffHrs}h ago` : `${Math.floor(diffHrs / 24)}d ago`
+
+      list.push({
+        id: otherUserId,
+        providerName: otherName,
+        providerAvatar: otherAvatar,
+        jobTitle: isProvider ? 'Employer' : 'Candidate',
+        jobStatus: isProvider ? 'Chat' : 'Applicant',
+        lastMessage: msg.content,
+        lastMessageTime: timeText,
+        isUnread: !msg.is_read && msg.recipient_id === user.id,
+        isOnline: true,
+        messages: []
+      })
+    })
+
+    // Combine with MOCK_CONVERSATIONS for demo session completeness
+    const finalConversations = [...list]
+    MOCK_CONVERSATIONS.forEach((mc) => {
+      if (!finalConversations.some(fc => fc.id === mc.id)) {
+        finalConversations.push(mc)
+      }
+    })
+
+    return finalConversations
+  }, [conversations, user?.id])
+
+  const activeConversation = useMemo(() => {
+    if (!activeId || !user?.id) return null
+    const conv = displayConversations.find(c => c.id === activeId)
+    
+    const uiMessages = messages.map(m => ({
+      id: m.id,
+      content: m.content,
+      senderId: m.sender_id === user.id ? 'me' : 'other',
+      timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }))
+
+    if (!conv) {
+      // Dynamic fallback for new chat recipient
+      return {
+        id: activeId,
+        providerName: 'Candidate Chat',
+        providerAvatar: '👨🏽‍🎓',
+        jobTitle: 'Candidate',
+        jobStatus: 'Applicant',
+        lastMessage: '',
+        lastMessageTime: '',
+        isUnread: false,
+        isOnline: true,
+        messages: uiMessages
+      }
+    }
+
+    return {
+      ...conv,
+      messages: uiMessages
+    }
+  }, [activeId, displayConversations, messages, user?.id])
+
+  const handleSendMessage = async (content: string) => {
+    if (!user?.id || !activeId) return
+
+    const isMock = user.id.startsWith('00000000-') || activeId.startsWith('conv-') || activeId.startsWith('sim-')
+
+    if (isSupabaseConfigured() && !isMock) {
+      await sendMessage({
+        sender_id: user.id,
+        recipient_id: activeId,
+        content
+      })
+    } else {
+      // Simulated chat for demo accounts
+      const userMsgId = Date.now().toString()
+      useMessages.setState(state => ({
+        messages: [
+          ...state.messages,
+          {
+            id: userMsgId,
+            sender_id: user.id,
+            recipient_id: activeId,
+            content,
+            is_read: false,
+            created_at: new Date().toISOString()
+          }
+        ]
+      }))
+
+      // Auto response trigger after 1.5s
+      setTimeout(() => {
+        useMessages.setState(state => ({
+          messages: [
+            ...state.messages,
+            {
+              id: (Date.now() + 1).toString(),
+              sender_id: activeId,
+              recipient_id: user.id,
+              content: `Hello! This is a demo auto-response. Supabase database tables sync your chat messages exactly like this!`,
+              is_read: false,
+              created_at: new Date().toISOString()
+            }
+          ]
+        }))
+      }, 1500)
+    }
+  }
 
   // Mobile layout state: if mobile and active conversation, show chat. Else show sidebar.
   const showSidebar = !isMobile || (isMobile && !activeId)
@@ -90,7 +284,7 @@ export const MessagesPage = () => {
 
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="flex flex-col">
-              {MOCK_CONVERSATIONS.map((conv) => {
+              {displayConversations.map((conv) => {
                 const isActive = activeId === conv.id
                 return (
                   <button
@@ -161,6 +355,7 @@ export const MessagesPage = () => {
           <ChatArea 
             conversation={activeConversation} 
             onBack={() => setActiveId(null)} 
+            onSendMessage={handleSendMessage}
           />
         </div>
       )}

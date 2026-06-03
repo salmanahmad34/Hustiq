@@ -26,9 +26,10 @@ export interface Conversation {
 interface ChatAreaProps {
   conversation: Conversation | null
   onBack: () => void
+  onSendMessage: (content: string) => Promise<void>
 }
 
-export const ChatArea = ({ conversation, onBack }: ChatAreaProps) => {
+export const ChatArea = ({ conversation, onBack, onSendMessage }: ChatAreaProps) => {
   const [inputText, setInputText] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -57,18 +58,11 @@ export const ChatArea = ({ conversation, onBack }: ChatAreaProps) => {
     )
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputText.trim()) return
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: inputText,
-      senderId: 'me',
-      timestamp: 'Just now'
-    }
-
-    setMessages(prev => [...prev, newMessage])
+    const text = inputText.trim()
     setInputText('')
+    await onSendMessage(text)
   }
 
   return (

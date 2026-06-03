@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { Search, Bell } from 'lucide-react'
 import { JobCard, type Job } from '@/components/dashboard/JobCard'
 import { HorizontalFeed } from '@/components/dashboard/HorizontalFeed'
@@ -9,6 +9,8 @@ import { NotificationDropdown } from '@/components/dashboard/NotificationDropdow
 import { useNotifications } from '@/store/useNotifications'
 import { useAppliedJobs } from '@/store/useAppliedJobs'
 import { FirstTimeGuidance } from '@/components/shared/FirstTimeGuidance'
+import { useJobs } from '@/store/useJobs'
+import { useAuth } from '@/store/useAuth'
 
 const MOCK_JOBS: Job[] = [
   {
@@ -117,9 +119,22 @@ const MOCK_JOBS: Job[] = [
 ]
 
 export const DashboardPage = () => {
-  const { toggleOpen, notifications } = useNotifications()
-  const hasUnread = notifications.some(n => n.isUnread)
+  const { toggleOpen, notifications, loadNotifications } = useNotifications()
+  const { user } = useAuth()
+  const { jobs, fetchJobs } = useJobs()
   const isApplied = useAppliedJobs((state) => state.isApplied)
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
+
+  useEffect(() => {
+    if (user?.id) {
+      loadNotifications(user.id, user.role)
+    }
+  }, [user?.id, user?.role, loadNotifications])
+
+  const hasUnread = notifications.some(n => n.isUnread)
 
   // Memoize heavy array derivations to prevent re-renders when toggleOpen or other states change
   const { 
@@ -137,17 +152,37 @@ export const DashboardPage = () => {
       return aApplied - bApplied
     })
 
-    const featured = MOCK_JOBS.find(j => j.id === '2') || MOCK_JOBS[0]
+    const dbJobs: Job[] = jobs.map((dbJob: any) => ({
+      id: dbJob.id,
+      title: dbJob.title,
+      businessName: dbJob.business_name,
+      description: dbJob.description || '',
+      payout: dbJob.payout,
+      payoutType: dbJob.payout_type,
+      isUrgent: dbJob.is_urgent || false,
+      isPremium: dbJob.is_premium || false,
+      isVerified: dbJob.is_verified || false,
+      location: dbJob.location || 'Local Area',
+      distance: dbJob.distance || '1.5 km away',
+      timing: dbJob.timing || 'Flexible Shifts',
+      postedTime: dbJob.posted_time || 'Posted recently',
+      tags: dbJob.tags || [],
+      logoPlaceholder: dbJob.logo_placeholder || '💼',
+      isNearby: dbJob.is_urgent || false
+    }))
+
+    const combinedJobs = [...dbJobs, ...MOCK_JOBS.filter(mj => !dbJobs.some(dj => dj.id === mj.id))]
+    const featured = combinedJobs.find(j => j.id === '2') || combinedJobs[0]
 
     return {
-      urgentJobs: sortByApplied(MOCK_JOBS.filter(j => j.isUrgent)).slice(0, 6),
-      nearbyJobs: sortByApplied(MOCK_JOBS.filter(j => j.isNearby)).slice(0, 6),
-      cafeJobs: sortByApplied(MOCK_JOBS.filter(j => j.tags.includes('Cafe'))),
+      urgentJobs: sortByApplied(combinedJobs.filter(j => j.isUrgent)).slice(0, 6),
+      nearbyJobs: sortByApplied(combinedJobs.filter(j => j.isNearby || j.location.includes('Bandra') || j.location.includes('Andheri'))).slice(0, 6),
+      cafeJobs: sortByApplied(combinedJobs.filter(j => j.tags.includes('Cafe') || j.title.toLowerCase().includes('barista') || j.title.toLowerCase().includes('cafe'))),
       featuredJob: featured,
-      quickPicks: sortByApplied(MOCK_JOBS.filter(j => j.id !== featured.id).slice(0, 4)),
-      discoveryJobs: sortByApplied(MOCK_JOBS.filter(j => !j.isUrgent && j.id !== featured.id)).slice(0, 6)
+      quickPicks: sortByApplied(combinedJobs.filter(j => j.id !== featured.id).slice(0, 4)),
+      discoveryJobs: sortByApplied(combinedJobs.filter(j => !j.isUrgent && j.id !== featured.id)).slice(0, 6)
     }
-  }, [isApplied])
+  }, [isApplied, jobs])
 
   return (
     <div className="flex flex-col h-full space-y-10 w-full pb-20 md:pb-0">

@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight, ChevronLeft, Briefcase, MapPin, ListChecks, Eye, CheckCircle2, IndianRupee } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePostJob } from '@/store/usePostJob'
+import { useAuth } from '@/store/useAuth'
+import { useJobs } from '@/store/useJobs'
+import { createJob } from '@/services/supabase/db'
 import { trackJobPostingStarted, trackJobPostingCompleted } from '@/services/analytics'
 
 const STEPS = [
@@ -14,6 +17,7 @@ const STEPS = [
 
 export const PostJobModal = () => {
   const { isOpen, close, currentStep, nextStep, prevStep, draftData, updateDraft, isSuccess, setSuccess } = usePostJob()
+  const { user } = useAuth()
   const [isPublishing, setIsPublishing] = useState(false)
 
   // Prevent background scrolling when open
@@ -32,20 +36,50 @@ export const PostJobModal = () => {
   if (!isOpen) return null
 
   const handlePublish = async () => {
+    if (!user?.id) {
+      console.error('Cannot publish job: User session is missing.')
+      return
+    }
+    
     setIsPublishing(true)
-    // Simulate network request
-    await new Promise(r => setTimeout(r, 1200))
-    setIsPublishing(false)
-    setSuccess(true)
+    try {
+      const jobData = {
+        title: draftData.title || 'Untitled Gig',
+        business_name: user.name || 'My Business',
+        description: draftData.notes || '',
+        payout: parseInt(draftData.payout) || 0,
+        payout_type: draftData.payoutType,
+        is_urgent: draftData.isUrgent,
+        is_premium: false,
+        is_verified: false,
+        location: draftData.location || 'Remote',
+        timing: draftData.shiftTiming || '',
+        tags: draftData.skills ? draftData.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+        provider_id: user.id,
+        posted_time: 'Just now'
+      }
 
-    // Track analytics event
-    trackJobPostingCompleted(
-      `pj-${Date.now()}`,
-      draftData.title || 'Untitled Gig',
-      'usr-provider-third-wave',
-      parseInt(draftData.payout) || 0,
-      draftData.payoutType
-    )
+      const result = await createJob(jobData)
+      if (result && user?.id) {
+        // Refresh the provider's jobs list
+        await useJobs.getState().fetchProviderJobs(user.id)
+      }
+      
+      setSuccess(true)
+
+      // Track analytics event
+      trackJobPostingCompleted(
+        result?.id || `pj-${Date.now()}`,
+        draftData.title || 'Untitled Gig',
+        user?.name || 'Anonymous Provider',
+        parseInt(draftData.payout) || 0,
+        draftData.payoutType
+      )
+    } catch (error) {
+      console.error('Error publishing job to Supabase:', error)
+    } finally {
+      setIsPublishing(false)
+    }
 
     setTimeout(() => {
       close()

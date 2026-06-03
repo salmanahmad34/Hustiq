@@ -1,6 +1,13 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
+import { useApplications } from '@/store/useApplications'
+import { useNotifications } from '@/store/useNotifications'
+import { useAuth } from '@/store/useAuth'
+import { useUiStore } from '@/store/uiStore'
+import { isSupabaseConfigured } from '@/services/supabase/auth'
+import { useNavigate } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 
 export interface Applicant {
   id: string
@@ -11,6 +18,9 @@ export interface Applicant {
   availability: string
   skills: string[]
   matchScore: number
+  studentId: string
+  jobId: string
+  status?: string
 }
 
 interface ApplicantCardProps {
@@ -24,10 +34,85 @@ const itemVariants = {
 } as const
 
 export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const isAccepted = applicant.status === 'accepted'
+  const isRejected = applicant.status === 'rejected'
+
+  const handleAccept = async () => {
+    try {
+      const isMock = !applicant.studentId || applicant.studentId.startsWith('00000000-') || applicant.id.startsWith('sim-')
+      
+      if (isSupabaseConfigured() && !isMock) {
+        await useApplications.getState().updateApplicationStatus(applicant.id, { status: 'accepted' })
+        
+        // Notify the student
+        await useNotifications.getState().addNotification({
+          title: 'Application Accepted! 🎉',
+          message: `${user?.name || 'The provider'} has accepted your application for ${applicant.jobApplied}.`,
+          type: 'offer_accepted',
+          isPriority: true,
+          category: 'today',
+          role: 'student',
+          actionPath: '/jobs',
+          actionText: 'View Status'
+        }, applicant.studentId)
+        
+        useUiStore.getState().addToast('Application accepted successfully!', 'success')
+      } else {
+        useUiStore.getState().addToast('Application accepted (Demo Mode)', 'success')
+      }
+    } catch (err) {
+      console.error(err)
+      useUiStore.getState().addToast('Failed to accept application', 'error')
+    }
+  }
+
+  const handleReject = async () => {
+    try {
+      const isMock = !applicant.studentId || applicant.studentId.startsWith('00000000-') || applicant.id.startsWith('sim-')
+      
+      if (isSupabaseConfigured() && !isMock) {
+        await useApplications.getState().updateApplicationStatus(applicant.id, { status: 'rejected' })
+        
+        // Notify the student
+        await useNotifications.getState().addNotification({
+          title: 'Application Update',
+          message: `Your application for ${applicant.jobApplied} was not selected this time.`,
+          type: 'offer_rejected',
+          isPriority: false,
+          category: 'today',
+          role: 'student',
+          actionPath: '/jobs',
+          actionText: 'View Status'
+        }, applicant.studentId)
+        
+        useUiStore.getState().addToast('Application rejected.', 'info')
+      } else {
+        useUiStore.getState().addToast('Application rejected (Demo Mode)', 'info')
+      }
+    } catch (err) {
+      console.error(err)
+      useUiStore.getState().addToast('Failed to reject application', 'error')
+    }
+  }
+
+  const handleChat = () => {
+    if (applicant.studentId) {
+      navigate(`/messages?recipientId=${applicant.studentId}`)
+    } else {
+      useUiStore.getState().addToast('Chat is not available for this candidate.', 'error')
+    }
+  }
+
   return (
     <motion.div 
       variants={itemVariants}
-      className="group bg-card border border-border/40 hover:border-border/80 shadow-sm transition-all duration-200 rounded-[1.5rem] p-4 sm:p-5 flex flex-col gap-4 relative overflow-hidden"
+      className={cn(
+        "group bg-card border border-border/40 hover:border-border/80 shadow-sm transition-all duration-200 rounded-[1.5rem] p-4 sm:p-5 flex flex-col gap-4 relative overflow-hidden",
+        isAccepted && "border-emerald-500/30 bg-emerald-500/5",
+        isRejected && "border-red-500/10 bg-red-500/5 opacity-70"
+      )}
     >
       <div className="flex items-start gap-4">
         <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center text-2xl border border-border/50 shrink-0 shadow-sm">
@@ -66,13 +151,34 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
       </div>
 
       <div className="flex gap-2 mt-2">
-        <button className="flex-1 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
-          <CheckCircle2 className="w-4 h-4" /> Accept
-        </button>
-        <button className="flex-1 bg-muted/50 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
-          <XCircle className="w-4 h-4" /> Reject
-        </button>
-        <button className="w-10 shrink-0 bg-muted/30 text-muted-foreground hover:text-primary font-bold rounded-xl transition-colors flex items-center justify-center">
+        {isAccepted ? (
+          <div className="flex-1 bg-emerald-500/20 text-emerald-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
+            <CheckCircle2 className="w-4 h-4" /> Accepted
+          </div>
+        ) : isRejected ? (
+          <div className="flex-1 bg-red-500/10 text-red-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
+            <XCircle className="w-4 h-4" /> Rejected
+          </div>
+        ) : (
+          <>
+            <button 
+              onClick={handleAccept}
+              className="flex-1 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm"
+            >
+              <CheckCircle2 className="w-4 h-4" /> Accept
+            </button>
+            <button 
+              onClick={handleReject}
+              className="flex-1 bg-muted/50 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm"
+            >
+              <XCircle className="w-4 h-4" /> Reject
+            </button>
+          </>
+        )}
+        <button 
+          onClick={handleChat}
+          className="w-10 shrink-0 bg-muted/30 text-muted-foreground hover:text-primary font-bold rounded-xl transition-colors flex items-center justify-center"
+        >
           <MessageSquare className="w-4 h-4" />
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Search, Bell, Plus } from 'lucide-react'
 
@@ -10,83 +11,67 @@ import { FirstTimeGuidance } from '@/components/shared/FirstTimeGuidance'
 
 import { usePostJob } from '@/store/usePostJob'
 import { useNotifications } from '@/store/useNotifications'
-
-const MOCK_ACTIVE_JOBS = [
-  {
-    id: 'pj-1',
-    title: 'Weekend Barista',
-    applicantsCount: 12,
-    newApplicants: 3,
-    isUrgent: true,
-    isActive: true,
-    payout: 450,
-    payoutType: 'shift',
-    postedDate: '2d ago'
-  },
-  {
-    id: 'pj-2',
-    title: 'Cafe Manager',
-    applicantsCount: 4,
-    newApplicants: 0,
-    isUrgent: false,
-    isActive: true,
-    payout: 35000,
-    payoutType: 'month',
-    postedDate: '1w ago'
-  },
-  {
-    id: 'pj-3',
-    title: 'Evening Server',
-    applicantsCount: 28,
-    newApplicants: 0,
-    isUrgent: false,
-    isActive: false,
-    payout: 300,
-    payoutType: 'shift',
-    postedDate: '1m ago'
-  }
-]
-
-const MOCK_APPLICANTS = [
-  {
-    id: 'app-1',
-    name: 'Rahul Sharma',
-    avatar: '👨🏽‍🎓',
-    jobApplied: 'Weekend Barista',
-    distance: '1.2km',
-    availability: 'Weekends',
-    skills: ['Coffee Brewing', 'Customer Service'],
-    matchScore: 95
-  },
-  {
-    id: 'app-2',
-    name: 'Priya Patel',
-    avatar: '👩🏽‍🎓',
-    jobApplied: 'Weekend Barista',
-    distance: '3.5km',
-    availability: 'Flexible',
-    skills: ['Cashier', 'Fast Learner'],
-    matchScore: 88
-  },
-  {
-    id: 'app-3',
-    name: 'Amit Kumar',
-    avatar: '👨🏽‍💻',
-    jobApplied: 'Cafe Manager',
-    distance: '5km',
-    availability: 'Full-time',
-    skills: ['Inventory', 'Team Lead', 'POS'],
-    matchScore: 92
-  }
-]
+import { useAuth } from '@/store/useAuth'
+import { useJobs } from '@/store/useJobs'
+import { useApplications } from '@/store/useApplications'
+import type { ApplicationWithDetails } from '@/types/database'
 
 export const ProviderDashboardPage = () => {
   const { open: openPostJob } = usePostJob()
   const { toggleOpen, notifications } = useNotifications()
+  const { user } = useAuth()
+  const { jobs, fetchProviderJobs, isLoading: isLoadingJobs } = useJobs()
+  const { applications, fetchProviderApplications, isLoading: isLoadingApps } = useApplications()
+
+  const appsWithDetails = applications as ApplicationWithDetails[]
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchProviderJobs(user.id)
+      fetchProviderApplications(user.id)
+    }
+  }, [user?.id, fetchProviderJobs, fetchProviderApplications])
 
   const hasUnread = notifications
     .filter(n => n.role === 'provider')
     .some(n => n.isUnread)
+
+  const activeJobs = jobs.map(job => {
+    const jobApps = appsWithDetails.filter(app => app.job_id === job.id)
+    const newApps = jobApps.filter(app => app.status === 'applied').length
+    
+    return {
+      id: job.id,
+      title: job.title,
+      applicantsCount: jobApps.length,
+      newApplicants: newApps,
+      isUrgent: job.is_urgent || false,
+      isActive: true,
+      payout: job.payout,
+      payoutType: job.payout_type,
+      postedDate: new Date(job.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+    }
+  })
+
+  const applicantsList = appsWithDetails.map(app => {
+    const studentProfile = app.student
+    const jobInfo = app.job
+    const studentMeta = studentProfile?.metadata || {}
+    
+    return {
+      id: app.id,
+      name: studentProfile?.name || 'Anonymous Student',
+      avatar: studentMeta.avatar || '👨🏽‍🎓',
+      jobApplied: jobInfo?.title || 'General Gig',
+      distance: studentMeta.distance || '1.5km',
+      availability: studentMeta.availability || 'Weekends',
+      skills: studentMeta.skills || ['Hardworking'],
+      matchScore: studentMeta.matchScore || 85,
+      studentId: studentProfile?.id || '',
+      jobId: jobInfo?.id || '',
+      status: app.status
+    }
+  })
 
   return (
     <div className="flex flex-col h-full w-full pb-20 md:pb-0">
@@ -139,7 +124,7 @@ export const ProviderDashboardPage = () => {
 
               <div className="hidden sm:flex flex-col items-end">
                 <span className="text-sm font-bold text-foreground leading-tight">
-                  Third Wave Coffee
+                  {user?.name || 'Third Wave Coffee'}
                 </span>
 
                 <span className="text-xs font-semibold text-primary">
@@ -170,13 +155,24 @@ export const ProviderDashboardPage = () => {
 
           <div className="flex flex-col gap-6">
             <AnimatePresence>
-              {MOCK_ACTIVE_JOBS.map((job, index) => (
-                <ActiveJobCard
-                  key={job.id}
-                  job={job}
-                  index={index}
-                />
-              ))}
+              {isLoadingJobs ? (
+                <div className="flex justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                </div>
+              ) : activeJobs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center bg-card border border-border/40 rounded-[2rem] h-[200px]">
+                  <p className="text-muted-foreground font-semibold">No active jobs posted yet.</p>
+                  <button onClick={openPostJob} className="text-primary font-bold text-sm hover:underline mt-2">Post your first gig now</button>
+                </div>
+              ) : (
+                activeJobs.map((job, index) => (
+                  <ActiveJobCard
+                    key={job.id}
+                    job={job}
+                    index={index}
+                  />
+                ))
+              )}
             </AnimatePresence>
           </div>
         </div>
@@ -205,13 +201,23 @@ export const ProviderDashboardPage = () => {
 
             <div className="flex flex-col gap-4">
               <AnimatePresence>
-                {MOCK_APPLICANTS.map((app, index) => (
-                  <ApplicantCard
-                    key={app.id}
-                    applicant={app}
-                    index={index}
-                  />
-                ))}
+                {isLoadingApps ? (
+                  <div className="flex justify-center p-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+                  </div>
+                ) : applicantsList.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm font-semibold bg-card border border-border/40 rounded-[1.5rem] p-4">
+                    No applicants in queue.
+                  </div>
+                ) : (
+                  applicantsList.map((app, index) => (
+                    <ApplicantCard
+                      key={app.id}
+                      applicant={app}
+                      index={index}
+                    />
+                  ))
+                )}
               </AnimatePresence>
             </div>
 

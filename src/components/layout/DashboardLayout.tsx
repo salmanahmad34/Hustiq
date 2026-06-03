@@ -1,19 +1,27 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageCircle, User, Briefcase, Zap, Bookmark, Wallet, Award, Compass } from 'lucide-react'
+import { Home, MessageCircle, User, Briefcase, Zap, Bookmark, Wallet, Award, Compass, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
 import { PostJobModal } from '@/components/dashboard/provider/PostJobModal'
 import { ProfileDropdown } from '@/components/dashboard/ProfileDropdown'
 import { useAuth } from '@/store/useAuth'
+import { usePostJob } from '@/store/usePostJob'
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { NetworkStatusDetector } from '@/components/shared/NetworkStatusDetector'
 import { SessionErrorRecovery } from '@/components/shared/SessionErrorRecovery'
 import { BetaFeedbackModal } from '@/components/shared/BetaFeedbackModal'
 import { ToastContainer } from '@/components/ui/ToastContainer'
 
-const STUDENT_NAV = [
+interface NavItem {
+  name: string
+  href: string
+  icon: any
+  action?: string
+}
+
+const STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Jobs', href: ROUTES.JOBS, icon: Briefcase },
@@ -25,10 +33,10 @@ const STUDENT_NAV = [
   { name: 'Profile', href: ROUTES.PROFILE, icon: User },
 ]
 
-const PROVIDER_NAV = [
+const PROVIDER_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
-  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
-  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Post a Job', href: '#', icon: Plus, action: 'post-job' },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Growth', href: ROUTES.GROWTH, icon: Award },
   { name: 'Profile', href: ROUTES.PROFILE, icon: User },
@@ -37,6 +45,7 @@ const PROVIDER_NAV = [
 export const DashboardLayout = () => {
   const location = useLocation()
   const { user, error, clearError } = useAuth()
+  const { open: openPostJob } = usePostJob()
   
   const navItems = user?.role === 'provider' ? PROVIDER_NAV : STUDENT_NAV
 
@@ -59,11 +68,29 @@ export const DashboardLayout = () => {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.href
+
+            if (item.action === 'post-job') {
+              return (
+                <button
+                  key={item.name}
+                  onClick={openPostJob}
+                  id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
+                  className={cn(
+                    "flex items-center w-full space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left",
+                    "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </button>
+              )
+            }
+
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                id={`${item.name.toLowerCase()}-nav-link`}
+                id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
                 className={cn(
                   "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive 
@@ -110,6 +137,22 @@ export const DashboardLayout = () => {
             const isCenter = index === 2
 
             if (isCenter) {
+              if (item.action === 'post-job') {
+                return (
+                  <button
+                    key={item.name}
+                    onClick={openPostJob}
+                    className="flex flex-col items-center justify-start w-16 h-full relative group z-10 pointer-events-auto"
+                  >
+                    <div className="absolute -top-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_16px_-4px_rgba(var(--primary),0.4)] transition-transform duration-300 active:scale-95 bg-primary text-primary-foreground opacity-95 hover:scale-105">
+                      <Icon className="w-6 h-6" strokeWidth={2} />
+                    </div>
+                    <span className="absolute top-[44px] text-[10px] font-bold text-muted-foreground transition-colors whitespace-nowrap">
+                      {item.name}
+                    </span>
+                  </button>
+                )
+              }
               return (
                 <Link
                   key={item.href}
@@ -133,6 +176,24 @@ export const DashboardLayout = () => {
                     isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
                   )} />
                 </Link>
+              )
+            }
+
+            if (item.action === 'post-job') {
+              return (
+                <button
+                  key={item.name}
+                  onClick={openPostJob}
+                  className="flex flex-col items-center justify-start w-16 h-full relative group pt-3.5 pointer-events-auto"
+                >
+                  <Icon 
+                    className="w-6 h-6 text-muted-foreground group-hover:text-foreground"
+                    strokeWidth={2}
+                  />
+                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap mt-1.5">
+                    {item.name}
+                  </span>
+                </button>
               )
             }
 

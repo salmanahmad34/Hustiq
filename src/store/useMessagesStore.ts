@@ -6,6 +6,8 @@ import {
   sendMessage,
   markMessageAsRead
 } from '@/services/supabase/db'
+import { supabase } from '@/services/supabase/supabaseClient'
+import { isSupabaseConfigured } from '@/services/supabase/auth'
 import type { Message, MessageInsert } from '@/types/database'
 
 interface MessagesState {
@@ -13,22 +15,29 @@ interface MessagesState {
   conversations: Message[]
   isLoading: boolean
   error: string | null
+  activeRecipientId: string | null
+  channel: any | null
 
   // Actions
   fetchConversation: (userId: string, recipientId: string) => Promise<void>
   fetchConversations: (userId: string) => Promise<void>
   sendMessage: (message: MessageInsert) => Promise<Message | null>
   markMessageAsRead: (messageId: string) => Promise<Message | null>
+  subscribeToMessages: (userId: string) => void
+  unsubscribeFromMessages: () => void
+  setActiveRecipientId: (id: string | null) => void
   clearError: () => void
 }
 
 export const useMessages = create<MessagesState>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       messages: [],
       conversations: [],
       isLoading: false,
       error: null,
+      activeRecipientId: null,
+      channel: null,
 
       fetchConversation: async (userId: string, recipientId: string) => {
         set({ isLoading: true, error: null })
@@ -62,6 +71,8 @@ export const useMessages = create<MessagesState>()(
             set((state) => ({
               messages: [...state.messages, result]
             }))
+            // Refresh conversation list after sending
+            get().fetchConversations(message.sender_id)
           }
           return result
         } catch (err: any) {
@@ -86,6 +97,53 @@ export const useMessages = create<MessagesState>()(
           return null
         }
       },
+
+      subscribeToMessages: (userId: string) => {
+        // Unsubscribe from any active channel first
+        const currentChannel = get().channel
+        if (currentChannel) {
+          currentChannel.unsubscribe()
+        }
+
+        if (!isSupabaseConfigured()) return
+
+        const channel = supabase
+          .channel(`messages_room_${userId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'messages',
+              filter: `recipient_id=eq.${userId}`
+            },
+            async (payload) => {
+              const newMsg = payload.new as any
+              
+              // Refresh contacts list
+              get().fetchConversations(userId)
+
+              // If the message is from the active conversation user, refresh current chat
+              const activeRecipient = get().activeRecipientId
+              if (activeRecipient && newMsg.sender_id === activeRecipient) {
+                get().fetchConversation(userId, activeRecipient)
+              }
+            }
+          )
+          .subscribe()
+
+        set({ channel })
+      },
+
+      unsubscribeFromMessages: () => {
+        const channel = get().channel
+        if (channel) {
+          channel.unsubscribe()
+          set({ channel: null })
+        }
+      },
+
+      setActiveRecipientId: (id) => set({ activeRecipientId: id }),
 
       clearError: () => set({ error: null })
     }),

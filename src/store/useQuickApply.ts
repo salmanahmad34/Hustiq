@@ -36,8 +36,9 @@ export const useQuickApply = create<QuickApplyState>((set, get) => ({
 
     const { user } = useAuth.getState()
     const studentId = user?.id || 'demo-user-123'
+    const isMock = !studentId || studentId.startsWith('demo-') || studentId.startsWith('mock-') || studentId.startsWith('00000000-')
 
-    if (isSupabaseConfigured() && !studentId.startsWith('demo-')) {
+    if (isSupabaseConfigured() && !isMock) {
       const application = {
         job_id: job.id,
         student_id: studentId,
@@ -50,6 +51,21 @@ export const useQuickApply = create<QuickApplyState>((set, get) => ({
       if (error || !result) {
         useUiStore.getState().addToast(error || 'Failed to submit application. Please try again.', 'error')
         return
+      }
+
+      // Notify the provider of the new application in Supabase
+      if (job.provider_id) {
+        const { useNotifications } = await import('@/store/useNotifications')
+        await useNotifications.getState().addNotification({
+          title: 'New Applicant Received',
+          message: `${user?.name || 'A student'} applied for your job "${job.title}"`,
+          type: 'new_applicant',
+          isPriority: true,
+          category: 'today',
+          role: 'provider',
+          actionPath: '/dashboard',
+          actionText: 'Review Candidate'
+        }, job.provider_id)
       }
     }
 
