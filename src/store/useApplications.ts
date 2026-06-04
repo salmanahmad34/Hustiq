@@ -14,6 +14,7 @@ interface ApplicationsState {
   applications: Application[]
   isLoading: boolean
   error: string | null
+  completedAppIds: string[]
 
   // Actions
   fetchStudentApplications: (studentId: string) => Promise<void>
@@ -21,6 +22,7 @@ interface ApplicationsState {
   submitApplication: (application: ApplicationInsert) => Promise<Application | null>
   updateApplicationStatus: (appId: string, updates: ApplicationUpdate) => Promise<Application | null>
   checkApplicationExists: (jobId: string, studentId: string) => Promise<boolean>
+  completeApplication: (appId: string) => void
   clearError: () => void
 }
 
@@ -30,6 +32,16 @@ export const useApplications = create<ApplicationsState>()(
       applications: [],
       isLoading: false,
       error: null,
+      completedAppIds: JSON.parse(localStorage.getItem('hustiq_completed_apps') || '[]'),
+
+      completeApplication: (appId: string) => {
+        const current = get().completedAppIds
+        if (!current.includes(appId)) {
+          const updated = [...current, appId]
+          localStorage.setItem('hustiq_completed_apps', JSON.stringify(updated))
+          set({ completedAppIds: updated })
+        }
+      },
 
       fetchStudentApplications: async (studentId: string) => {
         set({ isLoading: true, error: null })

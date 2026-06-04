@@ -10,6 +10,7 @@ import {
   type ReviewTag,
 } from '@/store/useReviews'
 import { useAuth } from '@/store/useAuth'
+import { useUiStore } from '@/store/uiStore'
 
 interface ReviewModalProps {
   isOpen: boolean
@@ -100,6 +101,7 @@ export const ReviewModal = ({
 }: ReviewModalProps) => {
   const { user } = useAuth()
   const { submitReview } = useReviews()
+  const isSelf = user?.id === subjectId
 
   const activeRole: ReviewerRole = reviewerRole ?? user?.role ?? 'student'
   const availableTags =
@@ -134,6 +136,10 @@ export const ReviewModal = ({
 
   const handleSubmit = () => {
     if (rating === 0) return
+    if (isSelf) {
+      useUiStore.getState().addToast('Self-reviewing is not allowed.', 'error')
+      return
+    }
     submitReview({
       reviewerRole: activeRole,
       reviewerName: user?.name ?? 'Anonymous',
@@ -186,7 +192,25 @@ export const ReviewModal = ({
 
             <div className="p-6 sm:p-8 flex flex-col gap-6 relative z-10">
               <AnimatePresence mode="wait">
-                {submitted ? (
+                {isSelf ? (
+                  /* ─── Self-Review Error State ─── */
+                  <motion.div
+                    key="self-review-error"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={springTransition}
+                    className="flex flex-col items-center gap-4 py-6 text-center"
+                  >
+                    <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                      <X className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h2 className="text-xl font-black text-foreground">Self-Review Blocked</h2>
+                    <p className="text-sm text-muted-foreground">
+                      You cannot write a review for yourself.
+                    </p>
+                  </motion.div>
+                ) : submitted ? (
                   /* ─── Success State ─── */
                   <motion.div
                     key="success"

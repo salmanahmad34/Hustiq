@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageCircle, User, Wallet, Compass, Plus, Rocket } from 'lucide-react'
+import { Home, MessageCircle, Wallet, Compass, Plus, LayoutGrid } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -27,7 +27,7 @@ const STUDENT_NAV: NavItem[] = [
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Profile', href: ROUTES.PROFILE, icon: User },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
 
 const PROVIDER_NAV: NavItem[] = [
@@ -35,8 +35,7 @@ const PROVIDER_NAV: NavItem[] = [
   { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Post a Job', href: '#', icon: Plus, action: 'post-job' },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
-  { name: 'Profile', href: ROUTES.PROFILE, icon: User },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
 
 const MOBILE_STUDENT_NAV: NavItem[] = [
@@ -44,15 +43,14 @@ const MOBILE_STUDENT_NAV: NavItem[] = [
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Profile', href: ROUTES.PROFILE, icon: User },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
 
 const MOBILE_PROVIDER_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
-  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Profile', href: ROUTES.PROFILE, icon: User },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
 
 export const DashboardLayout = () => {

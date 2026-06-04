@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
-import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Clock, Edit2, Wallet, Camera, Bookmark, Rocket, Zap } from 'lucide-react'
-import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
+import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/constants/routes'
+import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Edit2, Wallet, Camera, Bookmark, Rocket, Zap, ChevronUp, Plus, User } from 'lucide-react'
 import { TrustBanner } from '@/components/trust/TrustSystem'
 import { ReputationSummary } from '@/components/reviews/ReviewDisplay'
 import { useAuth } from '@/store/useAuth'
-import { useNavigate } from 'react-router-dom'
-import { ROUTES } from '@/constants/routes'
+import { usePostJob } from '@/store/usePostJob'
 
 // Spring physics for snappy app-like feel
 const springTransition = { type: "spring" as const, stiffness: 400, damping: 30 }
@@ -29,6 +29,10 @@ export const ProfilePage = () => {
   const { user, updateUserProfile } = useAuth()
   const isProvider = user?.role === 'provider'
   const navigate = useNavigate()
+  const { open: openPostJob } = usePostJob()
+
+  // Hub/Editor toggle
+  const [showProfileEditor, setShowProfileEditor] = useState(false)
 
   // Form states
   const [fullName, setFullName] = useState(user?.full_name || user?.name || '')
@@ -121,15 +125,6 @@ export const ProfilePage = () => {
     reader.readAsDataURL(file)
   }
 
-  const scrollToForm = () => {
-    const element = document.getElementById('profile-form-section')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
-
-
-
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
       {/* Hidden file inputs */}
@@ -148,336 +143,239 @@ export const ProfilePage = () => {
         className="hidden" 
       />
       
-      {/* 1. Premium Header Section */}
-      <motion.section 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={springTransition}
-        className="relative w-full rounded-3xl bg-card border border-border/50 shadow-soft-lg overflow-hidden"
-      >
-        {/* Cover Image/Gradient */}
-        <div 
-          className="h-40 sm:h-48 w-full bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10 relative overflow-hidden bg-cover bg-center"
-          style={user?.metadata?.coverUrl ? { backgroundImage: `url(${user.metadata.coverUrl})` } : undefined}
+      {!showProfileEditor ? (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="space-y-8"
         >
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-          {/* Decorative blur orbs */}
-          {!user?.metadata?.coverUrl && (
-            <>
-              <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-primary/40 rounded-full blur-[80px]" />
-              <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-accent/40 rounded-full blur-[80px]" />
-            </>
-          )}
-          
-          {/* Edit Cover Button */}
-          <button 
-            onClick={() => coverInputRef.current?.click()}
-            className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background/80 backdrop-blur-md rounded-full text-foreground transition-all shadow-sm z-10"
-            title="Upload cover photo"
+          {/* 1. Header Section */}
+          <motion.section 
+            variants={itemVariants}
+            className="relative w-full rounded-3xl bg-card border border-border/50 shadow-soft-lg overflow-hidden"
           >
-            <Camera className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Profile Identity Area */}
-        <div className="px-6 sm:px-10 pb-8 relative">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8 -mt-16 sm:-mt-20 relative z-10">
-            {/* Avatar */}
-            <div className="relative group">
-              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-card bg-muted flex items-center justify-center shadow-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 shrink-0">
-                {(user?.avatar_url || user?.metadata?.avatarUrl) ? (
-                  <img src={user.avatar_url || user.metadata?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-4xl sm:text-5xl font-bold text-muted-foreground">
-                    {user?.avatarPlaceholder || (user?.full_name || user?.name)?.charAt(0).toUpperCase() || 'Z'}
-                  </span>
-                )}
-              </div>
-              <button 
-                onClick={() => avatarInputRef.current?.click()}
-                className="absolute bottom-2 right-2 p-2 bg-foreground text-background rounded-full shadow-lg hover:scale-105 transition-transform"
-                title="Upload profile photo"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Name & Badges */}
-            <div className="flex-1 space-y-2 pb-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                  {user?.full_name || user?.name || 'HustiQ User'}
-                  <BadgeCheck className="w-6 h-6 text-primary" />
-                </h1>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                  {isProvider ? <Building2 className="w-4 h-4" /> : <GraduationCap className="w-4 h-4" />}
-                  {isProvider ? 'Verified Provider' : 'Verified Student'}
-                </span>
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  Mumbai, Maharashtra
-                </span>
-              </div>
-
-              {/* Trust Banner */}
-              <TrustBanner
-                role={user?.role ?? 'student'}
-                isVerified={true}
-                trustScore={88}
-                responseRate={isProvider ? 94 : undefined}
-                completedJobs={isProvider ? undefined : 7}
-                reliabilityLevel={isProvider ? 'high' : undefined}
-                className="mt-1"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 pb-2 w-full sm:w-auto">
-              <button 
-                onClick={scrollToForm}
-                className="flex-1 sm:flex-none px-6 py-2.5 bg-foreground text-background font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-              >
-                <Edit2 className="w-4 h-4" /> Edit Profile
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Main Content Grid */}
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-      >
-        {/* Left Column: Stats & Metadata */}
-        <div className="lg:col-span-1 space-y-8">
-          {/* Quick Shortcuts for Student */}
-          {!isProvider && (
-            <motion.div 
-              variants={itemVariants} 
-              className="glass-card p-6 rounded-2xl space-y-4 shadow-soft-lg border border-primary/10 bg-primary/5"
+            {/* Cover Image/Gradient */}
+            <div 
+              className="h-40 sm:h-48 w-full bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10 relative overflow-hidden bg-cover bg-center"
+              style={user?.metadata?.coverUrl ? { backgroundImage: `url(${user.metadata.coverUrl})` } : undefined}
             >
-              <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border/50 pb-4">
-                <Edit2 className="w-4 h-4 text-primary" />
-                Quick Shortcuts
-              </h3>
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => navigate(ROUTES.SAVED)}
-                  className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-secondary/60 border border-border/40 hover:border-primary/20 rounded-xl transition-all text-left font-semibold text-sm text-foreground group shadow-sm hover:shadow"
-                >
-                  <div className="flex items-center gap-3">
-                    <Bookmark className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform" />
-                    <span>Saved Gigs</span>
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+              {!user?.metadata?.coverUrl && (
+                <>
+                  <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-primary/40 rounded-full blur-[80px]" />
+                  <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-accent/40 rounded-full blur-[80px]" />
+                </>
+              )}
+            </div>
+
+            {/* Profile Identity Area */}
+            <div className="px-6 sm:px-10 pb-8 relative">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8 -mt-16 sm:-mt-20 relative z-10">
+                {/* Avatar */}
+                <div className="relative group">
+                  <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-card bg-muted flex items-center justify-center shadow-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 shrink-0">
+                    {(user?.avatar_url || user?.metadata?.avatarUrl) ? (
+                      <img src={user.avatar_url || user.metadata?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-4xl sm:text-5xl font-bold text-muted-foreground">
+                        {user?.avatarPlaceholder || (user?.full_name || user?.name)?.charAt(0).toUpperCase() || 'Z'}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full font-bold">View Saved</span>
-                </button>
-                <button
-                  onClick={() => navigate(ROUTES.GROWTH)}
-                  className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-secondary/60 border border-border/40 hover:border-primary/20 rounded-xl transition-all text-left font-semibold text-sm text-foreground group shadow-sm hover:shadow"
-                >
-                  <div className="flex items-center gap-3">
-                    <Rocket className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform" />
-                    <span>Growth Tracker</span>
+                </div>
+
+                {/* Name & Badges */}
+                <div className="flex-1 space-y-2 pb-2 text-left">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                      {user?.full_name || user?.name || 'HustiQ User'}
+                      <BadgeCheck className="w-6 h-6 text-primary" />
+                    </h1>
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full font-bold">View Stats</span>
-                </button>
-                <button
-                  onClick={() => navigate(ROUTES.PREMIUM)}
-                  className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-secondary/60 border border-border/40 hover:border-primary/20 rounded-xl transition-all text-left font-semibold text-sm text-foreground group shadow-sm hover:shadow"
-                >
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform" />
-                    <span>Premium Plans</span>
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {isProvider ? <Building2 className="w-4 h-4" /> : <GraduationCap className="w-4 h-4" />}
+                      {isProvider ? 'Verified Provider' : 'Verified Student'}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      Mumbai, Maharashtra
+                    </span>
                   </div>
-                  <span className="text-[10px] text-primary bg-primary/10 px-2.5 py-0.5 rounded-full font-bold">Upgrade</span>
-                </button>
+
+                  <TrustBanner
+                    role={user?.role ?? 'student'}
+                    isVerified={true}
+                    trustScore={88}
+                    responseRate={isProvider ? 94 : undefined}
+                    completedJobs={isProvider ? undefined : 7}
+                    reliabilityLevel={isProvider ? 'high' : undefined}
+                    className="mt-1"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 pb-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setShowProfileEditor(true)}
+                    className="flex-1 sm:flex-none px-6 py-2.5 bg-foreground text-background font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Edit2 className="w-4 h-4" /> Edit Profile
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* 2. Grid of Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Card 1: Profile Settings */}
+            <motion.div
+              variants={itemVariants}
+              onClick={() => setShowProfileEditor(true)}
+              className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+            >
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:scale-110 transition-transform">
+                  <User className="w-6 h-6" />
+                </div>
+                <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
+              </div>
+              <div className="mt-8">
+                <h3 className="font-bold text-lg text-foreground">Profile Settings</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  {isProvider ? 'Edit business logo, name, description, and contact info.' : 'Edit display name, bio, phone number, and avatar photos.'}
+                </p>
               </div>
             </motion.div>
-          )}
-          {/* Role-Based Stats Card */}
-          <motion.div variants={itemVariants} className="glass-card p-6 rounded-2xl space-y-6 shadow-soft-lg">
-            <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border/50 pb-4">
-              <ZivaroBrandIcon />
-              {isProvider ? 'Business Overview' : 'Hustle Stats'}
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              {isProvider ? (
-                <>
-                  <div className="space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50">
-                    <p className="text-sm text-muted-foreground font-medium">Active Jobs</p>
-                    <p className="text-2xl font-bold text-foreground">12</p>
-                  </div>
-                  <div className="space-y-1 p-4 bg-primary/5 rounded-xl border border-primary/10">
-                    <p className="text-sm text-primary font-medium">Applicants</p>
-                    <p className="text-2xl font-bold text-primary">48</p>
-                  </div>
-                  <div className="space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50">
-                    <p className="text-sm text-muted-foreground font-medium">Category</p>
-                    <p className="text-sm font-bold text-foreground flex items-center gap-1.5 mt-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-primary" /> Hospitality
-                    </p>
-                  </div>
-                  <div className="space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50 text-left">
-                    <p className="text-xs text-muted-foreground font-semibold">Expenses</p>
-                    <p className="text-base font-extrabold text-foreground flex items-center gap-1.5 mt-1.5">
-                      <Wallet className="w-3.5 h-3.5 text-emerald-500" /> ₹82.4K <span className="text-[10px] font-normal text-muted-foreground">spent</span>
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50">
-                    <p className="text-sm text-muted-foreground font-medium">Applications</p>
-                    <p className="text-2xl font-bold text-foreground">8</p>
-                  </div>
-                  <div className="space-y-1 p-4 bg-primary/5 rounded-xl border border-primary/10">
-                    <p className="text-sm text-primary font-medium">Saved Jobs</p>
-                    <p className="text-2xl font-bold text-primary">14</p>
-                  </div>
-                  <div className="col-span-2 space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50 text-left">
-                    <p className="text-xs text-muted-foreground font-semibold">Est. Earnings</p>
-                    <p className="text-xl font-bold text-foreground flex items-center gap-2 mt-1">
-                      <Wallet className="w-5 h-5 text-green-500" /> ₹18,450 <span className="text-sm font-normal text-muted-foreground">overall</span>
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </motion.div>
 
-          {/* Role-Based Tags/Details */}
-          <motion.div variants={itemVariants} className="glass-card p-6 rounded-2xl space-y-6 shadow-soft-lg">
-            <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border/50 pb-4">
-              {isProvider ? <Building2 className="w-5 h-5 text-primary" /> : <Clock className="w-5 h-5 text-primary" />}
-              {isProvider ? 'Business Details' : 'Availability & Skills'}
-            </h3>
-            
-            {isProvider ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Hiring Needs</p>
-                  <div className="flex flex-wrap gap-2">
-                    {['Baristas', 'Wait Staff', 'Event Management'].map(skill => (
-                      <span key={skill} className="px-3 py-1.5 bg-muted text-foreground text-sm rounded-lg font-medium border border-border">{skill}</span>
-                    ))}
+            {/* Card 2: Saved Gigs (Student) or Post Job (Provider) */}
+            {!isProvider ? (
+              <motion.div
+                variants={itemVariants}
+                onClick={() => navigate(ROUTES.SAVED)}
+                className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl group-hover:scale-110 transition-transform">
+                    <Bookmark className="w-6 h-6" />
                   </div>
+                  <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
                 </div>
-              </div>
+                <div className="mt-8">
+                  <h3 className="font-bold text-lg text-foreground">Saved Gigs</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    View and manage your bookmarked weekend gigs and shifts.
+                  </p>
+                </div>
+              </motion.div>
             ) : (
-              <div className="space-y-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Top Skills</p>
-                  <div className="flex flex-wrap gap-2">
-                    {['Data Entry', 'Event Staffing', 'Design', 'Tech Support'].map(skill => (
-                      <span key={skill} className="px-3 py-1.5 bg-muted text-foreground text-sm rounded-lg font-medium border border-border">{skill}</span>
-                    ))}
+              <motion.div
+                variants={itemVariants}
+                onClick={openPostJob}
+                className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:scale-110 transition-transform">
+                    <Plus className="w-6 h-6" />
                   </div>
+                  <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Weekly Availability</p>
-                  <div className="p-3 bg-primary/5 text-primary font-semibold rounded-xl border border-primary/20 flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> Weekends Only
-                  </div>
+                <div className="mt-8">
+                  <h3 className="font-bold text-lg text-foreground">Post a Job</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    Launch and publish a new shift or weekend opportunity for workers.
+                  </p>
                 </div>
-              </div>
+              </motion.div>
             )}
-          </motion.div>
-        </div>
 
-        {/* Right Column: Editable Settings */}
-        <div id="profile-form-section" className="lg:col-span-2 space-y-8">
-          <motion.div variants={itemVariants} className="glass-card rounded-2xl shadow-soft-lg overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-border/50 bg-muted/10">
-              <h2 className="text-xl font-bold text-foreground">Profile Information</h2>
-              <p className="text-sm text-muted-foreground mt-1">Update your personal details and public presence.</p>
-            </div>
-            
-            <div className="p-6 sm:p-8 space-y-6">
-              {successMsg && (
-                <div className="p-4 bg-primary/10 border border-primary/20 text-primary rounded-2xl text-xs font-semibold leading-relaxed">
-                  {successMsg}
+            {/* Card 3: Growth Tracker */}
+            <motion.div
+              variants={itemVariants}
+              onClick={() => navigate(ROUTES.GROWTH)}
+              className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+            >
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl group-hover:scale-110 transition-transform">
+                  <Rocket className="w-6 h-6" />
                 </div>
-              )}
-
-              {/* Name Section */}
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Display Name</label>
-                <input 
-                  type="text" 
-                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your name"
-                  disabled={isSaving}
-                />
+                <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
               </div>
-
-              {/* Bio Section */}
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">{isProvider ? 'Business Description' : 'About Me'}</label>
-                <textarea 
-                  className="w-full h-32 bg-background border border-border rounded-xl p-4 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none leading-relaxed font-medium text-sm"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder={isProvider ? "Describe your business, culture, and what kind of students you're looking for..." : "Write a short bio about yourself, your studies, and the types of gigs you prefer..."}
-                  disabled={isSaving}
-                />
+              <div className="mt-8">
+                <h3 className="font-bold text-lg text-foreground">Growth Tracker</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  Analyze your earning trajectory, shift metrics, and milestones.
+                </p>
               </div>
+            </motion.div>
 
-              {/* Contact Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" /> Email Address
-                  </label>
-                  <input 
-                    type="email" 
-                    className="w-full bg-muted/20 border border-border/80 rounded-xl px-4 py-3 text-foreground/60 cursor-not-allowed font-semibold text-sm"
-                    value={user?.email || ''}
-                    disabled
-                  />
+            {/* Card 4: Premium Plan (Student) or empty/Wallet (Provider) */}
+            {!isProvider && (
+              <motion.div
+                variants={itemVariants}
+                onClick={() => navigate(ROUTES.PREMIUM)}
+                className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl group-hover:scale-110 transition-transform">
+                    <Zap className="w-6 h-6" />
+                  </div>
+                  <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" /> Phone Number
-                  </label>
-                  <input 
-                    type="tel" 
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-sm"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91 XXXXXXXXXX"
-                    disabled={isSaving}
-                  />
+                <div className="mt-8">
+                  <h3 className="font-bold text-lg text-foreground">Premium Plans</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    Upgrade to get matching boosts, priority tags, and verifications.
+                  </p>
                 </div>
-              </div>
+              </motion.div>
+            )}
 
-              {/* Save Actions */}
-              <div className="pt-6 mt-6 border-t border-border/50 flex items-center justify-end gap-4">
-                <button 
-                  onClick={() => user && (setFullName(user.full_name || user.name || ''), setBio(user.bio || user.metadata?.bio || ''), setPhone(user.phone || user.metadata?.phone || ''))}
-                  className="px-6 py-2.5 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm focus:outline-none"
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSaveChanges}
-                  className="px-6 py-2.5 bg-primary text-primary-foreground font-black text-sm rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:active:scale-100"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
+            {/* Card 5: Wallet & Ledger */}
+            <motion.div
+              variants={itemVariants}
+              onClick={() => navigate(ROUTES.WALLET)}
+              className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+            >
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl group-hover:scale-110 transition-transform">
+                  <Wallet className="w-6 h-6" />
+                </div>
+                <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
               </div>
-            </div>
-          </motion.div>
+              <div className="mt-8">
+                <h3 className="font-bold text-lg text-foreground">Wallet & Ledger</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  Track offline settlements, record payments, and manage balances.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 6: Applications */}
+            <motion.div
+              variants={itemVariants}
+              onClick={() => navigate(ROUTES.JOBS)}
+              className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+            >
+              <div className="flex items-start justify-between">
+                <div className="p-3 bg-rose-500/10 text-rose-500 rounded-xl group-hover:scale-110 transition-transform">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <ChevronUp className="w-4 h-4 text-muted-foreground rotate-90 shrink-0" />
+              </div>
+              <div className="mt-8">
+                <h3 className="font-bold text-lg text-foreground">
+                  {isProvider ? 'Manage Jobs' : 'Applications'}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  {isProvider ? 'Manage applicant details and view shift applications.' : 'Track active job applications, statuses, and history.'}
+                </p>
+              </div>
+            </motion.div>
+          </div>
 
           {/* Reputation Summary */}
           <motion.div variants={itemVariants}>
@@ -486,8 +384,203 @@ export const ProfilePage = () => {
               title={isProvider ? 'Your Business Reviews' : 'Your Reviews'}
             />
           </motion.div>
-        </div>
-      </motion.div>
+        </motion.div>
+      ) : (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="space-y-6"
+        >
+          {/* Back Button */}
+          <div className="flex items-center justify-between border-b border-border/40 pb-4">
+            <button
+              onClick={() => setShowProfileEditor(false)}
+              className="px-4 py-2 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <ChevronUp className="w-4 h-4 -rotate-90" /> Back to Menu Hub
+            </button>
+            <h2 className="text-xl font-black text-foreground tracking-tight animate-fade-in">Profile Settings</h2>
+          </div>
+
+          {/* 1. Header Section (for Cover and Avatar upload) */}
+          <motion.section 
+            variants={itemVariants}
+            className="relative w-full rounded-3xl bg-card border border-border/50 shadow-soft-lg overflow-hidden animate-fade-in"
+          >
+            {/* Cover Image/Gradient */}
+            <div 
+              className="h-40 sm:h-48 w-full bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10 relative overflow-hidden bg-cover bg-center"
+              style={user?.metadata?.coverUrl ? { backgroundImage: `url(${user.metadata.coverUrl})` } : undefined}
+            >
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+              {!user?.metadata?.coverUrl && (
+                <>
+                  <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-primary/40 rounded-full blur-[80px]" />
+                  <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-accent/40 rounded-full blur-[80px]" />
+                </>
+              )}
+              
+              {/* Edit Cover Button */}
+              <button 
+                onClick={() => coverInputRef.current?.click()}
+                className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background/80 backdrop-blur-md rounded-full text-foreground transition-all shadow-sm z-10 animate-fade-in"
+                title="Upload cover photo"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Profile Identity Area */}
+            <div className="px-6 sm:px-10 pb-8 relative">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8 -mt-16 sm:-mt-20 relative z-10">
+                {/* Avatar */}
+                <div className="relative group">
+                  <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-card bg-muted flex items-center justify-center shadow-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 shrink-0">
+                    {(user?.avatar_url || user?.metadata?.avatarUrl) ? (
+                      <img src={user.avatar_url || user.metadata?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-4xl sm:text-5xl font-bold text-muted-foreground">
+                        {user?.avatarPlaceholder || (user?.full_name || user?.name)?.charAt(0).toUpperCase() || 'Z'}
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 p-2 bg-foreground text-background rounded-full shadow-lg hover:scale-105 transition-transform"
+                    title="Upload profile photo"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex-1 space-y-2 pb-2 text-left">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                      {user?.full_name || user?.name || 'HustiQ User'}
+                    </h1>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Click the icons to upload cover and avatar photos</p>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* Form and Stats block */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-8">
+              {/* Info Card */}
+              <motion.div variants={itemVariants} className="glass-card p-6 rounded-2xl space-y-4 border border-border/50 shadow-soft-lg text-left">
+                <h3 className="font-bold text-base text-foreground">Why edit?</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Keeping your contact number, bio, and business profile updated helps in matching with shifts and ensuring clean verification across the platform.
+                </p>
+              </motion.div>
+            </div>
+
+            {/* Editable Form */}
+            <div className="lg:col-span-2 space-y-8">
+              <motion.div variants={itemVariants} className="glass-card rounded-2xl shadow-soft-lg overflow-hidden">
+                <div className="p-6 sm:p-8 border-b border-border/50 bg-muted/10 text-left">
+                  <h2 className="text-xl font-bold text-foreground">Profile Information</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Update your personal details and public presence.</p>
+                </div>
+                
+                <div className="p-6 sm:p-8 space-y-6">
+                  {successMsg && (
+                    <div className="p-4 bg-primary/10 border border-primary/20 text-primary rounded-2xl text-xs font-semibold leading-relaxed">
+                      {successMsg}
+                    </div>
+                  )}
+
+                  {/* Name Section */}
+                  <div className="space-y-2 text-left">
+                    <label className="text-sm font-bold text-foreground">Display Name</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your name"
+                      disabled={isSaving}
+                    />
+                  </div>
+
+                  {/* Bio Section */}
+                  <div className="space-y-2 text-left">
+                    <label className="text-sm font-bold text-foreground">{isProvider ? 'Business Description' : 'About Me'}</label>
+                    <textarea 
+                      className="w-full h-32 bg-background border border-border rounded-xl p-4 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none leading-relaxed font-medium text-sm"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder={isProvider ? "Describe your business, culture, and what kind of students you're looking for..." : "Write a short bio about yourself, your studies, and the types of gigs you prefer..."}
+                      disabled={isSaving}
+                    />
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-muted-foreground" /> Email Address
+                      </label>
+                      <input 
+                        type="email" 
+                        className="w-full bg-muted/20 border border-border/80 rounded-xl px-4 py-3 text-foreground/60 cursor-not-allowed font-semibold text-sm"
+                        value={user?.email || ''}
+                        disabled
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-muted-foreground" /> Phone Number
+                      </label>
+                      <input 
+                        type="tel" 
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-sm"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+91 XXXXXXXXXX"
+                        disabled={isSaving}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Save Actions */}
+                  <div className="pt-6 mt-6 border-t border-border/50 flex items-center justify-end gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (user) {
+                          setFullName(user.full_name || user.name || '')
+                          setBio(user.bio || user.metadata?.bio || '')
+                          setPhone(user.phone || user.metadata?.phone || '')
+                        }
+                        setShowProfileEditor(false)
+                      }}
+                      className="px-6 py-2.5 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm focus:outline-none"
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={async () => {
+                        await handleSaveChanges()
+                        setShowProfileEditor(false)
+                      }}
+                      className="px-6 py-2.5 bg-primary text-primary-foreground font-black text-sm rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:active:scale-100"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { MapPin, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
 import { useApplications } from '@/store/useApplications'
 import { useNotifications } from '@/store/useNotifications'
 import { useAuth } from '@/store/useAuth'
+import { useWallet } from '@/store/useWallet'
 import { useUiStore } from '@/store/uiStore'
 import { isSupabaseConfigured } from '@/services/supabase/auth'
 import { useNavigate } from 'react-router-dom'
@@ -40,6 +41,18 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
   const isAccepted = applicant.status === 'accepted'
   const isRejected = applicant.status === 'rejected'
   const [isReviewOpen, setIsReviewOpen] = useState(false)
+
+  const { completedAppIds, completeApplication } = useApplications()
+  const isCompleted = completedAppIds.includes(applicant.id)
+  const { payWorker } = useWallet()
+
+  const handleCompleteJob = () => {
+    completeApplication(applicant.id)
+    const payoutAmount = (applicant as any).payout || 500
+    const payCategory = (applicant as any).category || 'Hospitality'
+    payWorker(applicant.name, applicant.jobApplied, payoutAmount, payCategory)
+    useUiStore.getState().addToast(`Job completed! Paid ₹${payoutAmount} to ${applicant.name} offline.`, 'success')
+  }
 
   const handleAccept = async () => {
     try {
@@ -154,16 +167,29 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
 
       <div className="flex gap-2 mt-2">
         {isAccepted ? (
-          <div className="flex-1 flex gap-2">
-            <div className="flex-1 bg-emerald-500/20 text-emerald-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
-              <CheckCircle2 className="w-4 h-4" /> Accepted
-            </div>
-            <button 
-              onClick={() => setIsReviewOpen(true)}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/95 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 text-sm transition-all"
-            >
-              ★ Review Student
-            </button>
+          <div className="flex-1 flex flex-col sm:flex-row gap-2">
+            {!isCompleted ? (
+              <button 
+                onClick={handleCompleteJob}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 text-sm transition-all shadow-sm"
+              >
+                ✓ Mark Completed & Pay
+              </button>
+            ) : (
+              <>
+                <div className="flex-1 bg-emerald-500/10 text-emerald-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm border border-emerald-500/20">
+                  <CheckCircle2 className="w-4 h-4" /> Completed & Paid
+                </div>
+                {user?.id !== applicant.studentId && (
+                  <button 
+                    onClick={() => setIsReviewOpen(true)}
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/95 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 text-sm transition-all"
+                  >
+                    ★ Review Student
+                  </button>
+                )}
+              </>
+            )}
           </div>
         ) : isRejected ? (
           <div className="flex-1 bg-red-500/10 text-red-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">

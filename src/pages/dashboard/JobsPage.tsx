@@ -220,6 +220,7 @@ export const JobsPage = () => {
             filteredApps.map((app, index) => (
               <ApplicationCard 
                 key={app.id} 
+                id={app.id}
                 job={app.job}
                 status={app.status}
                 appliedDate={app.appliedDate}

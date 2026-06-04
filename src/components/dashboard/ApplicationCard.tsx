@@ -5,8 +5,11 @@ import { cn } from '@/lib/utils'
 import { type Job } from '@/components/dashboard/JobCard'
 import { type ApplicationStatus } from '@/store/useAppliedJobs'
 import { ReviewModal } from '@/components/reviews/ReviewModal'
+import { useApplications } from '@/store/useApplications'
+import { useAuth } from '@/store/useAuth'
 
 interface ApplicationCardProps {
+  id: string
   job: Job
   status: ApplicationStatus
   appliedDate: string
@@ -19,8 +22,11 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } }
 } as const
 
-export const ApplicationCard = ({ job, status, appliedDate, responseEstimate }: ApplicationCardProps) => {
+export const ApplicationCard = ({ id, job, status, appliedDate, responseEstimate }: ApplicationCardProps) => {
   const [isReviewOpen, setIsReviewOpen] = useState(false)
+  const { user } = useAuth()
+  const { completedAppIds } = useApplications()
+  const isCompleted = completedAppIds.includes(id)
   
   const getStatusConfig = () => {
     switch(status) {
@@ -61,9 +67,9 @@ export const ApplicationCard = ({ job, status, appliedDate, responseEstimate }: 
       whileHover={{ y: -2 }}
       className="group bg-card border border-border/50 hover:border-border hover:shadow-sm transition-all duration-200 rounded-[2rem] p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center w-full relative overflow-hidden"
     >
-      {/* Visual Accent for Accepted */}
+      {/* Visual Accent for Accepted/Completed */}
       {status === 'accepted' && (
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 rounded-l-[2rem]" />
+        <div className={cn("absolute left-0 top-0 bottom-0 w-1.5 rounded-l-[2rem]", isCompleted ? "bg-emerald-600" : "bg-emerald-500")} />
       )}
 
       {/* Provider Logo */}
@@ -102,16 +108,33 @@ export const ApplicationCard = ({ job, status, appliedDate, responseEstimate }: 
         </div>
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {status === 'accepted' && (
-            <button 
-              onClick={() => setIsReviewOpen(true)}
-              className="px-3.5 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1"
-            >
-              ★ Leave Review
-            </button>
+            <>
+              {isCompleted ? (
+                <>
+                  {user?.id !== job.provider_id && (
+                    <button 
+                      onClick={() => setIsReviewOpen(true)}
+                      className="px-3.5 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1"
+                    >
+                      ★ Leave Review
+                    </button>
+                  )}
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold bg-emerald-500/5 text-emerald-600 border-emerald-500/20">
+                  <Clock className="w-3.5 h-3.5 animate-pulse" /> In Progress
+                </div>
+              )}
+            </>
           )}
-          <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold", config.style)}>
-            {config.icon} {config.label}
-          </div>
+          {status !== 'accepted' && (
+            <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold", config.style)}>
+              {config.icon} {config.label}
+            </div>
+          )}
         </div>
       </div>
 

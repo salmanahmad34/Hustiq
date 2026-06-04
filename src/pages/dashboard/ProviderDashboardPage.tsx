@@ -89,7 +89,9 @@ export const ProviderDashboardPage = () => {
       matchScore: studentMeta.matchScore || 85,
       studentId: studentProfile?.id || '',
       jobId: jobInfo?.id || '',
-      status: app.status
+      status: app.status,
+      payout: jobInfo?.payout || 500,
+      category: jobInfo?.tags?.[0] || 'Hospitality'
     }
   })
 
