@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LogOut, User, Settings, Briefcase, ChevronUp, Wallet, MessageSquare } from 'lucide-react'
+import { LogOut, User, Settings, Briefcase, ChevronUp, Wallet, MessageSquare, Bookmark, Rocket, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { cn } from '@/lib/utils'
@@ -32,9 +32,22 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
     navigate(ROUTES.HOME)
   }
 
-  const menuItems = [
+  const isProvider = user?.role === 'provider'
+
+  const menuItems = isProvider ? [
     { label: 'Profile', icon: User, action: () => navigate(ROUTES.PROFILE) },
-    { label: 'Wallet & Earnings', icon: Wallet, action: () => navigate(ROUTES.WALLET) },
+    { label: 'Wallet & Spendings', icon: Wallet, action: () => navigate(ROUTES.WALLET) },
+    { label: 'Posted Jobs', icon: Briefcase, action: () => navigate(ROUTES.JOBS) },
+    { label: 'Give Feedback', icon: MessageSquare, action: () => {
+      window.dispatchEvent(new CustomEvent('open-beta-feedback'))
+    } },
+    { label: 'Settings', icon: Settings, action: () => console.log('Settings clicked') }
+  ] : [
+    { label: 'Profile', icon: User, action: () => navigate(ROUTES.PROFILE) },
+    { label: 'Saved Gigs', icon: Bookmark, action: () => navigate(ROUTES.SAVED) },
+    { label: 'Growth Stats', icon: Rocket, action: () => navigate(ROUTES.GROWTH) },
+    { label: 'Premium HustiQ', icon: Zap, action: () => navigate(ROUTES.PREMIUM) },
+    { label: 'Wallet & Ledger', icon: Wallet, action: () => navigate(ROUTES.WALLET) },
     { label: 'Applications', icon: Briefcase, action: () => navigate(ROUTES.JOBS) },
     { label: 'Give Feedback', icon: MessageSquare, action: () => {
       window.dispatchEvent(new CustomEvent('open-beta-feedback'))

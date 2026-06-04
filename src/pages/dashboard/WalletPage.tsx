@@ -174,15 +174,15 @@ export const WalletPage = () => {
         <div>
           <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-1.5">
             <ZivaroBrandIcon size="xs" />
-            <span>HustiQ Secure Payouts</span>
+            <span>HustiQ Offline Payment Tracker</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
-            {isProvider ? 'Hiring Spending & Wallet' : 'Earnings Dashboard'}
+            {isProvider ? 'Offline Spending Tracker' : 'Offline Earnings Ledger'}
           </h1>
           <p className="text-muted-foreground text-sm font-medium mt-1">
             {isProvider 
-              ? 'Track active payouts, budget pools, and verify contractor wage details.' 
-              : 'Monitor completed jobs, track payout requests, and plan your savings.'
+              ? 'Track offline settlements, record payments, and manage direct contractor wages.' 
+              : 'Track direct offline earnings from completed shifts, record payouts, and plan savings.'
             }
           </p>
         </div>
@@ -194,14 +194,14 @@ export const WalletPage = () => {
                 onClick={handleFundSimulate}
                 className="flex items-center gap-2 bg-muted/40 hover:bg-muted text-foreground border border-border/60 py-2.5 px-5 rounded-full text-xs font-bold transition-all duration-200"
               >
-                Fund Wallet
+                Simulate Funding
               </button>
               <button 
                 onClick={() => setIsPayOpen(true)}
                 className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-primary-foreground py-2.5 px-5 rounded-full text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                Release Payment
+                Record Offline Payment
               </button>
             </>
           ) : (
@@ -210,14 +210,14 @@ export const WalletPage = () => {
                 onClick={handleEarnSimulate}
                 className="flex items-center gap-2 bg-muted/40 hover:bg-muted text-foreground border border-border/60 py-2.5 px-5 rounded-full text-xs font-bold transition-all duration-200"
               >
-                Simulate Shift Earning
+                Simulate Shift Earning (Offline)
               </button>
               <button 
                 onClick={() => setIsPayoutOpen(true)}
                 className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-primary-foreground py-2.5 px-5 rounded-full text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
               >
                 <ArrowUpRight className="w-4 h-4" />
-                Request Payout
+                Record Offline Payout
               </button>
             </>
           )}
@@ -245,7 +245,7 @@ export const WalletPage = () => {
             >
               <div className="flex justify-between items-start">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {isProvider ? 'Total Expense Outflow' : 'Total Earnings'}
+                  {isProvider ? 'Total Expense (Offline)' : 'Total Offline Earnings'}
                 </span>
                 <span className="p-1.5 bg-primary/10 text-primary rounded-lg">
                   <TrendingUp className="w-4 h-4" />
@@ -269,7 +269,7 @@ export const WalletPage = () => {
             >
               <div className="flex justify-between items-start">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {isProvider ? 'Escrow / Active Payouts' : 'Pending In Escrow'}
+                  {isProvider ? 'Direct / Offline Payments' : 'Direct Offline Payouts'}
                 </span>
                 <span className="p-1.5 bg-amber-500/10 text-amber-500 rounded-lg">
                   <Clock className="w-4 h-4 animate-pulse" />
@@ -280,7 +280,7 @@ export const WalletPage = () => {
                   {formatCurrency(isProvider ? providerWallet.activePayouts : studentWallet.pendingPayouts)}
                 </h2>
                 <p className="text-[10px] font-bold text-muted-foreground mt-1 flex items-center gap-1">
-                  <span>Awaiting confirmations</span>
+                  <span>Settled directly offline</span>
                 </p>
               </div>
             </motion.div>
@@ -288,11 +288,11 @@ export const WalletPage = () => {
             {/* Metric 3 */}
             <motion.div 
               variants={cardVariants}
-              className="glass-card p-6 rounded-2xl relative overflow-hidden border-border/60 bg-muted/20 shadow-soft-lg flex flex-col justify-between min-h-[140px] glow-primary/5"
+              className="glass-card p-6 rounded-2xl relative overflow-hidden border border-border/60 bg-muted/20 shadow-soft-lg flex flex-col justify-between min-h-[140px] glow-primary/5"
             >
               <div className="flex justify-between items-start">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {isProvider ? 'Fund Pool Balance' : 'Available for Payout'}
+                  {isProvider ? 'Fund Pool Balance' : 'Unsettled Offline Earnings'}
                 </span>
                 <span className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg">
                   <Wallet className="w-4 h-4" />
@@ -304,7 +304,7 @@ export const WalletPage = () => {
                 </h2>
                 <p className="text-[10px] font-bold text-primary mt-1 flex items-center gap-0.5">
                   <ShieldCheck className="w-3 h-3 text-emerald-500 inline mr-0.5" />
-                  <span>Instant withdrawals live</span>
+                  <span>Settled directly by providers offline</span>
                 </p>
               </div>
             </motion.div>
@@ -437,7 +437,7 @@ export const WalletPage = () => {
                 <div className="p-3.5 bg-primary/5 border border-primary/10 rounded-xl flex items-center gap-3">
                   <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
                   <p className="text-[11px] text-primary font-medium leading-relaxed">
-                    Hiring allocations are verified and audited. All funds release requests comply with platform security checks.
+                    All payments are settled directly between providers and workers offline via Cash, UPI, or direct bank transfer.
                   </p>
                 </div>
               </div>
@@ -546,7 +546,7 @@ export const WalletPage = () => {
             <div className="mt-auto border-t border-border/20 pt-4 flex items-center gap-2 bg-muted/10 p-3 rounded-xl">
               <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="text-[9px] text-muted-foreground font-semibold leading-relaxed">
-                HustiQ Payments uses 128-bit bank-grade encryption. Escrows are automatically released on job approval.
+                Notice: HustiQ does not process online payments. All shifts are paid offline directly by the provider. Use this ledger to keep track of settlements.
               </span>
             </div>
 
@@ -579,10 +579,10 @@ export const WalletPage = () => {
             >
               <h3 className="text-xl font-black text-foreground tracking-tight mb-2 flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-primary" />
-                Request Bank Payout
+                Record Offline Payout
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
-                Instantly transfer your completed earnings directly to your verified personal bank account.
+                Log a direct offline payment received from your provider (UPI, Cash, or Direct Transfer) to balance your ledger.
               </p>
 
               {payoutSuccess ? (
@@ -590,9 +590,9 @@ export const WalletPage = () => {
                   <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center animate-bounce">
                     <Check className="w-6 h-6 stroke-[3]" />
                   </div>
-                  <h4 className="font-extrabold text-sm text-foreground">Transfer Request Received!</h4>
+                  <h4 className="font-extrabold text-sm text-foreground">Offline Settlement Recorded!</h4>
                   <p className="text-xs text-muted-foreground max-w-xs">
-                    Your request for payout is being processed and will hit your bank account within 2 hours.
+                    Your direct payout settlement has been recorded to update your ledger balance.
                   </p>
                 </div>
               ) : (
@@ -652,7 +652,7 @@ export const WalletPage = () => {
                       type="submit"
                       className="flex-1 bg-foreground text-background hover:bg-primary hover:text-primary-foreground rounded-xl py-3 text-xs font-bold transition-all text-center"
                     >
-                      Confirm Payout
+                      Confirm Settlement
                     </button>
                   </div>
                 </form>
@@ -683,10 +683,10 @@ export const WalletPage = () => {
             >
               <h3 className="text-xl font-black text-foreground tracking-tight mb-2 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                Release Contractor Payment
+                Record Offline Payment
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
-                Release escrow funds instantly to students or workers who have successfully completed shifts at your startup/shop.
+                Log cash, UPI, or direct offline payments made to students for their completed shifts.
               </p>
 
               {paySuccess ? (
@@ -694,9 +694,9 @@ export const WalletPage = () => {
                   <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center animate-bounce">
                     <Check className="w-6 h-6 stroke-[3]" />
                   </div>
-                  <h4 className="font-extrabold text-sm text-foreground">Funds Disbursed Instantly!</h4>
+                  <h4 className="font-extrabold text-sm text-foreground">Offline Payment Logged!</h4>
                   <p className="text-xs text-muted-foreground max-w-xs">
-                    ₹{payAmount} has been transferred directly into {workerName}'s HustiQ Wallet.
+                    ₹{payAmount} payment has been recorded as paid offline to {workerName}.
                   </p>
                 </div>
               ) : (
@@ -775,7 +775,7 @@ export const WalletPage = () => {
                       type="submit"
                       className="flex-1 bg-foreground text-background hover:bg-primary hover:text-primary-foreground rounded-xl py-3 text-xs font-bold transition-all text-center"
                     >
-                      Confirm Payment
+                      Confirm Offline Payment
                     </button>
                   </div>
                 </form>
@@ -831,7 +831,7 @@ export const WalletPage = () => {
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-bold text-muted-foreground">Payment Mode</span>
-                    <span className="font-bold text-foreground">Escrow Direct</span>
+                    <span className="font-bold text-foreground">Direct Offline (Cash/UPI)</span>
                   </div>
                 </div>
 

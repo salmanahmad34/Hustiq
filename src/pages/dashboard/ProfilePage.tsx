@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
-import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Clock, Edit2, Wallet, Camera } from 'lucide-react'
+import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Clock, Edit2, Wallet, Camera, Bookmark, Rocket, Zap } from 'lucide-react'
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { TrustBanner } from '@/components/trust/TrustSystem'
 import { ReputationSummary } from '@/components/reviews/ReviewDisplay'
 import { useAuth } from '@/store/useAuth'
+import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/constants/routes'
 
 // Spring physics for snappy app-like feel
 const springTransition = { type: "spring" as const, stiffness: 400, damping: 30 }
@@ -26,6 +28,7 @@ const itemVariants = {
 export const ProfilePage = () => {
   const { user, updateUserProfile } = useAuth()
   const isProvider = user?.role === 'provider'
+  const navigate = useNavigate()
 
   // Form states
   const [fullName, setFullName] = useState(user?.full_name || user?.name || '')
@@ -253,6 +256,50 @@ export const ProfilePage = () => {
       >
         {/* Left Column: Stats & Metadata */}
         <div className="lg:col-span-1 space-y-8">
+          {/* Quick Shortcuts for Student */}
+          {!isProvider && (
+            <motion.div 
+              variants={itemVariants} 
+              className="glass-card p-6 rounded-2xl space-y-4 shadow-soft-lg border border-primary/10 bg-primary/5"
+            >
+              <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border/50 pb-4">
+                <Edit2 className="w-4 h-4 text-primary" />
+                Quick Shortcuts
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => navigate(ROUTES.SAVED)}
+                  className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-secondary/60 border border-border/40 hover:border-primary/20 rounded-xl transition-all text-left font-semibold text-sm text-foreground group shadow-sm hover:shadow"
+                >
+                  <div className="flex items-center gap-3">
+                    <Bookmark className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform" />
+                    <span>Saved Gigs</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full font-bold">View Saved</span>
+                </button>
+                <button
+                  onClick={() => navigate(ROUTES.GROWTH)}
+                  className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-secondary/60 border border-border/40 hover:border-primary/20 rounded-xl transition-all text-left font-semibold text-sm text-foreground group shadow-sm hover:shadow"
+                >
+                  <div className="flex items-center gap-3">
+                    <Rocket className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform" />
+                    <span>Growth Tracker</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full font-bold">View Stats</span>
+                </button>
+                <button
+                  onClick={() => navigate(ROUTES.PREMIUM)}
+                  className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-secondary/60 border border-border/40 hover:border-primary/20 rounded-xl transition-all text-left font-semibold text-sm text-foreground group shadow-sm hover:shadow"
+                >
+                  <div className="flex items-center gap-3">
+                    <Zap className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform" />
+                    <span>Premium Plans</span>
+                  </div>
+                  <span className="text-[10px] text-primary bg-primary/10 px-2.5 py-0.5 rounded-full font-bold">Upgrade</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
           {/* Role-Based Stats Card */}
           <motion.div variants={itemVariants} className="glass-card p-6 rounded-2xl space-y-6 shadow-soft-lg">
             <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border/50 pb-4">

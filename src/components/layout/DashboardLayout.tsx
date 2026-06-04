@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageCircle, User, Zap, Bookmark, Wallet, Compass, Plus, Rocket } from 'lucide-react'
+import { Home, MessageCircle, User, Wallet, Compass, Plus, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -26,10 +26,7 @@ const STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
-  { name: 'Saved', href: ROUTES.SAVED, icon: Bookmark },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
-  { name: 'Premium', href: ROUTES.PREMIUM, icon: Zap },
   { name: 'Profile', href: ROUTES.PROFILE, icon: User },
 ]
 
@@ -45,9 +42,9 @@ const PROVIDER_NAV: NavItem[] = [
 const MOBILE_STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
-  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
-  { name: 'Saved', href: ROUTES.SAVED, icon: Bookmark },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
+  { name: 'Profile', href: ROUTES.PROFILE, icon: User },
 ]
 
 const MOBILE_PROVIDER_NAV: NavItem[] = [
