@@ -4,10 +4,12 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/store/useAuth'
 import { ROUTES } from '@/constants/routes'
 import { User, Briefcase, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { SplashScreen } from '@/components/shared/SplashScreen'
 
 export const LoginPage = () => {
   const { login, isLoading, error, clearError } = useAuth()
   const navigate = useNavigate()
+  const [showSplash, setShowSplash] = useState(false)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,7 +37,7 @@ export const LoginPage = () => {
 
     try {
       await login(email, password)
-      navigate(ROUTES.DASHBOARD)
+      setShowSplash(true)
     } catch (err: any) {
       // Error handled by store/errors
     }
@@ -47,7 +49,7 @@ export const LoginPage = () => {
     clearError()
     try {
       await login(`${role}@hustiq.com`, undefined, role)
-      navigate(ROUTES.DASHBOARD)
+      setShowSplash(true)
     } catch (err) {
       console.error('Mock login failed:', err)
     }
@@ -162,6 +164,10 @@ export const LoginPage = () => {
           Sign up
         </Link>
       </p>
+
+      {showSplash && (
+        <SplashScreen onComplete={() => navigate(ROUTES.DASHBOARD)} />
+      )}
     </div>
   )
 }

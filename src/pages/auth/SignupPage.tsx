@@ -6,10 +6,12 @@ import { ROUTES } from '@/constants/routes'
 import { User, Briefcase, Mail, Lock, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { trackSignupStarted, trackSignupCompleted } from '@/services/analytics'
+import { SplashScreen } from '@/components/shared/SplashScreen'
 
 export const SignupPage = () => {
   const { signup, isLoading, error, clearError } = useAuth()
   const navigate = useNavigate()
+  const [showSplash, setShowSplash] = useState(false)
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -56,7 +58,7 @@ export const SignupPage = () => {
     try {
       await signup(email, password, name, role)
       trackSignupCompleted(`usr-${Date.now()}`, role, name)
-      navigate(ROUTES.DASHBOARD)
+      setShowSplash(true)
     } catch (err: any) {
       // Handled by store/errors
     }
@@ -70,7 +72,7 @@ export const SignupPage = () => {
       const mockName = selectedRole === 'student' ? 'HustiQ Student' : 'HustiQ Provider'
       await signup(`${selectedRole}@hustiq.com`, undefined, mockName, selectedRole)
       trackSignupCompleted(`usr-mock-${Date.now()}`, selectedRole, mockName)
-      navigate(ROUTES.DASHBOARD)
+      setShowSplash(true)
     } catch (err) {
       console.error('Mock signup failed:', err)
     }
@@ -229,6 +231,10 @@ export const SignupPage = () => {
           Sign in
         </Link>
       </p>
+
+      {showSplash && (
+        <SplashScreen onComplete={() => navigate(ROUTES.DASHBOARD)} />
+      )}
     </div>
   )
 }
