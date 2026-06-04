@@ -9,7 +9,10 @@ import {
   recoverSession, 
   buildUserSession, 
   updateProfile as updateProfileInDb,
-  checkEmailExists
+  checkEmailExists,
+  verifyEmailOtp,
+  requestPasswordReset,
+  updatePassword
 } from '@/services/supabase/auth'
 
 
@@ -28,7 +31,10 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string, name: string, role: 'student' | 'provider') => Promise<void>
+  signup: (email: string, password: string, name: string, role: 'student' | 'provider') => Promise<{ needsVerification: boolean }>
+  verifyOtp: (email: string, token: string) => Promise<void>
+  forgotPassword: (email: string) => Promise<void>
+  resetPassword: (password: string) => Promise<void>
   logout: () => Promise<void>
   recoverUserSession: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -124,7 +130,20 @@ export const useAuth = create<AuthState>()(
           const data = await signUpUser(email, password, name, role)
           if (!data || !data.user) throw new Error('Signup failed')
 
-          // Set user session
+          const needsVerification = data.session === null
+
+          if (needsVerification) {
+            // Keep user logged out on the client side since verification is pending
+            set({
+              isAuthenticated: false,
+              user: null,
+              hasShownSplash: false,
+              error: null
+            })
+            return { needsVerification: true }
+          }
+
+          // Set user session if automatically confirmed
           set({
             isAuthenticated: true,
             user: {
@@ -138,6 +157,7 @@ export const useAuth = create<AuthState>()(
             hasShownSplash: false,
             error: null
           })
+          return { needsVerification: false }
         } catch (err: any) {
           let errorMessage = err.message || 'Signup failed'
           if (
@@ -153,6 +173,72 @@ export const useAuth = create<AuthState>()(
             hasShownSplash: false,
             error: errorMessage
           })
+          throw err
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      // ============================================
+      // VERIFY OTP ACTION
+      // ============================================
+      verifyOtp: async (email: string, token: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const data = await verifyEmailOtp(email, token)
+          if (!data || !data.user) throw new Error('Verification failed. Invalid code.')
+
+          // After confirmation, build/get profile
+          const userSession = await buildUserSession(data.user.id, data.user.email || email)
+          if (!userSession) throw new Error('Failed to retrieve user profile from database')
+
+          set({
+            isAuthenticated: true,
+            user: userSession,
+            hasShownSplash: false,
+            error: null
+          })
+        } catch (err: any) {
+          const errorMessage = err.message || 'Verification failed. Invalid code.'
+          set({ error: errorMessage })
+          throw err
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      // ============================================
+      // FORGOT PASSWORD ACTION
+      // ============================================
+      forgotPassword: async (email: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const { success, error: resetErr } = await requestPasswordReset(email)
+          if (!success) {
+            throw resetErr || new Error('Failed to send reset link.')
+          }
+        } catch (err: any) {
+          const errorMessage = err.message || 'Failed to send reset link.'
+          set({ error: errorMessage })
+          throw err
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      // ============================================
+      // RESET PASSWORD ACTION
+      // ============================================
+      resetPassword: async (password: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const { success, error: updateErr } = await updatePassword(password)
+          if (!success) {
+            throw updateErr || new Error('Failed to update password.')
+          }
+        } catch (err: any) {
+          const errorMessage = err.message || 'Failed to update password.'
+          set({ error: errorMessage })
           throw err
         } finally {
           set({ isLoading: false })

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { isSupabaseConfigured } from '@/services/supabase/auth'
+import { supabase } from '@/services/supabase/supabaseClient'
 import { 
   fetchNotificationsFromDb, 
   markNotificationReadInDb, 
@@ -32,6 +33,7 @@ export interface NotificationItem {
 interface NotificationsState {
   isOpen: boolean
   notifications: NotificationItem[]
+  channel: any | null
   
   // Basic Actions
   toggleOpen: () => void
@@ -43,6 +45,10 @@ interface NotificationsState {
   
   // Realtime Simulation Actions
   addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'isUnread'>, userId?: string) => Promise<void>
+
+  // Realtime Subscription Actions
+  subscribeToNotifications: (userId: string, role: 'student' | 'provider') => void
+  unsubscribeFromNotifications: () => void
 }
 
 const INITIAL_NOTIFICATIONS: NotificationItem[] = [
@@ -168,9 +174,10 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   }
 ]
 
-export const useNotifications = create<NotificationsState>((set) => ({
+export const useNotifications = create<NotificationsState>((set, get) => ({
   isOpen: false,
   notifications: INITIAL_NOTIFICATIONS,
+  channel: null,
 
   toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
   close: () => set({ isOpen: false }),
@@ -256,5 +263,69 @@ export const useNotifications = create<NotificationsState>((set) => ({
     } catch (err) {
       console.error('Failed to submit notification to Supabase:', err)
     }
+  },
+
+  subscribeToNotifications: (userId, role) => {
+    // Unsubscribe from any active channel first
+    const currentChannel = get().channel
+    if (currentChannel) {
+      currentChannel.unsubscribe()
+    }
+
+    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+    if (!isSupabaseConfigured() || isMock) return
+
+    const channel = supabase
+      .channel(`notifications_room_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          const row = payload.new as any
+          const diffMs = Date.now() - new Date(row.created_at).getTime()
+          const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
+          const timeText = diffHrs < 1 ? 'Just now' : diffHrs < 24 ? `${diffHrs}h ago` : `${Math.floor(diffHrs / 24)}d ago`
+
+          const newNotif: NotificationItem = {
+            id: row.id,
+            title: row.title,
+            message: row.content,
+            time: timeText,
+            isUnread: !row.is_read,
+            type: row.type as any,
+            isPriority: row.is_important,
+            category: diffHrs < 24 ? 'today' : 'earlier',
+            role: role,
+            actionPath: row.metadata?.actionPath,
+            actionText: row.metadata?.actionText
+          }
+
+          set((state) => ({
+            notifications: [newNotif, ...state.notifications]
+          }))
+
+          // Trigger a global UI toast
+          import('@/store/uiStore').then(({ useUiStore }) => {
+            useUiStore.getState().addToast(newNotif.title, 'success')
+          }).catch(err => console.warn('Could not trigger toast for notification:', err))
+        }
+      )
+      .subscribe()
+
+    set({ channel })
+  },
+
+  unsubscribeFromNotifications: () => {
+    const channel = get().channel
+    if (channel) {
+      channel.unsubscribe()
+      set({ channel: null })
+    }
+    set({ notifications: [] })
   }
 }))

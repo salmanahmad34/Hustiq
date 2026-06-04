@@ -48,9 +48,13 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
         <button 
           id="profile-dropdown-btn"
           onClick={() => setIsOpen(!isOpen)}
-          className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center transition-transform active:scale-95 border border-primary/20"
+          className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center transition-transform active:scale-95 border border-primary/20 overflow-hidden"
         >
-          <User className="h-4 w-4 text-primary" />
+          {user?.metadata?.avatarUrl ? (
+            <img src={user.metadata.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <User className="h-4 w-4 text-primary" />
+          )}
         </button>
 
         <AnimatePresence>
@@ -141,8 +145,12 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
         className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shrink-0 mr-3">
-          {user?.avatarPlaceholder || 'Z'}
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shrink-0 mr-3 overflow-hidden">
+          {user?.metadata?.avatarUrl ? (
+            <img src={user.metadata.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            user?.avatarPlaceholder || user?.name?.charAt(0).toUpperCase() || 'Z'
+          )}
         </div>
         <div className="flex flex-col flex-1 min-w-0 text-left">
           <span className="text-sm font-bold text-foreground leading-tight truncate">{user?.name || 'Zivaro User'}</span>

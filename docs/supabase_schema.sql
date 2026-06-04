@@ -27,6 +27,9 @@ create policy "Profiles are viewable by authenticated users."
 create policy "Users can update their own profile." 
   on public.profiles for update using (auth.uid() = id);
 
+create policy "Users can insert their own profile." 
+  on public.profiles for insert with check (auth.uid() = id);
+
 -- 2. JOBS TABLE (Hustle Opportunities)
 create table if not exists public.jobs (
   id uuid default gen_random_uuid() primary key,
@@ -166,8 +169,13 @@ create table if not exists public.notifications (
 alter table public.notifications enable row level security;
 
 -- RLS Policies for Notifications
-create policy "Users can view and manage their own notifications." 
-  on public.notifications for all using (auth.uid() = user_id);
+create policy "Users can view and update their own notifications." 
+  on public.notifications for select, update, delete 
+  using (auth.uid() = user_id);
+
+create policy "Any authenticated user can insert notifications." 
+  on public.notifications for insert 
+  with check (auth.role() = 'authenticated');
 
 
 -- ========================================================================

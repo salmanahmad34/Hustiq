@@ -1,13 +1,11 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Clock, Edit2, Wallet, Camera } from 'lucide-react'
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { TrustBanner } from '@/components/trust/TrustSystem'
 import { ReputationSummary } from '@/components/reviews/ReviewDisplay'
 import { ReviewModal } from '@/components/reviews/ReviewModal'
 import { useAuth } from '@/store/useAuth'
-import { Link } from 'react-router-dom'
-import { ROUTES } from '@/constants/routes'
 
 // Spring physics for snappy app-like feel
 const springTransition = { type: "spring" as const, stiffness: 400, damping: 30 }
@@ -27,17 +25,131 @@ const itemVariants = {
 } as const
 
 export const ProfilePage = () => {
-  const { user } = useAuth()
+  const { user, updateUserProfile } = useAuth()
   const isProvider = user?.role === 'provider'
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
 
-  // subjectId for demo: students review the mock provider, providers review the mock student
+  // Form states
+  const [name, setName] = useState(user?.name || '')
+  const [bio, setBio] = useState(user?.metadata?.bio || '')
+  const [phone, setPhone] = useState(user?.metadata?.phone || '')
+  const [isSaving, setIsSaving] = useState(false)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+
+  // File input refs
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+
+  // Sync state with user data changes (e.g. initial load)
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '')
+      setBio(user.metadata?.bio || '')
+      setPhone(user.metadata?.phone || '')
+    }
+  }, [user])
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true)
+    setSuccessMsg(null)
+    try {
+      await updateUserProfile({
+        name,
+        metadata: {
+          ...user?.metadata,
+          bio,
+          phone
+        }
+      })
+      
+      const { useUiStore } = await import('@/store/uiStore')
+      useUiStore.getState().addToast('Profile saved successfully!', 'success')
+      setSuccessMsg('Profile updated successfully!')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch (err: any) {
+      console.error('Error saving profile:', err)
+      const { useUiStore } = await import('@/store/uiStore')
+      useUiStore.getState().addToast(err.message || 'Failed to save changes.', 'error')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      const base64String = reader.result as string
+      try {
+        await updateUserProfile({
+          metadata: {
+            ...user?.metadata,
+            avatarUrl: base64String
+          }
+        })
+        const { useUiStore } = await import('@/store/uiStore')
+        useUiStore.getState().addToast('Profile avatar updated!', 'success')
+      } catch (err: any) {
+        console.error('Error updating avatar:', err)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      const base64String = reader.result as string
+      try {
+        await updateUserProfile({
+          metadata: {
+            ...user?.metadata,
+            coverUrl: base64String
+          }
+        })
+        const { useUiStore } = await import('@/store/uiStore')
+        useUiStore.getState().addToast('Cover photo updated!', 'success')
+      } catch (err: any) {
+        console.error('Error updating cover:', err)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const scrollToForm = () => {
+    const element = document.getElementById('profile-form-section')
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  // subjectId for demo reviews
   const reviewSubjectId = isProvider ? 'mock-student' : 'mock-provider'
   const reviewSubjectName = isProvider ? 'HustiQ Student' : 'Third Wave Coffee'
   const reviewSubjectAvatar = isProvider ? 'H' : '☕'
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
+      {/* Hidden file inputs */}
+      <input 
+        type="file" 
+        ref={avatarInputRef} 
+        onChange={handleAvatarChange} 
+        accept="image/*" 
+        className="hidden" 
+      />
+      <input 
+        type="file" 
+        ref={coverInputRef} 
+        onChange={handleCoverChange} 
+        accept="image/*" 
+        className="hidden" 
+      />
       
       {/* 1. Premium Header Section */}
       <motion.section 
@@ -46,17 +158,28 @@ export const ProfilePage = () => {
         transition={springTransition}
         className="relative w-full rounded-3xl bg-card border border-border/50 shadow-soft-lg overflow-hidden"
       >
-        {/* Cover Gradient */}
-        <div className="h-40 sm:h-48 w-full bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10 relative overflow-hidden">
-           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-           {/* Decorative blur orbs */}
-           <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-primary/40 rounded-full blur-[80px]" />
-           <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-accent/40 rounded-full blur-[80px]" />
-           
-           {/* Edit Cover Button */}
-           <button className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background/80 backdrop-blur-md rounded-full text-foreground transition-all shadow-sm">
-             <Camera className="w-4 h-4" />
-           </button>
+        {/* Cover Image/Gradient */}
+        <div 
+          className="h-40 sm:h-48 w-full bg-gradient-to-r from-primary/30 via-accent/20 to-primary/10 relative overflow-hidden bg-cover bg-center"
+          style={user?.metadata?.coverUrl ? { backgroundImage: `url(${user.metadata.coverUrl})` } : undefined}
+        >
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+          {/* Decorative blur orbs */}
+          {!user?.metadata?.coverUrl && (
+            <>
+              <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-primary/40 rounded-full blur-[80px]" />
+              <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-accent/40 rounded-full blur-[80px]" />
+            </>
+          )}
+          
+          {/* Edit Cover Button */}
+          <button 
+            onClick={() => coverInputRef.current?.click()}
+            className="absolute top-4 right-4 p-2 bg-background/50 hover:bg-background/80 backdrop-blur-md rounded-full text-foreground transition-all shadow-sm z-10"
+            title="Upload cover photo"
+          >
+            <Camera className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Profile Identity Area */}
@@ -64,10 +187,20 @@ export const ProfilePage = () => {
           <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8 -mt-16 sm:-mt-20 relative z-10">
             {/* Avatar */}
             <div className="relative group">
-              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-card bg-muted flex items-center justify-center text-4xl sm:text-5xl font-bold text-muted-foreground shadow-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
-                {user?.avatarPlaceholder || 'Z'}
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-card bg-muted flex items-center justify-center shadow-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 shrink-0">
+                {user?.metadata?.avatarUrl ? (
+                  <img src={user.metadata.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl sm:text-5xl font-bold text-muted-foreground">
+                    {user?.avatarPlaceholder || user?.name?.charAt(0).toUpperCase() || 'Z'}
+                  </span>
+                )}
               </div>
-              <button className="absolute bottom-2 right-2 p-2 bg-foreground text-background rounded-full shadow-lg hover:scale-105 transition-transform">
+              <button 
+                onClick={() => avatarInputRef.current?.click()}
+                className="absolute bottom-2 right-2 p-2 bg-foreground text-background rounded-full shadow-lg hover:scale-105 transition-transform"
+                title="Upload profile photo"
+              >
                 <Camera className="w-4 h-4" />
               </button>
             </div>
@@ -106,7 +239,10 @@ export const ProfilePage = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3 pb-2 w-full sm:w-auto">
-              <button className="flex-1 sm:flex-none px-6 py-2.5 bg-foreground text-background font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+              <button 
+                onClick={scrollToForm}
+                className="flex-1 sm:flex-none px-6 py-2.5 bg-foreground text-background font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              >
                 <Edit2 className="w-4 h-4" /> Edit Profile
               </button>
               <button
@@ -127,10 +263,8 @@ export const ProfilePage = () => {
         animate="show"
         className="grid grid-cols-1 lg:grid-cols-3 gap-8"
       >
-        
         {/* Left Column: Stats & Metadata */}
         <div className="lg:col-span-1 space-y-8">
-          
           {/* Role-Based Stats Card */}
           <motion.div variants={itemVariants} className="glass-card p-6 rounded-2xl space-y-6 shadow-soft-lg">
             <h3 className="font-bold text-lg text-foreground flex items-center gap-2 border-b border-border/50 pb-4">
@@ -155,18 +289,12 @@ export const ProfilePage = () => {
                       <Briefcase className="w-3.5 h-3.5 text-primary" /> Hospitality
                     </p>
                   </div>
-                  <Link 
-                    to={ROUTES.WALLET}
-                    className="space-y-1 p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border/50 hover:border-primary/20 transition-all cursor-pointer block group text-left"
-                  >
-                    <p className="text-xs text-muted-foreground font-semibold group-hover:text-primary transition-colors flex justify-between items-center">
-                      <span>Expenses</span>
-                      <span className="opacity-0 group-hover:opacity-100 text-[8px] font-bold transition-opacity text-primary font-sans">&rarr;</span>
-                    </p>
+                  <div className="space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50 text-left">
+                    <p className="text-xs text-muted-foreground font-semibold">Expenses</p>
                     <p className="text-base font-extrabold text-foreground flex items-center gap-1.5 mt-1.5">
-                      <Wallet className="w-3.5 h-3.5 text-emerald-500 group-hover:scale-110 transition-transform" /> ₹82.4K <span className="text-[10px] font-normal text-muted-foreground">spent</span>
+                      <Wallet className="w-3.5 h-3.5 text-emerald-500" /> ₹82.4K <span className="text-[10px] font-normal text-muted-foreground">spent</span>
                     </p>
-                  </Link>
+                  </div>
                 </>
               ) : (
                 <>
@@ -178,18 +306,12 @@ export const ProfilePage = () => {
                     <p className="text-sm text-primary font-medium">Saved Jobs</p>
                     <p className="text-2xl font-bold text-primary">14</p>
                   </div>
-                  <Link 
-                    to={ROUTES.WALLET}
-                    className="col-span-2 space-y-1 p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border/50 hover:border-primary/20 transition-all cursor-pointer block group text-left"
-                  >
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs text-muted-foreground font-semibold group-hover:text-primary transition-colors">Est. Earnings</p>
-                      <span className="text-[9px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity font-sans">View Wallet &rarr;</span>
-                    </div>
+                  <div className="col-span-2 space-y-1 p-4 bg-muted/30 rounded-xl border border-border/50 text-left">
+                    <p className="text-xs text-muted-foreground font-semibold">Est. Earnings</p>
                     <p className="text-xl font-bold text-foreground flex items-center gap-2 mt-1">
-                      <Wallet className="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" /> ₹18,450 <span className="text-sm font-normal text-muted-foreground">overall</span>
+                      <Wallet className="w-5 h-5 text-green-500" /> ₹18,450 <span className="text-sm font-normal text-muted-foreground">overall</span>
                     </p>
-                  </Link>
+                  </div>
                 </>
               )}
             </div>
@@ -232,11 +354,10 @@ export const ProfilePage = () => {
               </div>
             )}
           </motion.div>
-
         </div>
 
         {/* Right Column: Editable Settings */}
-        <div className="lg:col-span-2 space-y-8">
+        <div id="profile-form-section" className="lg:col-span-2 space-y-8">
           <motion.div variants={itemVariants} className="glass-card rounded-2xl shadow-soft-lg overflow-hidden">
             <div className="p-6 sm:p-8 border-b border-border/50 bg-muted/10">
               <h2 className="text-xl font-bold text-foreground">Profile Information</h2>
@@ -244,12 +365,34 @@ export const ProfilePage = () => {
             </div>
             
             <div className="p-6 sm:p-8 space-y-6">
+              {successMsg && (
+                <div className="p-4 bg-primary/10 border border-primary/20 text-primary rounded-2xl text-xs font-semibold leading-relaxed">
+                  {successMsg}
+                </div>
+              )}
+
+              {/* Name Section */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-foreground">Display Name</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  disabled={isSaving}
+                />
+              </div>
+
               {/* Bio Section */}
               <div className="space-y-2">
                 <label className="text-sm font-bold text-foreground">{isProvider ? 'Business Description' : 'About Me'}</label>
                 <textarea 
-                  className="w-full h-32 bg-background border border-border rounded-xl p-4 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none leading-relaxed"
+                  className="w-full h-32 bg-background border border-border rounded-xl p-4 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none leading-relaxed font-medium text-sm"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
                   placeholder={isProvider ? "Describe your business, culture, and what kind of students you're looking for..." : "Write a short bio about yourself, your studies, and the types of gigs you prefer..."}
+                  disabled={isSaving}
                 />
               </div>
 
@@ -261,9 +404,9 @@ export const ProfilePage = () => {
                   </label>
                   <input 
                     type="email" 
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    defaultValue={user?.email || ''}
-                    placeholder="Enter your email address"
+                    className="w-full bg-muted/20 border border-border/80 rounded-xl px-4 py-3 text-foreground/60 cursor-not-allowed font-semibold text-sm"
+                    value={user?.email || ''}
+                    disabled
                   />
                 </div>
                 <div className="space-y-2">
@@ -272,19 +415,30 @@ export const ProfilePage = () => {
                   </label>
                   <input 
                     type="tel" 
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-sm"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 XXXXXXXXXX"
+                    disabled={isSaving}
                   />
                 </div>
               </div>
 
               {/* Save Actions */}
               <div className="pt-6 mt-6 border-t border-border/50 flex items-center justify-end gap-4">
-                <button className="px-6 py-2.5 font-bold text-muted-foreground hover:text-foreground transition-colors">
+                <button 
+                  onClick={() => user && (setName(user.name || ''), setBio(user.metadata?.bio || ''), setPhone(user.metadata?.phone || ''))}
+                  className="px-6 py-2.5 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm focus:outline-none"
+                  disabled={isSaving}
+                >
                   Cancel
                 </button>
-                <button className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
-                  Save Changes
+                <button 
+                  onClick={handleSaveChanges}
+                  className="px-6 py-2.5 bg-primary text-primary-foreground font-black text-sm rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:active:scale-100"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
@@ -299,7 +453,6 @@ export const ProfilePage = () => {
             />
           </motion.div>
         </div>
-
       </motion.div>
 
       {/* Review Modal */}

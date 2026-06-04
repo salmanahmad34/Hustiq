@@ -73,6 +73,29 @@ export const useMessages = create<MessagesState>()(
             }))
             // Refresh conversation list after sending
             get().fetchConversations(message.sender_id)
+
+            // Notify the recipient in Supabase in the background
+            try {
+              const { useAuth } = await import('@/store/useAuth')
+              const sender = useAuth.getState().user
+              const senderRole = sender?.role
+              const recipientRole = senderRole === 'provider' ? 'student' : 'provider'
+              const senderName = sender?.name || 'Someone'
+
+              const { useNotifications } = await import('@/store/useNotifications')
+              await useNotifications.getState().addNotification({
+                title: `New message from ${senderName}`,
+                message: message.content.length > 60 ? `${message.content.substring(0, 60)}...` : message.content,
+                type: 'new_message',
+                isPriority: false,
+                category: 'today',
+                role: recipientRole,
+                actionPath: '/messages',
+                actionText: 'Chat Now'
+              }, message.recipient_id)
+            } catch (notifErr) {
+              console.warn('Failed to send message notification:', notifErr)
+            }
           }
           return result
         } catch (err: any) {

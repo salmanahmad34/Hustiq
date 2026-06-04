@@ -143,6 +143,29 @@ export const signUpUser = async (
 }
 
 /**
+ * Verify user email via OTP code (sent during signup)
+ * @param email - User email
+ * @param token - 6-digit OTP code
+ */
+export const verifyEmailOtp = async (email: string, token: string) => {
+  verifySupabaseConfiguration()
+
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup'
+    })
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Error verifying email OTP:', error)
+    throw error
+  }
+}
+
+/**
  * Sign in with email and password
  * @param email - User email
  * @param password - User password
