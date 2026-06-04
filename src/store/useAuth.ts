@@ -22,15 +22,17 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   isRecovering: boolean
+  isSplashActive: boolean
   error: string | null
 
   // Actions
-  login: (email: string, password?: string, role?: 'student' | 'provider') => Promise<void>
+  login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string, role: 'student' | 'provider') => Promise<void>
   logout: () => Promise<void>
   recoverUserSession: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateUserProfile: (updates: Partial<Profile>) => Promise<void>
+  setSplashActive: (active: boolean) => void
   clearError: () => void
   setError: (error: string | null) => void
 }
@@ -47,35 +49,15 @@ export const useAuth = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       isRecovering: true,
+      isSplashActive: false,
       error: null,
 
       // ============================================
       // LOGIN ACTION
       // ============================================
-      login: async (email: string, password?: string, mockRole?: 'student' | 'provider') => {
+      login: async (email: string, password: string) => {
         set({ isLoading: true, error: null })
         try {
-          // If no password is provided, handle as mock login with valid UUID to prevent db errors
-          if (!password) {
-            await new Promise(resolve => setTimeout(resolve, 600))
-            const mockId = mockRole === 'provider' 
-              ? '00000000-0000-0000-0000-000000000002' 
-              : '00000000-0000-0000-0000-000000000001'
-            set({
-              isAuthenticated: true,
-              user: {
-                id: mockId,
-                email: email || 'demo@hustiq.com',
-                role: mockRole || 'student',
-                name: mockRole === 'provider' ? 'Third Wave Coffee' : 'Demo Student',
-                onboarding_completed: true,
-                metadata: {}
-              },
-              error: null
-            })
-            return
-          }
-
           // Real Supabase Login
           const data = await signInUser(email, password)
           if (!data || !data.user) throw new Error('No user data returned from Supabase')
@@ -87,6 +69,7 @@ export const useAuth = create<AuthState>()(
           set({
             isAuthenticated: true,
             user: userSession,
+            isSplashActive: true,
             error: null
           })
         } catch (err: any) {
@@ -94,6 +77,7 @@ export const useAuth = create<AuthState>()(
           set({
             isAuthenticated: false,
             user: null,
+            isSplashActive: false,
             error: errorMessage
           })
           throw err
@@ -123,6 +107,7 @@ export const useAuth = create<AuthState>()(
               onboarding_completed: false,
               metadata: {}
             },
+            isSplashActive: true,
             error: null
           })
         } catch (err: any) {
@@ -130,6 +115,7 @@ export const useAuth = create<AuthState>()(
           set({
             isAuthenticated: false,
             user: null,
+            isSplashActive: false,
             error: errorMessage
           })
           throw err
@@ -256,6 +242,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // ERROR MANAGEMENT ACTIONS
       // ============================================
+      setSplashActive: (active: boolean) => set({ isSplashActive: active }),
       clearError: () => set({ error: null }),
       setError: (error: string | null) => set({ error })
     }),

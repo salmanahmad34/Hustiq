@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/store/useAuth'
@@ -9,9 +8,8 @@ import { trackSignupStarted, trackSignupCompleted } from '@/services/analytics'
 import { SplashScreen } from '@/components/shared/SplashScreen'
 
 export const SignupPage = () => {
-  const { signup, isLoading, error, clearError } = useAuth()
+  const { signup, isLoading, error, clearError, isSplashActive, setSplashActive } = useAuth()
   const navigate = useNavigate()
-  const [showSplash, setShowSplash] = useState(false)
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -58,23 +56,8 @@ export const SignupPage = () => {
     try {
       await signup(email, password, name, role)
       trackSignupCompleted(`usr-${Date.now()}`, role, name)
-      setShowSplash(true)
     } catch (err: any) {
       // Handled by store/errors
-    }
-  }
-
-  const handleMockSignup = async (selectedRole: 'student' | 'provider') => {
-    if (isLoading) return
-    setFormError(null)
-    clearError()
-    try {
-      const mockName = selectedRole === 'student' ? 'HustiQ Student' : 'HustiQ Provider'
-      await signup(`${selectedRole}@hustiq.com`, undefined, mockName, selectedRole)
-      trackSignupCompleted(`usr-mock-${Date.now()}`, selectedRole, mockName)
-      setShowSplash(true)
-    } catch (err) {
-      console.error('Mock signup failed:', err)
     }
   }
 
@@ -196,35 +179,6 @@ export const SignupPage = () => {
         </button>
       </form>
 
-      {/* Divider */}
-      <div className="relative flex py-2 items-center">
-        <div className="flex-grow border-t border-border/40"></div>
-        <span className="flex-shrink mx-4 text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60 select-none">
-          Demo Bypass Registrations
-        </span>
-        <div className="flex-grow border-t border-border/40"></div>
-      </div>
-
-      {/* Mock Fast Registrations */}
-      <div className="grid grid-cols-2 gap-3 shrink-0">
-        <button
-          type="button"
-          onClick={() => handleMockSignup('student')}
-          className="h-12 bg-muted/30 hover:bg-primary/5 hover:text-primary hover:border-primary/20 text-foreground rounded-2xl font-bold flex items-center justify-center gap-1.5 border border-border/40 text-xs transition-all active:scale-95"
-          disabled={isLoading}
-        >
-          <User className="w-4 h-4 shrink-0" /> Student
-        </button>
-        <button
-          type="button"
-          onClick={() => handleMockSignup('provider')}
-          className="h-12 bg-muted/30 hover:bg-primary/5 hover:text-primary hover:border-primary/20 text-foreground rounded-2xl font-bold flex items-center justify-center gap-1.5 border border-border/40 text-xs transition-all active:scale-95"
-          disabled={isLoading}
-        >
-          <Briefcase className="w-4 h-4 shrink-0" /> Provider
-        </button>
-      </div>
-
       <p className="text-center text-xs text-muted-foreground font-semibold mt-4">
         Already have an account?{' '}
         <Link to={ROUTES.LOGIN} className="font-extrabold text-primary hover:underline">
@@ -232,11 +186,14 @@ export const SignupPage = () => {
         </Link>
       </p>
 
-      {showSplash && (
-        <SplashScreen onComplete={() => navigate(ROUTES.DASHBOARD)} />
+      {isSplashActive && (
+        <SplashScreen 
+          onComplete={() => {
+            setSplashActive(false)
+            navigate(ROUTES.DASHBOARD)
+          }} 
+        />
       )}
     </div>
   )
 }
-
-

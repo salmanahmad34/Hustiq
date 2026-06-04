@@ -11,6 +11,10 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [phase, setPhase] = useState<'draw' | 'slide' | 'fadeout'>('draw')
 
   useEffect(() => {
+    console.log('Splash mounted')
+  }, [])
+
+  useEffect(() => {
     // 1. Draw logo initially, then transition to sliding logo + showing text
     const slideTimer = setTimeout(() => {
       setPhase('slide')
@@ -23,6 +27,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
 
     // 3. Complete and unmount, triggering dashboard navigation
     const completeTimer = setTimeout(() => {
+      console.log('Splash finished')
       onComplete()
     }, 3000)
 
