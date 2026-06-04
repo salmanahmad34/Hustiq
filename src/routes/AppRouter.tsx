@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { createHashRouter, RouterProvider, Navigate, useLocation, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { LogoLoader } from '@/components/shared/LogoLoader'
 
@@ -92,7 +92,7 @@ const RouteDiagnostic = () => {
   return <Outlet />
 }
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <RouteDiagnostic />,
@@ -182,6 +182,14 @@ const router = createHashRouter([
       },
       {
         path: '/auth/callback',
+        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+      },
+      {
+        path: '/deshboard',
+        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+      },
+      {
+        path: '/Deshboard',
         element: <Navigate to={ROUTES.DASHBOARD} replace />,
       },
       {
