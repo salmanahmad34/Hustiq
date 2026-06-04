@@ -5,7 +5,7 @@ import { ChatArea, type Conversation } from '@/components/dashboard/ChatArea'
 import { cn } from '@/lib/utils'
 import { useMessages } from '@/store/useMessagesStore'
 import { useAuth } from '@/store/useAuth'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured } from '@/services/supabase/auth'
 
 const MOCK_CONVERSATIONS: Conversation[] = [
@@ -59,6 +59,8 @@ const MOCK_CONVERSATIONS: Conversation[] = [
 export const MessagesPage = () => {
   const [searchParams] = useSearchParams()
   const recipientParam = searchParams.get('recipientId')
+  const { chatId } = useParams()
+  const navigate = useNavigate()
 
   const { user } = useAuth()
   const {
@@ -72,7 +74,7 @@ export const MessagesPage = () => {
     setActiveRecipientId
   } = useMessages()
 
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const activeId = chatId || null
   const [isMobile, setIsMobile] = useState(false)
 
   // Listen for window resize
@@ -94,15 +96,17 @@ export const MessagesPage = () => {
     }
   }, [user?.id, fetchConversations, subscribeToMessages, unsubscribeFromMessages])
 
-  // Set recipient active status when URL search parameters or user clicks load it
+  // Redirect recipientParam to route-based chatId if present
   useEffect(() => {
     if (recipientParam) {
-      setActiveId(recipientParam)
-      setActiveRecipientId(recipientParam)
-    } else {
-      setActiveRecipientId(activeId)
+      navigate(`/messages/${recipientParam}`, { replace: true })
     }
-  }, [recipientParam, activeId, setActiveRecipientId])
+  }, [recipientParam, navigate])
+
+  // Set recipient active status when activeId changes
+  useEffect(() => {
+    setActiveRecipientId(activeId)
+  }, [activeId, setActiveRecipientId])
 
   // Fetch individual conversation history when activeId changes
   useEffect(() => {
@@ -265,7 +269,12 @@ export const MessagesPage = () => {
   const showChat = !isMobile || (isMobile && activeId)
 
   return (
-    <div className="flex h-[calc(100vh-56px-68px-env(safe-area-inset-bottom))] md:h-full w-full overflow-hidden bg-background fixed md:absolute top-14 md:top-0 bottom-[calc(68px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-30 md:z-auto">
+    <div className={cn(
+      "flex w-full overflow-hidden bg-background md:h-full md:absolute md:top-0 md:bottom-0 md:z-auto left-0 right-0",
+      activeId 
+        ? "fixed top-0 bottom-0 h-[100dvh] z-50"
+        : "fixed top-14 bottom-[calc(68px+env(safe-area-inset-bottom))] h-[calc(100vh-56px-68px-env(safe-area-inset-bottom))] z-30"
+    )}>
       
       {/* Sidebar (Conversations List) */}
       {showSidebar && (
@@ -289,7 +298,7 @@ export const MessagesPage = () => {
                 return (
                   <button
                     key={conv.id}
-                    onClick={() => setActiveId(conv.id)}
+                    onClick={() => navigate(`/messages/${conv.id}`)}
                     className={cn(
                       "flex items-start gap-4 p-4 sm:p-5 w-full text-left transition-all border-b border-border/20 last:border-0 relative group",
                       isActive 
@@ -354,7 +363,7 @@ export const MessagesPage = () => {
         <div className="flex-1 h-full w-full absolute md:relative inset-0 z-20 md:z-auto bg-background">
           <ChatArea 
             conversation={activeConversation} 
-            onBack={() => setActiveId(null)} 
+            onBack={() => navigate('/messages')} 
             onSendMessage={handleSendMessage}
           />
         </div>

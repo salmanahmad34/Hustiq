@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Send, MoreVertical, Image as ImageIcon, Briefcase } from 'lucide-react'
+import { ArrowLeft, Send, MoreVertical, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface Message {
@@ -69,8 +69,8 @@ export const ChatArea = ({ conversation, onBack, onSendMessage }: ChatAreaProps)
     <div className="h-full flex flex-col bg-background md:border-l border-border/40 overflow-hidden relative">
       
       {/* Chat Header */}
-      <div className="h-[76px] shrink-0 border-b border-border/40 flex items-center justify-between px-4 sm:px-6 bg-card/50 backdrop-blur-md z-10">
-        <div className="flex items-center gap-4">
+      <div className="min-h-[76px] pt-[env(safe-area-inset-top)] pb-2 shrink-0 border-b border-border/40 flex items-center justify-between px-4 sm:px-6 bg-card/50 backdrop-blur-md z-10">
+        <div className="flex items-center gap-3">
           <button 
             onClick={onBack}
             className="md:hidden w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors -ml-2"
@@ -78,21 +78,30 @@ export const ChatArea = ({ conversation, onBack, onSendMessage }: ChatAreaProps)
             <ArrowLeft className="w-5 h-5" />
           </button>
           
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center text-xl border border-border/50 shadow-sm shrink-0">
+          <div className="relative shrink-0">
+            <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center text-lg border border-border/50 shadow-sm">
               {conversation.providerAvatar}
             </div>
             {conversation.isOnline && (
-              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
             )}
           </div>
           
-          <div className="flex flex-col">
+          <div className="flex flex-col text-left">
             <h3 className="font-bold text-foreground leading-tight">{conversation.providerName}</h3>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground/80 mt-0.5">
-              <Briefcase className="w-3 h-3" />
-              {conversation.jobTitle} • <span className="text-primary">{conversation.jobStatus}</span>
-            </div>
+            <span className="text-[11px] font-medium text-muted-foreground mt-0.5 flex items-center gap-1">
+              {conversation.isOnline ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                  Online
+                </>
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 inline-block" />
+                  Offline
+                </>
+              )}
+            </span>
           </div>
         </div>
         
@@ -145,7 +154,7 @@ export const ChatArea = ({ conversation, onBack, onSendMessage }: ChatAreaProps)
       </div>
 
       {/* Composer Input Bar */}
-      <div className="p-4 sm:p-6 bg-background border-t border-border/40 shrink-0">
+      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 bg-background border-t border-border/40 shrink-0">
         <div className="relative flex items-center">
           <button className="absolute left-3 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors z-10">
             <ImageIcon className="w-4 h-4" />

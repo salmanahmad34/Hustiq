@@ -149,6 +149,18 @@ const router = createBrowserRouter([
                 element: withSuspense(MessagesPage),
               },
               {
+                path: `${ROUTES.MESSAGES}/:chatId`,
+                element: withSuspense(MessagesPage),
+              },
+              {
+                path: '/chat/:chatId',
+                element: withSuspense(MessagesPage),
+              },
+              {
+                path: '/conversation/:chatId',
+                element: withSuspense(MessagesPage),
+              },
+              {
                 path: ROUTES.PROFILE,
                 element: withSuspense(ProfilePage),
               },
