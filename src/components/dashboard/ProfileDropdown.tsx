@@ -50,8 +50,8 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
           onClick={() => setIsOpen(!isOpen)}
           className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center transition-transform active:scale-95 border border-primary/20 overflow-hidden"
         >
-          {user?.metadata?.avatarUrl ? (
-            <img src={user.metadata.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          {(user?.avatar_url || user?.metadata?.avatarUrl) ? (
+            <img src={user.avatar_url || user.metadata?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
             <User className="h-4 w-4 text-primary" />
           )}
@@ -67,7 +67,7 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
               className="absolute right-0 top-12 w-56 bg-card border border-border/50 rounded-2xl shadow-xl overflow-hidden z-50 flex flex-col"
             >
               <div className="p-4 border-b border-border/30 bg-muted/20 flex flex-col gap-1">
-                <p className="font-bold text-foreground text-sm leading-tight">{user?.name || 'Zivaro User'}</p>
+                <p className="font-bold text-foreground text-sm leading-tight">{user?.full_name || user?.name || 'Zivaro User'}</p>
                 <p className="text-xs text-muted-foreground truncate leading-tight mb-1">{user?.email || 'user@zivaro.com'}</p>
                 <div className="inline-flex max-w-fit">
                   <span className="text-[10px] uppercase font-bold tracking-widest bg-primary/10 text-primary px-2 py-0.5 rounded-sm">
@@ -146,14 +146,14 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shrink-0 mr-3 overflow-hidden">
-          {user?.metadata?.avatarUrl ? (
-            <img src={user.metadata.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          {(user?.avatar_url || user?.metadata?.avatarUrl) ? (
+            <img src={user.avatar_url || user.metadata?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            user?.avatarPlaceholder || user?.name?.charAt(0).toUpperCase() || 'Z'
+            user?.avatarPlaceholder || (user?.full_name || user?.name)?.charAt(0).toUpperCase() || 'Z'
           )}
         </div>
         <div className="flex flex-col flex-1 min-w-0 text-left">
-          <span className="text-sm font-bold text-foreground leading-tight truncate">{user?.name || 'Zivaro User'}</span>
+          <span className="text-sm font-bold text-foreground leading-tight truncate">{user?.full_name || user?.name || 'Zivaro User'}</span>
           <span className="text-[10px] uppercase tracking-wider font-bold text-primary mt-0.5 truncate">
             {user?.role || 'Student'}
           </span>

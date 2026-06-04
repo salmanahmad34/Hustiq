@@ -76,13 +76,69 @@ export const updateProfile = async (
   if (!isSupabaseConfigured()) return null
 
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .upsert({ id: userId, ...updates })
-      .select()
-      .single()
+    console.log('[auth.ts] updateProfile request received:', {
+      auth_user_id: userId,
+      profile_id: userId
+    })
 
-    if (error) throw error
+    // Check if profile exists using a SELECT query
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('[auth.ts] Error checking profile existence:', checkError)
+      throw checkError
+    }
+
+    let data: any
+    let error: any
+
+    if (existingProfile) {
+      // Perform UPDATE
+      const updatePayload = { ...updates }
+      console.log('[auth.ts] Profile exists. Executing UPDATE:', {
+        auth_user_id: userId,
+        profile_id: userId,
+        update_payload: updatePayload
+      })
+
+      const res = await supabase
+        .from('profiles')
+        .update(updatePayload)
+        .eq('id', userId)
+        .select()
+        .single()
+      
+      data = res.data
+      error = res.error
+    } else {
+      // Perform INSERT
+      const insertPayload = { id: userId, ...updates }
+      console.log('[auth.ts] Profile does not exist. Executing INSERT:', {
+        auth_user_id: userId,
+        profile_id: userId,
+        insert_payload: insertPayload
+      })
+
+      const res = await supabase
+        .from('profiles')
+        .insert(insertPayload)
+        .select()
+        .single()
+      
+      data = res.data
+      error = res.error
+    }
+
+    if (error) {
+      console.error('[auth.ts] Error saving profile in database:', error)
+      throw error
+    }
+
+    console.log('[auth.ts] Profile successfully saved:', data)
     return data as SupabaseProfile
   } catch (error) {
     console.error('Error updating profile:', error)
@@ -308,16 +364,29 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       const currentUser = await getCurrentUser()
       const metadata = currentUser?.user_metadata || {}
       const fallbackName = metadata.name || metadata.full_name || email.split('@')[0]
+      const fallbackBio = metadata.bio || ''
+      const fallbackPhone = metadata.phone || ''
+      const fallbackAvatar = metadata.avatar_url || metadata.avatarUrl || ''
       
       // Try to create the profile row automatically
       const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
         .insert({
           id: userId,
-          role: metadata.role || 'student', // use metadata role or default
+          email,
+          full_name: fallbackName,
           name: fallbackName,
+          role: metadata.role || 'student', // use metadata role or default
+          avatar_url: fallbackAvatar,
+          bio: fallbackBio,
+          phone: fallbackPhone,
           onboarding_completed: metadata.onboarding_completed || false,
-          metadata: metadata
+          metadata: {
+            ...metadata,
+            bio: fallbackBio,
+            phone: fallbackPhone,
+            avatarUrl: fallbackAvatar
+          }
         })
         .select()
         .single()
@@ -329,9 +398,18 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
           id: userId,
           email,
           role: metadata.role || 'student',
+          full_name: fallbackName,
           name: fallbackName,
+          avatar_url: fallbackAvatar,
+          bio: fallbackBio,
+          phone: fallbackPhone,
           onboarding_completed: metadata.onboarding_completed || false,
-          metadata: metadata
+          metadata: {
+            ...metadata,
+            bio: fallbackBio,
+            phone: fallbackPhone,
+            avatarUrl: fallbackAvatar
+          }
         }
       }
       
@@ -340,9 +418,18 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         id: userId,
         email,
         role: newProfile.role,
-        name: newProfile.name || email.split('@')[0],
+        full_name: newProfile.full_name || newProfile.name || fallbackName,
+        name: newProfile.full_name || newProfile.name || fallbackName,
+        avatar_url: newProfile.avatar_url || fallbackAvatar,
+        bio: newProfile.bio || fallbackBio,
+        phone: newProfile.phone || fallbackPhone,
         onboarding_completed: newProfile.onboarding_completed,
-        metadata: newProfile.metadata
+        metadata: {
+          ...newProfile.metadata,
+          bio: newProfile.bio || fallbackBio,
+          phone: newProfile.phone || fallbackPhone,
+          avatarUrl: newProfile.avatar_url || fallbackAvatar
+        }
       }
     }
 
@@ -350,9 +437,18 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       id: userId,
       email,
       role: profile.role,
-      name: profile.name || email.split('@')[0],
+      full_name: profile.full_name || profile.name || email.split('@')[0],
+      name: profile.full_name || profile.name || email.split('@')[0],
+      avatar_url: profile.avatar_url || profile.metadata?.avatarUrl || '',
+      bio: profile.bio || profile.metadata?.bio || '',
+      phone: profile.phone || profile.metadata?.phone || '',
       onboarding_completed: profile.onboarding_completed,
-      metadata: profile.metadata
+      metadata: {
+        ...profile.metadata,
+        bio: profile.bio || profile.metadata?.bio || '',
+        phone: profile.phone || profile.metadata?.phone || '',
+        avatarUrl: profile.avatar_url || profile.metadata?.avatarUrl || '',
+      }
     }
     console.log('[auth.ts] buildUserSession success:', session)
     return session

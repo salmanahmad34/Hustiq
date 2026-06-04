@@ -28,9 +28,9 @@ export const ProfilePage = () => {
   const isProvider = user?.role === 'provider'
 
   // Form states
-  const [name, setName] = useState(user?.name || '')
-  const [bio, setBio] = useState(user?.metadata?.bio || '')
-  const [phone, setPhone] = useState(user?.metadata?.phone || '')
+  const [fullName, setFullName] = useState(user?.full_name || user?.name || '')
+  const [bio, setBio] = useState(user?.bio || user?.metadata?.bio || '')
+  const [phone, setPhone] = useState(user?.phone || user?.metadata?.phone || '')
   const [isSaving, setIsSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
@@ -41,9 +41,9 @@ export const ProfilePage = () => {
   // Sync state with user data changes (e.g. initial load)
   useEffect(() => {
     if (user) {
-      setName(user.name || '')
-      setBio(user.metadata?.bio || '')
-      setPhone(user.metadata?.phone || '')
+      setFullName(user.full_name || user.name || '')
+      setBio(user.bio || user.metadata?.bio || '')
+      setPhone(user.phone || user.metadata?.phone || '')
     }
   }, [user])
 
@@ -52,12 +52,10 @@ export const ProfilePage = () => {
     setSuccessMsg(null)
     try {
       await updateUserProfile({
-        name,
-        metadata: {
-          ...user?.metadata,
-          bio,
-          phone
-        }
+        full_name: fullName,
+        name: fullName,
+        bio,
+        phone
       })
       
       const { useUiStore } = await import('@/store/uiStore')
@@ -82,6 +80,7 @@ export const ProfilePage = () => {
       const base64String = reader.result as string
       try {
         await updateUserProfile({
+          avatar_url: base64String,
           metadata: {
             ...user?.metadata,
             avatarUrl: base64String
@@ -183,11 +182,11 @@ export const ProfilePage = () => {
             {/* Avatar */}
             <div className="relative group">
               <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-card bg-muted flex items-center justify-center shadow-xl overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 shrink-0">
-                {user?.metadata?.avatarUrl ? (
-                  <img src={user.metadata.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                {(user?.avatar_url || user?.metadata?.avatarUrl) ? (
+                  <img src={user.avatar_url || user.metadata?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-4xl sm:text-5xl font-bold text-muted-foreground">
-                    {user?.avatarPlaceholder || user?.name?.charAt(0).toUpperCase() || 'Z'}
+                    {user?.avatarPlaceholder || (user?.full_name || user?.name)?.charAt(0).toUpperCase() || 'Z'}
                   </span>
                 )}
               </div>
@@ -204,7 +203,7 @@ export const ProfilePage = () => {
             <div className="flex-1 space-y-2 pb-2">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                  {user?.name || 'HustiQ User'}
+                  {user?.full_name || user?.name || 'HustiQ User'}
                   <BadgeCheck className="w-6 h-6 text-primary" />
                 </h1>
               </div>
@@ -366,8 +365,8 @@ export const ProfilePage = () => {
                 <input 
                   type="text" 
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder="Enter your name"
                   disabled={isSaving}
                 />
@@ -416,7 +415,7 @@ export const ProfilePage = () => {
               {/* Save Actions */}
               <div className="pt-6 mt-6 border-t border-border/50 flex items-center justify-end gap-4">
                 <button 
-                  onClick={() => user && (setName(user.name || ''), setBio(user.metadata?.bio || ''), setPhone(user.metadata?.phone || ''))}
+                  onClick={() => user && (setFullName(user.full_name || user.name || ''), setBio(user.bio || user.metadata?.bio || ''), setPhone(user.phone || user.metadata?.phone || ''))}
                   className="px-6 py-2.5 font-bold text-muted-foreground hover:text-foreground transition-colors text-sm focus:outline-none"
                   disabled={isSaving}
                 >

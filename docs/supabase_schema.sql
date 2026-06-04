@@ -10,7 +10,11 @@ create table if not exists public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
   email text,
   role text check (role in ('student', 'provider')) not null default 'student',
-  name text,
+  full_name text,
+  name text, -- Kept for backward compatibility
+  avatar_url text,
+  bio text,
+  phone text,
   onboarding_completed boolean default false,
   metadata jsonb default '{}'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -21,14 +25,9 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 -- RLS Policies for Profiles
-create policy "Profiles are viewable by authenticated users." 
-  on public.profiles for select using (auth.role() = 'authenticated');
-
-create policy "Users can update their own profile." 
-  on public.profiles for update using (auth.uid() = id);
-
-create policy "Users can insert their own profile." 
-  on public.profiles for insert with check (auth.uid() = id);
+create policy "SELECT" on public.profiles for select using (auth.uid() = id);
+create policy "INSERT" on public.profiles for insert with check (auth.uid() = id);
+create policy "UPDATE" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- 2. JOBS TABLE (Hustle Opportunities)
 create table if not exists public.jobs (
@@ -186,15 +185,25 @@ create policy "Any authenticated user can insert notifications."
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, name, role, onboarding_completed, metadata)
+  insert into public.profiles (id, email, full_name, name, role, onboarding_completed, avatar_url, bio, phone, metadata)
   values (
     new.id,
     new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', ''),
     coalesce(new.raw_user_meta_data->>'name', ''),
     coalesce(new.raw_user_meta_data->>'role', 'student'),
     coalesce((new.raw_user_meta_data->>'onboarding_completed')::boolean, false),
+    coalesce(new.raw_user_meta_data->>'avatar_url', ''),
+    coalesce(new.raw_user_meta_data->>'bio', ''),
+    coalesce(new.raw_user_meta_data->>'phone', ''),
     coalesce(new.raw_user_meta_data->'metadata', '{}'::jsonb)
-  );
+  )
+  on conflict (id) do update
+  set 
+    email = excluded.email,
+    full_name = excluded.full_name,
+    role = excluded.role,
+    avatar_url = excluded.avatar_url;
   return new;
 end;
 $$ language plpgsql security definer;

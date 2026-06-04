@@ -8,16 +8,26 @@
 // ============================================
 export interface Profile {
   id: string
+  email?: string
+  full_name?: string
+  name?: string
   role: 'student' | 'provider'
-  name: string
+  avatar_url?: string
+  bio?: string
+  phone?: string
   onboarding_completed: boolean
   metadata: Record<string, any>
   created_at: string
 }
 
 export interface ProfileUpdate {
+  email?: string
+  full_name?: string
   name?: string
   role?: 'student' | 'provider'
+  avatar_url?: string
+  bio?: string
+  phone?: string
   onboarding_completed?: boolean
   metadata?: Record<string, any>
 }
@@ -227,8 +237,12 @@ export interface ReviewWithProfiles extends Review {
 export interface UserSession {
   id: string
   email: string
+  full_name?: string
+  name?: string
   role: 'student' | 'provider'
-  name: string
+  avatar_url?: string
+  bio?: string
+  phone?: string
   onboarding_completed: boolean
   metadata?: Record<string, any>
   avatarPlaceholder?: string

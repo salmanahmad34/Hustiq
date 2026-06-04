@@ -9,24 +9,39 @@ export type Database = {
       profiles: {
         Row: {
           id: string
-          role: 'student' | 'provider'
+          email: string | null
+          full_name: string | null
           name: string | null
+          role: 'student' | 'provider'
+          avatar_url: string | null
+          bio: string | null
+          phone: string | null
           onboarding_completed: boolean
           metadata: Record<string, any> | null
           created_at: string
         }
         Insert: {
           id: string
-          role?: 'student' | 'provider'
+          email?: string | null
+          full_name?: string | null
           name?: string | null
+          role?: 'student' | 'provider'
+          avatar_url?: string | null
+          bio?: string | null
+          phone?: string | null
           onboarding_completed?: boolean
           metadata?: Record<string, any> | null
           created_at?: string
         }
         Update: {
           id?: string
-          role?: 'student' | 'provider'
+          email?: string | null
+          full_name?: string | null
           name?: string | null
+          role?: 'student' | 'provider'
+          avatar_url?: string | null
+          bio?: string | null
+          phone?: string | null
           onboarding_completed?: boolean
           metadata?: Record<string, any> | null
           created_at?: string
