@@ -19,15 +19,15 @@ export const LogoLoader = ({ text = 'Loading Workspace...' }: LogoLoaderProps) =
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute inset-0 rounded-full blur-2xl bg-primary/20 pointer-events-none w-28 h-28 -m-8"
+          className="absolute inset-0 rounded-full blur-xl bg-primary/20 pointer-events-none w-20 h-20 -m-5"
         />
 
         {/* HustiQ Logo SVG with smooth pulse */}
         <motion.svg
           viewBox="0 0 32 32"
-          className="w-14 h-14 stroke-foreground select-none pointer-events-none drop-shadow-[0_0_10px_rgba(var(--primary),0.1)]"
+          className="w-10 h-10 stroke-foreground select-none pointer-events-none drop-shadow-[0_0_8px_rgba(var(--primary),0.1)]"
           fill="none"
-          strokeWidth={2.8}
+          strokeWidth={3}
           animate={{
             scale: [1, 1.04, 1],
           }}
