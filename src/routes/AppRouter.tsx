@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { createHashRouter, RouterProvider, Navigate, useLocation, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 
 // Layouts
@@ -92,7 +92,7 @@ const RouteDiagnostic = () => {
   return <Outlet />
 }
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <RouteDiagnostic />,

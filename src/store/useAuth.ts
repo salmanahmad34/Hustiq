@@ -209,20 +209,28 @@ export const useAuth = create<AuthState>()(
             }
           }
 
-          // Fallback to Zustand persisted local state
-          const state = get()
-          if (state.user) {
-            set({ isAuthenticated: true })
-          } else {
-            set({ isAuthenticated: false })
-          }
-        } catch (err: any) {
-          logger.error('Session recovery error:', err)
+          // If no session is found, clear state to prevent stale login loops
           set({
             isAuthenticated: false,
             user: null,
+            hasShownSplash: false,
             error: null
           })
+        } catch (err: any) {
+          logger.error('Session recovery error (e.g. stale refresh token or network error):', err)
+          // Explicitly clear auth states to prevent half-logged in loops
+          set({
+            isAuthenticated: false,
+            user: null,
+            hasShownSplash: false,
+            error: null
+          })
+          try {
+            // Also call signOutUser to clear client-side token storage in Supabase
+            await signOutUser()
+          } catch (signOutErr) {
+            console.warn('Sign out during session recovery failure failed silently:', signOutErr)
+          }
         } finally {
           set({ isRecovering: false })
         }

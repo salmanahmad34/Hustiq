@@ -264,7 +264,7 @@ export const recoverSession = async () => {
     return data.session
   } catch (error) {
     console.error('Error recovering session:', error)
-    return null
+    throw error
   }
 }
 
