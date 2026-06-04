@@ -3,13 +3,13 @@ import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/store/useAuth'
 
 export const PublicRoute = () => {
-  const { isAuthenticated, isRecovering, isSplashActive } = useAuth()
+  const { isAuthenticated, isRecovering, hasShownSplash } = useAuth()
   const location = useLocation()
 
   console.log('auth state', {
     isAuthenticated,
     isRecovering,
-    isSplashActive,
+    hasShownSplash,
     pathname: location.pathname
   })
 
@@ -25,9 +25,13 @@ export const PublicRoute = () => {
     return <Outlet />
   }
 
-  // Redirect authenticated users to dashboard if splash is not active
-  if (isAuthenticated && !isSplashActive) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />
+  // Redirect authenticated users to splash or dashboard
+  if (isAuthenticated) {
+    if (!hasShownSplash) {
+      return <Navigate to={ROUTES.SPLASH} replace />
+    } else {
+      return <Navigate to={ROUTES.DASHBOARD} replace />
+    }
   }
 
   return <Outlet />

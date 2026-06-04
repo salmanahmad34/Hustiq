@@ -5,10 +5,9 @@ import { ROUTES } from '@/constants/routes'
 import { User, Briefcase, Mail, Lock, Eye, EyeOff, Loader2, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { trackSignupStarted, trackSignupCompleted } from '@/services/analytics'
-import { SplashScreen } from '@/components/shared/SplashScreen'
 
 export const SignupPage = () => {
-  const { signup, isLoading, error, clearError, isSplashActive, setSplashActive } = useAuth()
+  const { signup, isLoading, error, clearError } = useAuth()
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
@@ -56,6 +55,7 @@ export const SignupPage = () => {
     try {
       await signup(email, password, name, role)
       trackSignupCompleted(`usr-${Date.now()}`, role, name)
+      navigate(ROUTES.SPLASH)
     } catch (err: any) {
       // Handled by store/errors
     }
@@ -186,14 +186,6 @@ export const SignupPage = () => {
         </Link>
       </p>
 
-      {isSplashActive && (
-        <SplashScreen 
-          onComplete={() => {
-            setSplashActive(false)
-            navigate(ROUTES.DASHBOARD)
-          }} 
-        />
-      )}
     </div>
   )
 }

@@ -8,12 +8,14 @@ create extension if not exists "uuid-ossp";
 -- 1. PROFILES TABLE (Extends auth.users for Student & Provider metadata)
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
+  email text,
   role text check (role in ('student', 'provider')) not null default 'student',
   name text,
   onboarding_completed boolean default false,
   metadata jsonb default '{}'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
 
 -- Enable RLS for Profiles
 alter table public.profiles enable row level security;
@@ -176,9 +178,10 @@ create policy "Users can view and manage their own notifications."
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, name, role, onboarding_completed, metadata)
+  insert into public.profiles (id, email, name, role, onboarding_completed, metadata)
   values (
     new.id,
+    new.email,
     coalesce(new.raw_user_meta_data->>'name', ''),
     coalesce(new.raw_user_meta_data->>'role', 'student'),
     coalesce((new.raw_user_meta_data->>'onboarding_completed')::boolean, false),
@@ -192,3 +195,15 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- ========================================================================
+-- RPC TO CHECK IF EMAIL EXISTS IN AUTH.USERS (Bypasses RLS securely)
+-- ========================================================================
+create or replace function public.check_user_exists(email_to_check text)
+returns boolean as $$
+begin
+  return exists (
+    select 1 from auth.users where email = email_to_check
+  );
+end;
+$$ language plpgsql security definer;

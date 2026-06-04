@@ -430,3 +430,36 @@ export const updatePassword = async (newPassword: string) => {
     return { success: false, error }
   }
 }
+
+/**
+ * Check if a user email already exists in the system via RPC
+ * @param email - User email to check
+ * @returns boolean indicating if the email exists
+ */
+export const checkEmailExists = async (email: string): Promise<boolean> => {
+  if (!isSupabaseConfigured()) return false
+
+  try {
+    const { data, error } = await supabase.rpc('check_user_exists', { email_to_check: email })
+    if (error) {
+      console.warn('[auth.ts] check_user_exists RPC failed, trying query profiles table:', error.message)
+      // Fallback: try querying profiles table by email column (if it exists)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .limit(1)
+
+      if (profileError) {
+        throw profileError
+      }
+      return profileData && profileData.length > 0
+    }
+    return !!data
+  } catch (error) {
+    console.error('Error in checkEmailExists:', error)
+    // Re-throw so the store can handle fallback or error propagation
+    throw error
+  }
+}
+

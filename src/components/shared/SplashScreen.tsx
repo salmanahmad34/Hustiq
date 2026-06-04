@@ -18,18 +18,17 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     // 1. Draw logo initially, then transition to sliding logo + showing text
     const slideTimer = setTimeout(() => {
       setPhase('slide')
-    }, 1400)
+    }, 1000)
 
     // 2. Stay unified for a moment, then trigger full screen fade out
     const fadeTimer = setTimeout(() => {
       setPhase('fadeout')
-    }, 2600)
+    }, 2300)
 
     // 3. Complete and unmount, triggering dashboard navigation
     const completeTimer = setTimeout(() => {
-      console.log('Splash finished')
       onComplete()
-    }, 3000)
+    }, 2700)
 
     return () => {
       clearTimeout(slideTimer)

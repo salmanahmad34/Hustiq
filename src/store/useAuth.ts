@@ -8,7 +8,8 @@ import {
   signOutUser, 
   recoverSession, 
   buildUserSession, 
-  updateProfile as updateProfileInDb 
+  updateProfile as updateProfileInDb,
+  checkEmailExists
 } from '@/services/supabase/auth'
 
 
@@ -22,7 +23,7 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   isRecovering: boolean
-  isSplashActive: boolean
+  hasShownSplash: boolean
   error: string | null
 
   // Actions
@@ -32,7 +33,7 @@ interface AuthState {
   recoverUserSession: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateUserProfile: (updates: Partial<Profile>) => Promise<void>
-  setSplashActive: (active: boolean) => void
+  setSplashShown: (shown: boolean) => void
   clearError: () => void
   setError: (error: string | null) => void
 }
@@ -49,7 +50,7 @@ export const useAuth = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       isRecovering: true,
-      isSplashActive: false,
+      hasShownSplash: false,
       error: null,
 
       // ============================================
@@ -58,7 +59,19 @@ export const useAuth = create<AuthState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null })
         try {
-          // Real Supabase Login
+          // 1. Verify if the email is registered
+          let exists = true
+          try {
+            exists = await checkEmailExists(email)
+          } catch (e) {
+            console.warn('[useAuth] Email existence check failed/skipped:', e)
+          }
+
+          if (!exists) {
+            throw new Error('No account found with this email.')
+          }
+
+          // 2. Real Supabase Login
           const data = await signInUser(email, password)
           if (!data || !data.user) throw new Error('No user data returned from Supabase')
 
@@ -69,15 +82,18 @@ export const useAuth = create<AuthState>()(
           set({
             isAuthenticated: true,
             user: userSession,
-            isSplashActive: true,
+            hasShownSplash: false,
             error: null
           })
         } catch (err: any) {
-          const errorMessage = err.message || 'Login failed'
+          let errorMessage = err.message || 'Login failed'
+          if (errorMessage === 'Invalid login credentials') {
+            errorMessage = 'Wrong password'
+          }
           set({
             isAuthenticated: false,
             user: null,
-            isSplashActive: false,
+            hasShownSplash: false,
             error: errorMessage
           })
           throw err
@@ -92,7 +108,19 @@ export const useAuth = create<AuthState>()(
       signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
-          // Real Supabase Signup
+          // 1. Verify if email already exists
+          let exists = false
+          try {
+            exists = await checkEmailExists(email)
+          } catch (e) {
+            console.warn('[useAuth] Email existence check failed/skipped:', e)
+          }
+
+          if (exists) {
+            throw new Error('Account already exists. Please sign in.')
+          }
+
+          // 2. Real Supabase Signup
           const data = await signUpUser(email, password, name, role)
           if (!data || !data.user) throw new Error('Signup failed')
 
@@ -107,15 +135,22 @@ export const useAuth = create<AuthState>()(
               onboarding_completed: false,
               metadata: {}
             },
-            isSplashActive: true,
+            hasShownSplash: false,
             error: null
           })
         } catch (err: any) {
-          const errorMessage = err.message || 'Signup failed'
+          let errorMessage = err.message || 'Signup failed'
+          if (
+            errorMessage.toLowerCase().includes('already registered') ||
+            errorMessage.toLowerCase().includes('already exists') ||
+            errorMessage.toLowerCase().includes('email_exists')
+          ) {
+            errorMessage = 'Account already exists. Please sign in.'
+          }
           set({
             isAuthenticated: false,
             user: null,
-            isSplashActive: false,
+            hasShownSplash: false,
             error: errorMessage
           })
           throw err
@@ -142,6 +177,7 @@ export const useAuth = create<AuthState>()(
           set({
             isAuthenticated: false,
             user: null,
+            hasShownSplash: false,
             error: null
           })
         } catch (err: any) {
@@ -152,6 +188,7 @@ export const useAuth = create<AuthState>()(
           set({ isLoading: false })
         }
       },
+
 
       // ============================================
       // SESSION RECOVERY ACTION
@@ -242,7 +279,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // ERROR MANAGEMENT ACTIONS
       // ============================================
-      setSplashActive: (active: boolean) => set({ isSplashActive: active }),
+      setSplashShown: (shown: boolean) => set({ hasShownSplash: shown }),
       clearError: () => set({ error: null }),
       setError: (error: string | null) => set({ error })
     }),

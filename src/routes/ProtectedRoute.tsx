@@ -3,12 +3,13 @@ import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/store/useAuth'
 
 export const ProtectedRoute = () => {
-  const { isAuthenticated, isRecovering } = useAuth()
+  const { isAuthenticated, isRecovering, hasShownSplash } = useAuth()
   const location = useLocation()
 
   console.log('auth state', {
     isAuthenticated,
     isRecovering,
+    hasShownSplash,
     pathname: location.pathname
   })
 
@@ -28,6 +29,12 @@ export const ProtectedRoute = () => {
   if (!isAuthenticated) {
     console.log('[ProtectedRoute] Not authenticated, redirecting to login.')
     return <Navigate to={ROUTES.LOGIN} replace />
+  }
+
+  // Redirect to splash if not yet shown during this session, unless already visiting it
+  if (!hasShownSplash && location.pathname !== ROUTES.SPLASH) {
+    console.log(`[ProtectedRoute] Splash screen not shown yet in this session. Redirecting to /splash from ${location.pathname}`)
+    return <Navigate to={ROUTES.SPLASH} state={{ redirectTo: location.pathname }} replace />
   }
 
   // Render protected routes

@@ -3,10 +3,9 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/store/useAuth'
 import { ROUTES } from '@/constants/routes'
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { SplashScreen } from '@/components/shared/SplashScreen'
 
 export const LoginPage = () => {
-  const { login, isLoading, error, clearError, isSplashActive, setSplashActive } = useAuth()
+  const { login, isLoading, error, clearError } = useAuth()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -35,6 +34,7 @@ export const LoginPage = () => {
 
     try {
       await login(email, password)
+      navigate(ROUTES.SPLASH)
     } catch (err: any) {
       // Error handled by store/errors
     }
@@ -121,14 +121,6 @@ export const LoginPage = () => {
         </Link>
       </p>
 
-      {isSplashActive && (
-        <SplashScreen 
-          onComplete={() => {
-            setSplashActive(false)
-            navigate(ROUTES.DASHBOARD)
-          }} 
-        />
-      )}
     </div>
   )
 }

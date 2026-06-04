@@ -2,6 +2,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   SIGNUP: '/signup',
+  SPLASH: '/splash',
   DASHBOARD: '/dashboard',
   NOTIFICATIONS: '/notifications',
   MESSAGES: '/messages',

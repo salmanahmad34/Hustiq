@@ -46,6 +46,7 @@ const PremiumPage = lazyWithRetry(() => import('@/pages/dashboard/PremiumPage').
 const WalletPage = lazyWithRetry(() => import('@/pages/dashboard/WalletPage').then(m => ({ default: m.WalletPage })))
 const RecommendationsPage = lazyWithRetry(() => import('@/pages/dashboard/RecommendationsPage').then(m => ({ default: m.RecommendationsPage })))
 const GrowthPage = lazyWithRetry(() => import('@/pages/dashboard/GrowthPage').then(m => ({ default: m.GrowthPage })))
+const SplashPage = lazyWithRetry(() => import('@/pages/auth/SplashPage').then(m => ({ default: m.SplashPage })))
 
 const PageLoader = () => (
   <div className="w-full h-full min-h-[50vh] flex flex-col items-center justify-center gap-4">
@@ -128,6 +129,10 @@ const router = createHashRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          {
+            path: ROUTES.SPLASH,
+            element: withSuspense(SplashPage),
+          },
           {
             element: <DashboardLayout />,
             children: [
