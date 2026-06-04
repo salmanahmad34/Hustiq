@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/store/useAuth'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 
 export const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const { recoverUserSession } = useAuth()
@@ -37,10 +38,7 @@ export const AuthInitializer = ({ children }: { children: React.ReactNode }) => 
   if (isInitializing) {
     return (
       <div className="flex items-center justify-center w-full h-screen bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent mx-auto mb-4" />
-          <p className="text-sm font-semibold text-muted-foreground">Authenticating session...</p>
-        </div>
+        <LogoLoader text="Authenticating session..." />
       </div>
     )
   }

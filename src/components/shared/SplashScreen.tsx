@@ -23,12 +23,12 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     // 2. Stay unified for a moment, then trigger full screen fade out
     const fadeTimer = setTimeout(() => {
       setPhase('fadeout')
-    }, 2300)
+    }, 2600)
 
     // 3. Complete and unmount, triggering dashboard navigation
     const completeTimer = setTimeout(() => {
       onComplete()
-    }, 2700)
+    }, 3000)
 
     return () => {
       clearTimeout(slideTimer)
@@ -117,38 +117,37 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
           </div>
 
           {/* Logo & Wordmark Container */}
-          <div className="relative flex items-center justify-center gap-0">
+          {/* Logo & Wordmark Container */}
+          <motion.div 
+            layout 
+            className="flex items-center justify-center gap-3 sm:gap-4 px-6 w-full max-w-sm"
+          >
             {/* Logo Shape */}
             <motion.div
               layout
               transition={{
                 type: 'spring',
-                stiffness: 120,
-                damping: 20,
-                mass: 1,
+                stiffness: 140,
+                damping: 22,
               }}
-              animate={{
-                x: phase === 'slide' ? -65 : 0,
-                scale: phase === 'slide' ? 1.05 : 1,
-              }}
-              className="relative flex items-center justify-center z-10"
+              className="relative flex items-center justify-center shrink-0 z-10"
             >
               {/* Outer pulsing glow */}
               <motion.div
                 animate={{
-                  scale: [0.95, 1.08, 0.95],
-                  opacity: [0.3, 0.6, 0.3],
+                  scale: [0.93, 1.07, 0.93],
+                  opacity: [0.35, 0.55, 0.35],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
-                className="absolute inset-0 rounded-full blur-2xl bg-primary/25 pointer-events-none w-32 h-32 -m-8"
+                className="absolute inset-0 rounded-full blur-2xl bg-primary/20 pointer-events-none w-32 h-32 -m-8"
               />
 
               {/* Overlapping Squares SVG */}
-              <svg
+              <motion.svg
                 viewBox="0 0 32 32"
                 className={cn(
                   "w-20 h-20 sm:w-24 sm:h-24 stroke-foreground select-none pointer-events-none transition-colors duration-500",
@@ -156,6 +155,15 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 )}
                 fill="none"
                 strokeWidth={2.8}
+                animate={{
+                  scale: [1, 1.03, 1],
+                  rotate: [0, 2, -2, 0]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut'
+                }}
               >
                 {/* Offset square - Background layer */}
                 <motion.rect
@@ -189,33 +197,32 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                     delay: 0.3,
                   }}
                 />
-              </svg>
+              </motion.svg>
             </motion.div>
 
             {/* Wordmark Text */}
-            <div className="absolute overflow-hidden pointer-events-none flex items-center">
-              <AnimatePresence>
-                {phase === 'slide' && (
-                  <motion.h1
-                    initial={{ opacity: 0, x: 80, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, x: 55, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, x: 20, filter: 'blur(4px)' }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 140,
-                      damping: 18,
-                    }}
-                    className={cn(
-                      "text-4xl sm:text-5xl font-black tracking-tighter text-foreground whitespace-nowrap",
-                      "bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-primary/80"
-                    )}
-                  >
-                    HustiQ
-                  </motion.h1>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+            <AnimatePresence>
+              {phase === 'slide' && (
+                <motion.h1
+                  layout
+                  initial={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 140,
+                    damping: 18,
+                  }}
+                  className={cn(
+                    "text-4xl sm:text-5xl font-black tracking-tight text-foreground whitespace-nowrap select-none",
+                    "bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-primary/80"
+                  )}
+                >
+                  HustiQ
+                </motion.h1>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

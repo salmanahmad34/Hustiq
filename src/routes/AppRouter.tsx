@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 
 // Layouts
 import { LandingLayout } from '@/components/layout/LandingLayout'
@@ -49,9 +50,8 @@ const GrowthPage = lazyWithRetry(() => import('@/pages/dashboard/GrowthPage').th
 const SplashPage = lazyWithRetry(() => import('@/pages/auth/SplashPage').then(m => ({ default: m.SplashPage })))
 
 const PageLoader = () => (
-  <div className="w-full h-full min-h-[50vh] flex flex-col items-center justify-center gap-4">
-    <div className="w-8 h-8 rounded-full border-4 border-muted border-t-primary animate-spin" />
-    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">Loading Workspace...</span>
+  <div className="w-full h-full min-h-[50vh] flex items-center justify-center">
+    <LogoLoader text="Loading Workspace..." />
   </div>
 )
 
