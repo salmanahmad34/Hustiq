@@ -4,7 +4,6 @@ import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, C
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { TrustBanner } from '@/components/trust/TrustSystem'
 import { ReputationSummary } from '@/components/reviews/ReviewDisplay'
-import { ReviewModal } from '@/components/reviews/ReviewModal'
 import { useAuth } from '@/store/useAuth'
 
 // Spring physics for snappy app-like feel
@@ -27,7 +26,6 @@ const itemVariants = {
 export const ProfilePage = () => {
   const { user, updateUserProfile } = useAuth()
   const isProvider = user?.role === 'provider'
-  const [reviewModalOpen, setReviewModalOpen] = useState(false)
 
   // Form states
   const [name, setName] = useState(user?.name || '')
@@ -128,10 +126,7 @@ export const ProfilePage = () => {
     }
   }
 
-  // subjectId for demo reviews
-  const reviewSubjectId = isProvider ? 'mock-student' : 'mock-provider'
-  const reviewSubjectName = isProvider ? 'HustiQ Student' : 'Third Wave Coffee'
-  const reviewSubjectAvatar = isProvider ? 'H' : '☕'
+
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
@@ -244,12 +239,6 @@ export const ProfilePage = () => {
                 className="flex-1 sm:flex-none px-6 py-2.5 bg-foreground text-background font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
               >
                 <Edit2 className="w-4 h-4" /> Edit Profile
-              </button>
-              <button
-                onClick={() => setReviewModalOpen(true)}
-                className="flex-1 sm:flex-none px-6 py-2.5 bg-muted border border-border text-foreground font-bold rounded-xl hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all"
-              >
-                ★ Leave a Review
               </button>
             </div>
           </div>
@@ -449,21 +438,10 @@ export const ProfilePage = () => {
             <ReputationSummary
               subjectId={isProvider ? 'mock-provider' : 'mock-student'}
               title={isProvider ? 'Your Business Reviews' : 'Your Reviews'}
-              onWriteReview={() => setReviewModalOpen(true)}
             />
           </motion.div>
         </div>
       </motion.div>
-
-      {/* Review Modal */}
-      <ReviewModal
-        isOpen={reviewModalOpen}
-        onClose={() => setReviewModalOpen(false)}
-        subjectId={reviewSubjectId}
-        subjectName={reviewSubjectName}
-        subjectAvatar={reviewSubjectAvatar}
-        jobTitle="Weekend Barista"
-      />
     </div>
   )
 }

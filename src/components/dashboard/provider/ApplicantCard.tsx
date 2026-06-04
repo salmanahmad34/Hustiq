@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
 import { useApplications } from '@/store/useApplications'
@@ -8,6 +8,7 @@ import { useUiStore } from '@/store/uiStore'
 import { isSupabaseConfigured } from '@/services/supabase/auth'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { ReviewModal } from '@/components/reviews/ReviewModal'
 
 export interface Applicant {
   id: string
@@ -38,6 +39,7 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
   const navigate = useNavigate()
   const isAccepted = applicant.status === 'accepted'
   const isRejected = applicant.status === 'rejected'
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
 
   const handleAccept = async () => {
     try {
@@ -152,8 +154,16 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
 
       <div className="flex gap-2 mt-2">
         {isAccepted ? (
-          <div className="flex-1 bg-emerald-500/20 text-emerald-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
-            <CheckCircle2 className="w-4 h-4" /> Accepted
+          <div className="flex-1 flex gap-2">
+            <div className="flex-1 bg-emerald-500/20 text-emerald-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
+              <CheckCircle2 className="w-4 h-4" /> Accepted
+            </div>
+            <button 
+              onClick={() => setIsReviewOpen(true)}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/95 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 text-sm transition-all"
+            >
+              ★ Review Student
+            </button>
           </div>
         ) : isRejected ? (
           <div className="flex-1 bg-red-500/10 text-red-500 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm">
@@ -182,6 +192,16 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
           <MessageSquare className="w-4 h-4" />
         </button>
       </div>
+
+      <ReviewModal 
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        subjectId={applicant.studentId || 'mock-student'}
+        subjectName={applicant.name}
+        subjectAvatar={applicant.avatar}
+        reviewerRole="provider"
+        jobTitle={applicant.jobApplied}
+      />
     </motion.div>
   )
 })
