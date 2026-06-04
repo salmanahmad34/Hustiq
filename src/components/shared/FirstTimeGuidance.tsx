@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Compass, Square, X, ChevronRight, CheckCircle2, Award } from 'lucide-react'
-import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { useAuth } from '@/store/useAuth'
 
 interface GuideItem {
@@ -15,7 +14,6 @@ export const FirstTimeGuidance = () => {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [completed, setCompleted] = useState<string[]>([])
-  const [tourDismissed, setTourDismissed] = useState(false)
 
   const isProvider = user?.role === 'provider'
   const userId = user?.id || 'guest'
@@ -26,16 +24,20 @@ export const FirstTimeGuidance = () => {
     const savedDismissed = localStorage.getItem(`zivaro_tour_dismissed_${userId}`)
     
     if (savedCompleted) setCompleted(JSON.parse(savedCompleted))
-    if (savedDismissed === 'true') {
-      setTourDismissed(true)
-    } else {
+    if (savedDismissed !== 'true') {
       // Auto-open after a short delay for first-time users
       const timer = setTimeout(() => setIsOpen(true), 1500)
       return () => clearTimeout(timer)
     }
   }, [userId])
 
-  if (tourDismissed) return null
+  useEffect(() => {
+    const handleOpenGuide = () => {
+      setIsOpen(true)
+    }
+    window.addEventListener('open-setup-guide', handleOpenGuide)
+    return () => window.removeEventListener('open-setup-guide', handleOpenGuide)
+  }, [])
 
   // Define guide checklists
   const studentItems: GuideItem[] = [
@@ -117,38 +119,35 @@ export const FirstTimeGuidance = () => {
     
     setCompleted(newCompleted)
     localStorage.setItem(`zivaro_tour_completed_${userId}`, JSON.stringify(newCompleted))
+    window.dispatchEvent(new CustomEvent('zivaro-tour-updated'))
   }
 
   const handleDismissTour = () => {
-    setTourDismissed(true)
     localStorage.setItem(`zivaro_tour_dismissed_${userId}`, 'true')
+    window.dispatchEvent(new CustomEvent('zivaro-tour-updated'))
+    setIsOpen(false)
   }
 
   return (
-    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 left-4 z-[999] max-w-sm w-[calc(100vw-2rem)] select-none">
-      <AnimatePresence>
-        {!isOpen ? (
-          <motion.button
-            layoutId="guidance-panel"
-            onClick={() => setIsOpen(true)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 px-4 py-3 bg-foreground text-background font-bold rounded-2xl shadow-xl hover:shadow-primary/25 border border-foreground/10 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-          >
-            <ZivaroBrandIcon size="md" className="animate-pulse text-primary dark:text-foreground" />
-            <span className="text-xs tracking-wider uppercase">Setup Guide</span>
-            {progressPercent < 100 ? (
-              <span className="bg-primary/20 text-primary dark:bg-background/25 dark:text-foreground text-[10px] px-2 py-0.5 rounded-full font-black">
-                {progressPercent}%
-              </span>
-            ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            )}
-          </motion.button>
-        ) : (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 select-none">
+          {/* Backdrop */}
           <motion.div
-            layoutId="guidance-panel"
-            className="relative overflow-hidden rounded-[2rem] border border-border bg-card/90 backdrop-blur-md p-6 shadow-2xl flex flex-col gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsOpen(false)}
+            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+          />
+
+          {/* Modal Container */}
+          <motion.div
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="relative w-full sm:max-w-md bg-card border-t sm:border border-border shadow-2xl rounded-t-[2.2rem] sm:rounded-[2.2rem] overflow-hidden flex flex-col p-6 max-h-[85vh] z-10 gap-4"
           >
             {/* Header Glow */}
             <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
@@ -161,14 +160,12 @@ export const FirstTimeGuidance = () => {
                 </div>
                 <h4 className="text-sm font-black text-foreground">Getting Started</h4>
               </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Checklist Progress */}
@@ -188,7 +185,7 @@ export const FirstTimeGuidance = () => {
             </div>
 
             {/* Tasks List */}
-            <div className="relative z-10 space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+            <div className="relative z-10 space-y-2.5 overflow-y-auto pr-1">
               {items.map((item) => {
                 const isCompleted = completed.includes(item.id)
                 return (
@@ -244,8 +241,8 @@ export const FirstTimeGuidance = () => {
               </button>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        </div>
+      )}
+    </AnimatePresence>
   )
 }

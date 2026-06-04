@@ -265,7 +265,7 @@ export const MessagesPage = () => {
   const showChat = !isMobile || (isMobile && activeId)
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background absolute inset-0 pt-[80px] md:pt-0">
+    <div className="flex h-[calc(100vh-56px-68px-env(safe-area-inset-bottom))] md:h-full w-full overflow-hidden bg-background fixed md:absolute top-14 md:top-0 bottom-[calc(68px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-30 md:z-auto">
       
       {/* Sidebar (Conversations List) */}
       {showSidebar && (

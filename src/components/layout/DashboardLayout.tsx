@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageCircle, User, Briefcase, Zap, Bookmark, Wallet, Award, Compass, Plus } from 'lucide-react'
+import { Home, MessageCircle, User, Zap, Bookmark, Wallet, Compass, Plus, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -13,6 +13,7 @@ import { NetworkStatusDetector } from '@/components/shared/NetworkStatusDetector
 import { SessionErrorRecovery } from '@/components/shared/SessionErrorRecovery'
 import { BetaFeedbackModal } from '@/components/shared/BetaFeedbackModal'
 import { ToastContainer } from '@/components/ui/ToastContainer'
+import { motion } from 'framer-motion'
 
 interface NavItem {
   name: string
@@ -24,11 +25,10 @@ interface NavItem {
 const STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
-  { name: 'Jobs', href: ROUTES.JOBS, icon: Briefcase },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Saved', href: ROUTES.SAVED, icon: Bookmark },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Growth', href: ROUTES.GROWTH, icon: Award },
+  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
   { name: 'Premium', href: ROUTES.PREMIUM, icon: Zap },
   { name: 'Profile', href: ROUTES.PROFILE, icon: User },
 ]
@@ -38,7 +38,23 @@ const PROVIDER_NAV: NavItem[] = [
   { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
   { name: 'Post a Job', href: '#', icon: Plus, action: 'post-job' },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
-  { name: 'Growth', href: ROUTES.GROWTH, icon: Award },
+  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
+  { name: 'Profile', href: ROUTES.PROFILE, icon: User },
+]
+
+const MOBILE_STUDENT_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
+  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Saved', href: ROUTES.SAVED, icon: Bookmark },
+]
+
+const MOBILE_PROVIDER_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Growth', href: ROUTES.GROWTH, icon: Rocket },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Profile', href: ROUTES.PROFILE, icon: User },
 ]
 
@@ -48,6 +64,7 @@ export const DashboardLayout = () => {
   const { open: openPostJob } = usePostJob()
   
   const navItems = user?.role === 'provider' ? PROVIDER_NAV : STUDENT_NAV
+  const mobileNavItems = user?.role === 'provider' ? MOBILE_PROVIDER_NAV : MOBILE_STUDENT_NAV
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
@@ -110,14 +127,24 @@ export const DashboardLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {/* Mobile Topbar */}
         <header className="md:hidden sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md px-4 h-14 flex items-center justify-between">
           <Link to={ROUTES.DASHBOARD} className="flex items-center gap-2 font-bold text-xl gradient-text">
             <ZivaroBrandIcon size="sm" className="text-primary" />
             HustiQ
           </Link>
-          <ProfileDropdown isMobile={true} />
+          <div className="flex items-center gap-3">
+            {user?.role === 'provider' && (
+              <button
+                onClick={openPostJob}
+                className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+            <ProfileDropdown isMobile={true} />
+          </div>
         </header>
 
         {/* Page Content */}
@@ -130,97 +157,40 @@ export const DashboardLayout = () => {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] pointer-events-none">
-        <div className="bg-background/85 backdrop-blur-2xl border-t border-border/50 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-3xl flex items-center justify-around px-2 h-[72px] pointer-events-auto relative">
-          {navItems.slice(0, 5).map((item, index) => {
+        <div className="bg-background/90 backdrop-blur-2xl border-t border-border/50 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-3xl flex items-center justify-around px-2 h-[68px] pointer-events-auto relative">
+          {mobileNavItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.href
-            const isCenter = index === 2
-
-            if (isCenter) {
-              if (item.action === 'post-job') {
-                return (
-                  <button
-                    key={item.name}
-                    onClick={openPostJob}
-                    className="flex flex-col items-center justify-start w-16 h-full relative group z-10 pointer-events-auto"
-                  >
-                    <div className="absolute -top-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_16px_-4px_rgba(var(--primary),0.4)] transition-transform duration-300 active:scale-95 bg-primary text-primary-foreground opacity-95 hover:scale-105">
-                      <Icon className="w-6 h-6" strokeWidth={2} />
-                    </div>
-                    <span className="absolute top-[44px] text-[10px] font-bold text-muted-foreground transition-colors whitespace-nowrap">
-                      {item.name}
-                    </span>
-                  </button>
-                )
-              }
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="flex flex-col items-center justify-start w-16 h-full relative group z-10"
-                >
-                  <div className={cn(
-                    "absolute -top-6 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_16px_-4px_rgba(var(--primary),0.4)] transition-transform duration-300 active:scale-95",
-                    isActive ? "bg-primary text-primary-foreground" : "bg-primary text-primary-foreground opacity-95 hover:scale-105"
-                  )}>
-                    <Icon className="w-6 h-6" fill={isActive ? "currentColor" : "none"} strokeWidth={isActive ? 2.5 : 2} />
-                  </div>
-                  <span className={cn(
-                    "absolute top-[44px] text-[10px] font-bold transition-colors whitespace-nowrap",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {item.name}
-                  </span>
-                  <div className={cn(
-                    "absolute bottom-2 w-4 h-1 rounded-full bg-primary transition-all duration-300",
-                    isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                  )} />
-                </Link>
-              )
-            }
-
-            if (item.action === 'post-job') {
-              return (
-                <button
-                  key={item.name}
-                  onClick={openPostJob}
-                  className="flex flex-col items-center justify-start w-16 h-full relative group pt-3.5 pointer-events-auto"
-                >
-                  <Icon 
-                    className="w-6 h-6 text-muted-foreground group-hover:text-foreground"
-                    strokeWidth={2}
-                  />
-                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap mt-1.5">
-                    {item.name}
-                  </span>
-                </button>
-              )
-            }
 
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                className="flex flex-col items-center justify-start w-16 h-full relative group pt-3.5"
+                className="flex flex-col items-center justify-center w-16 h-full relative group pt-1"
               >
-                <Icon 
-                  className={cn(
-                    "w-6 h-6 transition-all duration-300",
-                    isActive ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
-                  )} 
-                  fill={isActive ? "currentColor" : "none"} 
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                <span className={cn(
-                  "text-[10px] font-semibold transition-colors duration-300 whitespace-nowrap mt-1.5",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {item.name}
-                </span>
-                <div className={cn(
-                  "absolute bottom-2 w-4 h-1 rounded-full bg-primary transition-all duration-300",
-                  isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                )} />
+                <div className="relative flex flex-col items-center justify-center">
+                  <Icon 
+                    className={cn(
+                      "w-5 h-5 transition-all duration-300",
+                      isActive ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
+                    )} 
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                  <span className={cn(
+                    "text-[10px] font-semibold transition-colors duration-300 whitespace-nowrap mt-1",
+                    isActive ? "text-primary font-bold" : "text-muted-foreground"
+                  )}>
+                    {item.name}
+                  </span>
+                </div>
+                {/* Active Indicator Bar */}
+                {isActive && (
+                  <motion.div 
+                    layoutId="activeTabIndicator"
+                    className="absolute bottom-1.5 w-6 h-1 rounded-full bg-gradient-to-r from-primary to-accent"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
               </Link>
             )
           })}

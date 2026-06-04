@@ -35,7 +35,7 @@ const SavedJobRow = ({ job, savedAt }: { job: Job; savedAt: number }) => {
       variants={itemVariants}
       exit="exit"
       onClick={() => openDetails(job)}
-      className="group relative bg-card border border-border/40 rounded-2xl p-4 sm:p-5 flex items-center gap-4 cursor-pointer hover:border-primary/20 hover:shadow-lg transition-all duration-200 overflow-hidden"
+      className="group relative bg-card border border-border/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-primary/20 hover:shadow-lg transition-all duration-200 overflow-hidden text-left"
     >
       {/* Subtle Glow */}
       <div className={cn(
@@ -43,66 +43,70 @@ const SavedJobRow = ({ job, savedAt }: { job: Job; savedAt: number }) => {
         job.isUrgent ? "bg-destructive/10" : job.isNearby ? "bg-emerald-500/8" : "bg-primary/8"
       )} />
 
-      {/* Logo */}
-      <div className="w-12 h-12 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-xl shrink-0 group-hover:bg-primary/5 transition-colors relative z-10">
-        {job.logoPlaceholder}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0 relative z-10">
-        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <h3 className="font-bold text-foreground text-sm sm:text-base truncate group-hover:text-primary transition-colors">
-            {job.title}
-          </h3>
-          {job.isUrgent && (
-            <span className="flex items-center gap-1 bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
-              <Zap className="w-3 h-3" /> Urgent
+      {/* Main body (Logo + Title/Meta) */}
+      <div className="flex items-start gap-4 flex-1 min-w-0 relative z-10">
+        <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border flex items-center justify-center text-xl shrink-0 group-hover:bg-primary/5 transition-colors">
+          {job.logoPlaceholder}
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+            <h3 className="font-bold text-foreground text-sm sm:text-base truncate group-hover:text-primary transition-colors">
+              {job.title}
+            </h3>
+            {job.isUrgent && (
+              <span className="flex items-center gap-1 bg-destructive/10 text-destructive text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                <Zap className="w-2.5 h-2.5" /> Urgent
+              </span>
+            )}
+            {job.isNearby && (
+              <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                <Navigation className="w-2.5 h-2.5" /> Nearby
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground font-medium truncate">{job.businessName}</p>
+          
+          <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1">
+              <MapPin className={cn("w-3.5 h-3.5", job.isNearby && "text-emerald-500")} />
+              <span className="truncate max-w-[120px] sm:max-w-[150px]">{job.location}</span>
             </span>
-          )}
-          {job.isNearby && (
-            <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
-              <Navigation className="w-3 h-3" /> Nearby
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" /> <span className="truncate max-w-[120px] sm:max-w-[150px]">{job.timing}</span>
             </span>
-          )}
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">{job.businessName}</p>
-        <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-          <span className="flex items-center gap-1">
-            <MapPin className={cn("w-3 h-3", job.isNearby && "text-emerald-500")} />
-            {job.location} <span className={cn("font-medium", job.isNearby ? "text-emerald-500" : "text-muted-foreground/60")}>({job.distance})</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" /> {job.timing}
-          </span>
+          </div>
         </div>
       </div>
 
-      {/* Payout */}
-      <div className="flex flex-col items-end shrink-0 relative z-10 gap-1">
-        <div className="flex items-baseline gap-0.5">
-          <IndianRupee className="w-3.5 h-3.5 text-primary" />
-          <span className="font-black text-lg text-foreground tracking-tighter">{job.payout}</span>
-          <span className="text-xs text-muted-foreground ml-0.5">/{job.payoutType}</span>
+      {/* Payout & Date Block */}
+      <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-center pt-3 sm:pt-0 border-t sm:border-t-0 border-border/20 shrink-0 relative z-10 gap-2">
+        <div className="flex flex-col text-left sm:text-right">
+          <div className="flex items-baseline gap-0.5">
+            <IndianRupee className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="font-black text-xl text-foreground tracking-tighter">{job.payout}</span>
+            <span className="text-xs text-muted-foreground ml-0.5">/{job.payoutType}</span>
+          </div>
+          <span className="text-[9px] text-muted-foreground/60 mt-0.5">Saved {savedDate}</span>
         </div>
-        <span className="text-[10px] text-muted-foreground/60">Saved {savedDate}</span>
-      </div>
 
-      {/* Actions */}
-      <div className="flex flex-col gap-2 shrink-0 relative z-10">
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={(e) => { e.stopPropagation(); openQuickApply(job) }}
-          className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:bg-primary hover:shadow-lg hover:shadow-primary/20 transition-all"
-        >
-          <ArrowUpRight className="w-4 h-4" />
-        </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={(e) => { e.stopPropagation(); unsaveJob(job.id) }}
-          className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-all"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </motion.button>
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={(e) => { e.stopPropagation(); openQuickApply(job) }}
+            className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:shadow-lg transition-all"
+          >
+            <ArrowUpRight className="w-4 h-4" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={(e) => { e.stopPropagation(); unsaveJob(job.id) }}
+            className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-all"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   )

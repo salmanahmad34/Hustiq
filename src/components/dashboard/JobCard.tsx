@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { MapPin, Clock, IndianRupee, Zap, ShieldCheck, ArrowUpRight, Navigation, Bookmark } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useJobDetails } from '@/store/useJobDetails'
@@ -209,8 +209,8 @@ export const JobCard = memo(({ job, variant = 'default', className }: JobCardPro
         "group relative bg-card border border-border/40 transition-all duration-200 overflow-hidden flex flex-col break-inside-avoid cursor-pointer",
         isApplied ? "opacity-75 grayscale-[15%] shadow-none hover:shadow-sm" : "shadow-sm hover:shadow-xl",
         isUrgentVariant 
-          ? "rounded-[2.5rem] p-5 min-[360px]:p-6 sm:p-8 gap-4 sm:gap-6 w-[280px] min-[360px]:w-[340px] sm:w-[460px] shrink-0 snap-center sm:snap-align-none" 
-          : "rounded-[2rem] p-5 sm:p-6 gap-5 w-full mb-6",
+          ? "rounded-[2.5rem] p-5 min-[360px]:p-6 sm:p-8 gap-4 w-[280px] min-[360px]:w-[340px] sm:w-[460px] shrink-0 snap-center sm:snap-align-none" 
+          : "rounded-[2rem] p-5 sm:p-6 gap-4 w-full mb-6",
         className
       )}
     >
@@ -222,118 +222,98 @@ export const JobCard = memo(({ job, variant = 'default', className }: JobCardPro
         "w-64 h-64 bg-primary/10"
       )} />
 
-      {/* TOP: Badges & Logo */}
-      <div className="relative z-10 flex justify-between items-start gap-4">
-        <div className="flex gap-4 items-center">
-          <div className={cn(
-            "rounded-2xl bg-muted/30 border border-border flex items-center justify-center font-bold text-muted-foreground shadow-sm group-hover:border-primary/30 transition-colors shrink-0",
-            isUrgentVariant ? "w-14 h-14 text-2xl" : "w-12 h-12 text-xl"
-          )}>
-            {job.logoPlaceholder}
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-sm sm:text-base font-semibold text-foreground truncate max-w-[140px]">{job.businessName}</h3>
-              {job.isPremium && <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />}
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground/70 font-medium">{job.postedTime}</span>
-          </div>
+      {/* TOP: Logo & Company Name */}
+      <div className="relative z-10 flex items-center gap-3 pr-10">
+        <div className="w-12 h-12 rounded-xl bg-muted/30 border border-border flex items-center justify-center text-xl shrink-0 group-hover:border-primary/30 transition-colors">
+          {job.logoPlaceholder}
         </div>
-        <div className="flex flex-wrap gap-2 justify-end">
-          {job.isNearby && (
-            <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shrink-0">
-              <Navigation className="w-3 h-3" /> Nearby
-            </div>
-          )}
-          {job.isUrgent && (
-            <div className="flex items-center gap-1 bg-destructive/10 text-destructive text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shrink-0">
-              <Zap className="w-3 h-3" /> Urgent
-            </div>
-          )}
-          {job.isVerified && <VerifiedEmployerBadge compact />}
-          <motion.button
-            whileTap={{ scale: 0.8 }}
-            onClick={handleSaveToggle}
-            className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
-              saved ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={saved ? 'saved' : 'unsaved'}
-                initial={{ scale: 0.6, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.6, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <Bookmark className={cn("w-4 h-4", saved && "fill-primary")} />
-              </motion.span>
-            </AnimatePresence>
-          </motion.button>
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-foreground truncate">{job.businessName}</h3>
+            {job.isPremium && <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />}
+          </div>
+          <span className="text-[10px] text-muted-foreground/70 font-medium">{job.postedTime}</span>
         </div>
       </div>
 
+      {/* Bookmark Button (Absolute top-right for clean mobile stacking) */}
+      <div className="absolute top-5 right-5 z-20">
+        <motion.button
+          whileTap={{ scale: 0.8 }}
+          onClick={handleSaveToggle}
+          className={cn(
+            "w-9 h-9 rounded-full flex items-center justify-center transition-colors border",
+            saved 
+              ? "bg-primary/10 text-primary border-primary/20" 
+              : "bg-muted/50 text-muted-foreground border-border/50 hover:text-foreground"
+          )}
+        >
+          <Bookmark className={cn("w-4 h-4", saved && "fill-primary")} />
+        </motion.button>
+      </div>
+
+      {/* Badges row */}
+      {(job.isNearby || job.isUrgent || job.isVerified) && (
+        <div className="relative z-10 flex flex-wrap gap-2 mt-1">
+          {job.isNearby && (
+            <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+              <Navigation className="w-3 h-3" /> Nearby
+            </span>
+          )}
+          {job.isUrgent && (
+            <span className="flex items-center gap-1 bg-destructive/10 text-destructive text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+              <Zap className="w-3 h-3" /> Urgent
+            </span>
+          )}
+          {job.isVerified && <VerifiedEmployerBadge compact />}
+        </div>
+      )}
+
       {/* CENTER: Title & Description */}
-      <div className="relative z-10 space-y-2 sm:space-y-3">
+      <div className="relative z-10 space-y-1.5 text-left">
         <h2 className={cn(
           "font-bold text-foreground leading-tight tracking-tight group-hover:text-primary transition-colors",
-          isUrgentVariant ? "text-2xl sm:text-3xl" : "text-xl"
+          isUrgentVariant ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
         )}>
           {job.title}
         </h2>
         {job.description && (
-          <p className={cn(
-            "text-muted-foreground/80 leading-relaxed",
-            isUrgentVariant ? "text-sm sm:text-base line-clamp-2" : "text-sm line-clamp-4"
-          )}>
+          <p className="text-muted-foreground/80 leading-relaxed text-xs sm:text-sm line-clamp-3">
             {job.description}
           </p>
         )}
       </div>
 
-      {/* METADATA: Tiny details */}
-      <div className="relative z-10 flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-border/30 mt-auto">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+      {/* METADATA: Location and Timing */}
+      <div className="relative z-10 flex flex-col gap-2 pt-3 border-t border-border/30 mt-auto text-left">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
           <MapPin className={cn("w-3.5 h-3.5 shrink-0", job.isNearby && "text-emerald-500")} />
-          <span className="truncate max-w-[120px]">{job.location}</span> 
+          <span className="truncate">{job.location}</span> 
           <span className={cn(
             "font-normal shrink-0",
             job.isNearby ? "text-emerald-500 font-semibold" : "text-muted-foreground/60"
           )}>({job.distance})</span>
-          {job.isNearby && (
-            <motion.div 
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-0.5"
-            />
-          )}
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
           <Clock className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate max-w-[140px]">{job.timing}</span>
+          <span className="truncate">{job.timing}</span>
         </div>
       </div>
 
-      {/* BOTTOM: Payout & Action */}
-      <div className={cn(
-        "relative z-10 flex justify-between items-center bg-muted/20 border-t border-border/40",
-        isUrgentVariant 
-          ? "mt-2 pt-4 -mx-6 sm:-mx-8 -mb-6 sm:-mb-8 px-6 sm:px-8 py-5 sm:py-6 rounded-b-[2.5rem] flex-col sm:flex-row gap-4" 
-          : "mt-2 pt-4 -mx-5 sm:-mx-6 -mb-5 sm:-mb-6 px-5 sm:px-6 py-4 sm:py-5 rounded-b-[2rem] gap-2"
-      )}>
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-1">Guaranteed</span>
-          <div className="flex items-baseline gap-1">
-            <IndianRupee className={cn("text-primary", isUrgentVariant ? "w-4 h-4 sm:w-5 sm:h-5 -mr-1.5" : "w-4 h-4 -mr-1.5")} />
-            <span className={cn(
-              "font-black text-foreground tracking-tighter",
-              isUrgentVariant ? "text-4xl" : "text-3xl"
-            )}>{job.payout}</span>
-            <span className="text-sm font-semibold text-muted-foreground ml-1 shrink-0">/ {job.payoutType}</span>
+      {/* BOTTOM: Payout & Apply Button */}
+      <div className="relative z-10 mt-2 pt-4 border-t border-border/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+        <div className="flex items-center justify-between sm:justify-start gap-4">
+          <div className="flex flex-col text-left">
+            <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest">Guaranteed</span>
+            <div className="flex items-baseline gap-0.5">
+              <IndianRupee className="w-4 h-4 -mr-1 text-primary shrink-0" />
+              <span className="font-black text-2xl sm:text-3xl text-foreground tracking-tighter">{job.payout}</span>
+              <span className="text-xs font-semibold text-muted-foreground ml-0.5">/ {job.payoutType}</span>
+            </div>
           </div>
-          {job.isVerified && <SafePayoutIndicator className="mt-1" />}
+          {job.isVerified && <SafePayoutIndicator className="shrink-0" />}
         </div>
+        
         <button 
           onClick={(e) => { 
             e.stopPropagation(); 
@@ -341,11 +321,10 @@ export const JobCard = memo(({ job, variant = 'default', className }: JobCardPro
           }}
           disabled={isApplied}
           className={cn(
-            "font-bold rounded-xl transition-all text-sm shrink-0",
-            isUrgentVariant ? "w-full sm:w-auto px-8 py-3.5 text-base" : "px-6 py-2.5",
+            "font-bold rounded-xl transition-all text-sm py-2.5 sm:py-3 px-6 w-full sm:w-auto text-center shrink-0",
             isApplied 
               ? "bg-muted/50 text-muted-foreground cursor-not-allowed" 
-              : "bg-foreground text-background hover:bg-primary hover:text-primary-foreground hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 active:scale-95"
+              : "bg-foreground text-background hover:bg-primary hover:text-primary-foreground hover:shadow-lg active:scale-95"
           )}
         >
           {isApplied ? "✓ Applied" : "Apply"}

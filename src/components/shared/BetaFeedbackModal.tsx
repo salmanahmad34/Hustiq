@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Heart, Lightbulb, AlertTriangle, CheckCircle, X, Send } from 'lucide-react'
+import { Heart, Lightbulb, AlertTriangle, CheckCircle, X, Send } from 'lucide-react'
 import { trackFeedbackSubmitted } from '@/services/analytics'
 
 type Tab = 'sentiment' | 'feature' | 'bug'
@@ -41,6 +41,15 @@ export const BetaFeedbackModal = () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    const handleOpenFeedback = () => {
+      resetForm()
+      setIsOpen(true)
+    }
+    window.addEventListener('open-beta-feedback', handleOpenFeedback)
+    return () => window.removeEventListener('open-beta-feedback', handleOpenFeedback)
+  }, [])
 
   const handleEmojiSelect = (type: EmojiReaction) => {
     setEmoji(type)
@@ -106,22 +115,6 @@ export const BetaFeedbackModal = () => {
 
   return (
     <>
-      {/* Floating Feedback Bubble */}
-      <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 right-6 z-[9999]">
-        <motion.button
-          onClick={() => {
-            resetForm()
-            setIsOpen(true)
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 h-12 px-4 rounded-full bg-foreground text-background dark:bg-card dark:text-foreground border border-foreground/15 dark:border-border hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-xl hover:shadow-primary/20"
-        >
-          <MessageSquare className="w-5 h-5 shrink-0" />
-          <span className="text-xs font-black tracking-widest uppercase hidden md:inline-block">Beta Feedback</span>
-        </motion.button>
-      </div>
-
       {/* Modal Dialog */}
       <AnimatePresence>
         {isOpen && (

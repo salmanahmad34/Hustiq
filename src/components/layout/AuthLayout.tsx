@@ -14,7 +14,7 @@ export const AuthLayout = () => {
         HustiQ
       </Link>
 
-      <main className="w-full max-w-md z-10 glass-card rounded-2xl p-8 border border-border/50">
+      <main className="w-full max-w-md z-10 glass-card rounded-2xl p-5 sm:p-8 border border-border/50">
         <div className="flex justify-center mb-8 md:hidden">
           <Link to={ROUTES.HOME} className="flex items-center gap-2 font-bold text-2xl gradient-text">
             <ZivaroBrandIcon size="md" className="text-primary" />

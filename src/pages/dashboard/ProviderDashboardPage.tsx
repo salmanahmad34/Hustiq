@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Search, Bell, Plus } from 'lucide-react'
 
@@ -22,6 +22,26 @@ export const ProviderDashboardPage = () => {
   const { user } = useAuth()
   const { jobs, fetchProviderJobs, isLoading: isLoadingJobs } = useJobs()
   const { applications, fetchProviderApplications, isLoading: isLoadingApps } = useApplications()
+
+  const [tourState, setTourState] = useState({ dismissed: true, progress: 0 })
+
+  useEffect(() => {
+    const updateState = () => {
+      if (!user?.id) return
+      const userId = user.id
+      const savedDismissed = localStorage.getItem(`zivaro_tour_dismissed_${userId}`)
+      const savedCompleted = localStorage.getItem(`zivaro_tour_completed_${userId}`)
+      const completedList = savedCompleted ? JSON.parse(savedCompleted) : []
+      setTourState({
+        dismissed: savedDismissed === 'true',
+        progress: Math.round((completedList.length / 4) * 100)
+      })
+    }
+
+    updateState()
+    window.addEventListener('zivaro-tour-updated', updateState)
+    return () => window.removeEventListener('zivaro-tour-updated', updateState)
+  }, [user?.id])
 
   const appsWithDetails = applications as ApplicationWithDetails[]
 
@@ -137,6 +157,46 @@ export const ProviderDashboardPage = () => {
           </div>
         </div>
       </div>
+
+      {!tourState.dismissed && tourState.progress < 100 && (
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden text-left mb-6 max-w-[1600px] mx-auto w-full px-6">
+          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-sm inline-block mb-2">
+              HustiQ Provider Onboarding
+            </span>
+            <h4 className="text-lg font-black text-foreground">Complete Provider Setup</h4>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              Complete all onboarding setup milestones to fully unlock smart applicant matching and escrow payout structures!
+            </p>
+            <div className="flex items-center gap-3 mt-4">
+              <div className="flex-1 max-w-[200px] h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${tourState.progress}%` }} />
+              </div>
+              <span className="text-xs font-bold text-foreground">{tourState.progress}% Done</span>
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-setup-guide'))}
+              className="bg-primary text-primary-foreground font-black text-xs py-2.5 px-5 rounded-xl hover:shadow-lg active:scale-95 transition-all"
+            >
+              Resume Setup
+            </button>
+            <button
+              onClick={() => {
+                if (user?.id) {
+                  localStorage.setItem(`zivaro_tour_dismissed_${user.id}`, 'true')
+                  window.dispatchEvent(new CustomEvent('zivaro-tour-updated'))
+                }
+              }}
+              className="bg-muted hover:bg-muted/80 text-muted-foreground font-bold text-xs py-2.5 px-4 rounded-xl transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8 w-full max-w-[1600px] mx-auto px-2 sm:px-0">
 
