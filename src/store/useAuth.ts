@@ -123,7 +123,7 @@ export const useAuth = create<AuthState>()(
           }
 
           if (exists) {
-            throw new Error('Account already exists. Please sign in.')
+            throw new Error('This email is already registered. Please sign in.')
           }
 
           // 2. Real Supabase Signup
@@ -160,12 +160,18 @@ export const useAuth = create<AuthState>()(
           return { needsVerification: false }
         } catch (err: any) {
           let errorMessage = err.message || 'Signup failed'
+          const lowerMsg = errorMessage.toLowerCase()
           if (
-            errorMessage.toLowerCase().includes('already registered') ||
-            errorMessage.toLowerCase().includes('already exists') ||
-            errorMessage.toLowerCase().includes('email_exists')
+            lowerMsg.includes('already registered') ||
+            lowerMsg.includes('already exists') ||
+            lowerMsg.includes('email_exists') ||
+            lowerMsg.includes('email already registered')
           ) {
-            errorMessage = 'Account already exists. Please sign in.'
+            errorMessage = 'This email is already registered. Please sign in.'
+          } else if (lowerMsg.includes('invalid email') || lowerMsg.includes('email is invalid') || lowerMsg.includes('invalid_email')) {
+            errorMessage = 'Please enter a valid email address.'
+          } else if (lowerMsg.includes('weak password') || lowerMsg.includes('password should be at least 6 characters') || lowerMsg.includes('password_too_weak')) {
+            errorMessage = 'Password must be at least 6 characters long.'
           }
           set({
             isAuthenticated: false,
@@ -173,7 +179,7 @@ export const useAuth = create<AuthState>()(
             hasShownSplash: false,
             error: errorMessage
           })
-          throw err
+          throw new Error(errorMessage)
         } finally {
           set({ isLoading: false })
         }
@@ -199,9 +205,20 @@ export const useAuth = create<AuthState>()(
             error: null
           })
         } catch (err: any) {
-          const errorMessage = err.message || 'Verification failed. Invalid code.'
+          let errorMessage = err.message || 'Verification failed. Invalid code.'
+          const lowerMsg = errorMessage.toLowerCase()
+          if (lowerMsg.includes('expired')) {
+            errorMessage = 'Verification code expired. Please request a new one.'
+          } else if (
+            lowerMsg.includes('invalid') || 
+            lowerMsg.includes('incorrect') || 
+            lowerMsg.includes('token signature is invalid') ||
+            lowerMsg.includes('verify_otp_failed')
+          ) {
+            errorMessage = 'Verification code is incorrect. Please try again.'
+          }
           set({ error: errorMessage })
-          throw err
+          throw new Error(errorMessage)
         } finally {
           set({ isLoading: false })
         }

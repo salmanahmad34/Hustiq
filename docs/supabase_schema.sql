@@ -8,7 +8,7 @@ create extension if not exists "uuid-ossp";
 -- 1. PROFILES TABLE (Extends auth.users for Student & Provider metadata)
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
-  email text,
+  email text unique,
   role text check (role in ('student', 'provider')) not null default 'student',
   full_name text,
   name text, -- Kept for backward compatibility
@@ -22,6 +22,17 @@ create table if not exists public.profiles (
 
 -- Enable RLS for Profiles
 alter table public.profiles enable row level security;
+
+-- Ensure email constraint is unique (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'profiles_email_key'
+  ) THEN
+    ALTER TABLE public.profiles ADD CONSTRAINT profiles_email_key UNIQUE (email);
+  END IF;
+END $$;
 
 -- RLS Policies for Profiles (Conditional)
 DO $$
@@ -269,7 +280,9 @@ create or replace function public.check_user_exists(email_to_check text)
 returns boolean as $$
 begin
   return exists (
-    select 1 from auth.users where email = email_to_check
+    select 1 from auth.users 
+    where email = email_to_check 
+    and email_confirmed_at is not null
   );
 end;
 $$ language plpgsql security definer;
