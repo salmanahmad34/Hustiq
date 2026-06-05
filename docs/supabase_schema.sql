@@ -25,6 +25,9 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 -- RLS Policies for Profiles
+drop policy if exists "SELECT" on public.profiles;
+drop policy if exists "INSERT" on public.profiles;
+drop policy if exists "UPDATE" on public.profiles;
 create policy "SELECT" on public.profiles for select using (auth.uid() = id);
 create policy "INSERT" on public.profiles for insert with check (auth.uid() = id);
 create policy "UPDATE" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
@@ -54,6 +57,8 @@ create table if not exists public.jobs (
 alter table public.jobs enable row level security;
 
 -- RLS Policies for Jobs
+drop policy if exists "Jobs are readable by all authenticated users." on public.jobs;
+drop policy if exists "Providers can manage their own posted jobs." on public.jobs;
 create policy "Jobs are readable by all authenticated users." 
   on public.jobs for select using (auth.role() = 'authenticated');
 
@@ -76,6 +81,9 @@ create table if not exists public.applications (
 alter table public.applications enable row level security;
 
 -- RLS Policies for Applications
+drop policy if exists "Students can view and manage their own applications." on public.applications;
+drop policy if exists "Providers can view applications for their posted jobs." on public.applications;
+drop policy if exists "Providers can update application status for their posted jobs." on public.applications;
 create policy "Students can view and manage their own applications." 
   on public.applications for all using (auth.uid() = student_id);
 
@@ -110,6 +118,7 @@ create table if not exists public.saved_jobs (
 alter table public.saved_jobs enable row level security;
 
 -- RLS Policies for Saved Jobs
+drop policy if exists "Users can manage their saved jobs list." on public.saved_jobs;
 create policy "Users can manage their saved jobs list." 
   on public.saved_jobs for all using (auth.uid() = student_id);
 
@@ -127,6 +136,7 @@ create table if not exists public.messages (
 alter table public.messages enable row level security;
 
 -- RLS Policies for Messages
+drop policy if exists "Users can send and view their own chat histories." on public.messages;
 create policy "Users can send and view their own chat histories." 
   on public.messages for all using (auth.uid() = sender_id or auth.uid() = recipient_id);
 
@@ -145,6 +155,8 @@ create table if not exists public.reviews (
 alter table public.reviews enable row level security;
 
 -- RLS Policies for Reviews
+drop policy if exists "Reviews are viewable by authenticated users." on public.reviews;
+drop policy if exists "Users can submit reviewer entries." on public.reviews;
 create policy "Reviews are viewable by authenticated users." 
   on public.reviews for select using (auth.role() = 'authenticated');
 
@@ -168,6 +180,10 @@ create table if not exists public.notifications (
 alter table public.notifications enable row level security;
 
 -- RLS Policies for Notifications
+drop policy if exists "Users can select their own notifications." on public.notifications;
+drop policy if exists "Users can update their own notifications." on public.notifications;
+drop policy if exists "Users can delete their own notifications." on public.notifications;
+drop policy if exists "Any authenticated user can insert notifications." on public.notifications;
 create policy "Users can select their own notifications." 
   on public.notifications for select 
   using (auth.uid() = user_id);
@@ -217,7 +233,8 @@ end;
 $$ language plpgsql security definer;
 
 -- Bind trigger execution to auth.users inserts
-create or replace trigger on_auth_user_created
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
@@ -247,6 +264,7 @@ create table if not exists public.user_push_tokens (
 alter table public.user_push_tokens enable row level security;
 
 -- RLS Policies
+drop policy if exists "Users can manage their own push tokens." on public.user_push_tokens;
 create policy "Users can manage their own push tokens."
   on public.user_push_tokens for all
   using (auth.uid() = user_id)
