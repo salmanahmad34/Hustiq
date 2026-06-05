@@ -131,7 +131,7 @@ export const useAuth = create<AuthState>()(
 
           // 2. Real Supabase Signup
           const data = await signUpUser(email, password, name, role)
-          console.log("Signup response", data)
+          console.log("Signup response:", data)
 
           const needsVerification = !data || data.session === null
           console.log('[useAuth] Needs OTP email confirmation:', needsVerification)
@@ -145,13 +145,13 @@ export const useAuth = create<AuthState>()(
               error: null
             })
             // Trigger visual Toast alert for success
-            useUiStore.getState().addToast('Account created successfully. Please check your email and verify your account.', 'success')
+            useUiStore.getState().addToast('Account created successfully. Please check your email to verify your account.', 'success')
             return { needsVerification: true }
           }
 
           const userObj = data?.user || data?.session?.user
           if (!userObj) {
-            throw new Error('Signup failed: User data not found.')
+            return { needsVerification: false }
           }
 
           // Set user session if automatically confirmed
@@ -172,42 +172,7 @@ export const useAuth = create<AuthState>()(
         } catch (err: any) {
           console.error("Signup Error:", err)
           
-          let errorMessage = err.message || 'Signup failed'
-          const lowerMsg = errorMessage.toLowerCase()
-          if (
-            lowerMsg.includes('already registered') ||
-            lowerMsg.includes('already exists') ||
-            lowerMsg.includes('email_exists') ||
-            lowerMsg.includes('email already registered')
-          ) {
-            errorMessage = 'This email is already registered. Please sign in.'
-          } else if (
-            lowerMsg.includes('invalid email') || 
-            lowerMsg.includes('email is invalid') || 
-            lowerMsg.includes('invalid_email') ||
-            lowerMsg.includes('invalid email address')
-          ) {
-            errorMessage = 'Please enter a valid email address.'
-          } else if (
-            lowerMsg.includes('weak password') || 
-            lowerMsg.includes('password should be at least 6 characters') || 
-            lowerMsg.includes('password_too_weak') ||
-            lowerMsg.includes('password too short') ||
-            lowerMsg.includes('password must be')
-          ) {
-            errorMessage = 'Password must be at least 6 characters long.'
-          } else if (
-            lowerMsg.includes('confirmation required') ||
-            lowerMsg.includes('confirm email') ||
-            lowerMsg.includes('email confirmation required')
-          ) {
-            errorMessage = 'Email confirmation required. Please check your inbox for the verification code.'
-          } else if (
-            lowerMsg.includes('profile creation failed') ||
-            lowerMsg.includes('profile failed')
-          ) {
-            errorMessage = 'Profile creation failed. Please contact support.'
-          }
+          const errorMessage = err.message || 'Signup failed'
           
           set({
             isAuthenticated: false,
@@ -216,10 +181,10 @@ export const useAuth = create<AuthState>()(
             error: errorMessage
           })
           
-          // Trigger visual Toast alert
+          // Trigger visual Toast alert with the exact error message
           useUiStore.getState().addToast(errorMessage, 'error')
           
-          throw new Error(errorMessage)
+          throw err
         } finally {
           set({ isLoading: false })
         }
