@@ -20,17 +20,22 @@ create table if not exists public.profiles (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
-
 -- Enable RLS for Profiles
 alter table public.profiles enable row level security;
 
--- RLS Policies for Profiles
-drop policy if exists "SELECT" on public.profiles;
-drop policy if exists "INSERT" on public.profiles;
-drop policy if exists "UPDATE" on public.profiles;
-create policy "SELECT" on public.profiles for select using (auth.uid() = id);
-create policy "INSERT" on public.profiles for insert with check (auth.uid() = id);
-create policy "UPDATE" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+-- RLS Policies for Profiles (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'SELECT') THEN
+    CREATE POLICY "SELECT" ON public.profiles FOR SELECT USING (auth.uid() = id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'INSERT') THEN
+    CREATE POLICY "INSERT" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'UPDATE') THEN
+    CREATE POLICY "UPDATE" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+  END IF;
+END $$;
 
 -- 2. JOBS TABLE (Hustle Opportunities)
 create table if not exists public.jobs (
@@ -56,14 +61,18 @@ create table if not exists public.jobs (
 -- Enable RLS for Jobs
 alter table public.jobs enable row level security;
 
--- RLS Policies for Jobs
-drop policy if exists "Jobs are readable by all authenticated users." on public.jobs;
-drop policy if exists "Providers can manage their own posted jobs." on public.jobs;
-create policy "Jobs are readable by all authenticated users." 
-  on public.jobs for select using (auth.role() = 'authenticated');
-
-create policy "Providers can manage their own posted jobs." 
-  on public.jobs for all using (auth.uid() = provider_id);
+-- RLS Policies for Jobs (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'jobs' AND policyname = 'Jobs are readable by all authenticated users.') THEN
+    CREATE POLICY "Jobs are readable by all authenticated users." 
+      ON public.jobs FOR SELECT USING (auth.role() = 'authenticated');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'jobs' AND policyname = 'Providers can manage their own posted jobs.') THEN
+    CREATE POLICY "Providers can manage their own posted jobs." 
+      ON public.jobs FOR ALL USING (auth.uid() = provider_id);
+  END IF;
+END $$;
 
 -- 3. APPLICATIONS TABLE (Shift hiring pipes)
 create table if not exists public.applications (
@@ -80,30 +89,34 @@ create table if not exists public.applications (
 -- Enable RLS for Applications
 alter table public.applications enable row level security;
 
--- RLS Policies for Applications
-drop policy if exists "Students can view and manage their own applications." on public.applications;
-drop policy if exists "Providers can view applications for their posted jobs." on public.applications;
-drop policy if exists "Providers can update application status for their posted jobs." on public.applications;
-create policy "Students can view and manage their own applications." 
-  on public.applications for all using (auth.uid() = student_id);
-
-create policy "Providers can view applications for their posted jobs." 
-  on public.applications for select using (
-    exists (
-      select 1 from public.jobs 
-      where jobs.id = applications.job_id 
-      and jobs.provider_id = auth.uid()
-    )
-  );
-
-create policy "Providers can update application status for their posted jobs." 
-  on public.applications for update using (
-    exists (
-      select 1 from public.jobs 
-      where jobs.id = applications.job_id 
-      and jobs.provider_id = auth.uid()
-    )
-  );
+-- RLS Policies for Applications (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'applications' AND policyname = 'Students can view and manage their own applications.') THEN
+    CREATE POLICY "Students can view and manage their own applications." 
+      ON public.applications FOR ALL USING (auth.uid() = student_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'applications' AND policyname = 'Providers can view applications for their posted jobs.') THEN
+    CREATE POLICY "Providers can view applications for their posted jobs." 
+      ON public.applications FOR SELECT USING (
+        exists (
+          select 1 from public.jobs 
+          where jobs.id = applications.job_id 
+          and jobs.provider_id = auth.uid()
+        )
+      );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'applications' AND policyname = 'Providers can update application status for their posted jobs.') THEN
+    CREATE POLICY "Providers can update application status for their posted jobs." 
+      ON public.applications FOR UPDATE USING (
+        exists (
+          select 1 from public.jobs 
+          where jobs.id = applications.job_id 
+          and jobs.provider_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
 -- 4. SAVED JOBS TABLE (Student Bookmarks)
 create table if not exists public.saved_jobs (
@@ -117,10 +130,14 @@ create table if not exists public.saved_jobs (
 -- Enable RLS for Saved Jobs
 alter table public.saved_jobs enable row level security;
 
--- RLS Policies for Saved Jobs
-drop policy if exists "Users can manage their saved jobs list." on public.saved_jobs;
-create policy "Users can manage their saved jobs list." 
-  on public.saved_jobs for all using (auth.uid() = student_id);
+-- RLS Policies for Saved Jobs (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'saved_jobs' AND policyname = 'Users can manage their saved jobs list.') THEN
+    CREATE POLICY "Users can manage their saved jobs list." 
+      ON public.saved_jobs FOR ALL USING (auth.uid() = student_id);
+  END IF;
+END $$;
 
 -- 5. MESSAGES TABLE (Realtime Chat conversations)
 create table if not exists public.messages (
@@ -135,10 +152,14 @@ create table if not exists public.messages (
 -- Enable RLS for Messages
 alter table public.messages enable row level security;
 
--- RLS Policies for Messages
-drop policy if exists "Users can send and view their own chat histories." on public.messages;
-create policy "Users can send and view their own chat histories." 
-  on public.messages for all using (auth.uid() = sender_id or auth.uid() = recipient_id);
+-- RLS Policies for Messages (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'messages' AND policyname = 'Users can send and view their own chat histories.') THEN
+    CREATE POLICY "Users can send and view their own chat histories." 
+      ON public.messages FOR ALL USING (auth.uid() = sender_id or auth.uid() = recipient_id);
+  END IF;
+END $$;
 
 -- 6. REVIEWS TABLE (Platform feedback rating tracks)
 create table if not exists public.reviews (
@@ -154,14 +175,18 @@ create table if not exists public.reviews (
 -- Enable RLS for Reviews
 alter table public.reviews enable row level security;
 
--- RLS Policies for Reviews
-drop policy if exists "Reviews are viewable by authenticated users." on public.reviews;
-drop policy if exists "Users can submit reviewer entries." on public.reviews;
-create policy "Reviews are viewable by authenticated users." 
-  on public.reviews for select using (auth.role() = 'authenticated');
-
-create policy "Users can submit reviewer entries." 
-  on public.reviews for insert with check (auth.uid() = reviewer_id);
+-- RLS Policies for Reviews (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'reviews' AND policyname = 'Reviews are viewable by authenticated users.') THEN
+    CREATE POLICY "Reviews are viewable by authenticated users." 
+      ON public.reviews FOR SELECT USING (auth.role() = 'authenticated');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'reviews' AND policyname = 'Users can submit reviewer entries.') THEN
+    CREATE POLICY "Users can submit reviewer entries." 
+      ON public.reviews FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
+  END IF;
+END $$;
 
 -- 7. NOTIFICATIONS TABLE (Centralized Activity updates)
 create table if not exists public.notifications (
@@ -179,27 +204,26 @@ create table if not exists public.notifications (
 -- Enable RLS for Notifications
 alter table public.notifications enable row level security;
 
--- RLS Policies for Notifications
-drop policy if exists "Users can select their own notifications." on public.notifications;
-drop policy if exists "Users can update their own notifications." on public.notifications;
-drop policy if exists "Users can delete their own notifications." on public.notifications;
-drop policy if exists "Any authenticated user can insert notifications." on public.notifications;
-create policy "Users can select their own notifications." 
-  on public.notifications for select 
-  using (auth.uid() = user_id);
-
-create policy "Users can update their own notifications." 
-  on public.notifications for update 
-  using (auth.uid() = user_id);
-
-create policy "Users can delete their own notifications." 
-  on public.notifications for delete 
-  using (auth.uid() = user_id);
-
-create policy "Any authenticated user can insert notifications." 
-  on public.notifications for insert 
-  with check (auth.role() = 'authenticated');
-
+-- RLS Policies for Notifications (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'notifications' AND policyname = 'Users can select their own notifications.') THEN
+    CREATE POLICY "Users can select their own notifications." 
+      ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'notifications' AND policyname = 'Users can update their own notifications.') THEN
+    CREATE POLICY "Users can update their own notifications." 
+      ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'notifications' AND policyname = 'Users can delete their own notifications.') THEN
+    CREATE POLICY "Users can delete their own notifications." 
+      ON public.notifications FOR DELETE USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'notifications' AND policyname = 'Any authenticated user can insert notifications.') THEN
+    CREATE POLICY "Any authenticated user can insert notifications." 
+      ON public.notifications FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
 -- ========================================================================
 -- AUTOMATIC PROFILE ROW SYNC TRIGGER
@@ -263,9 +287,13 @@ create table if not exists public.user_push_tokens (
 -- Enable RLS
 alter table public.user_push_tokens enable row level security;
 
--- RLS Policies
-drop policy if exists "Users can manage their own push tokens." on public.user_push_tokens;
-create policy "Users can manage their own push tokens."
-  on public.user_push_tokens for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+-- RLS Policies for User Push Tokens (Conditional)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'user_push_tokens' AND policyname = 'Users can manage their own push tokens.') THEN
+    CREATE POLICY "Users can manage their own push tokens."
+      ON public.user_push_tokens FOR ALL
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
