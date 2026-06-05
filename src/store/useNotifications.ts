@@ -22,6 +22,7 @@ export interface NotificationItem {
     | 'new_message'
     | 'new_applicant'
     | 'urgent_alert'
+    | 'job_completed'
     | 'system'
   isPriority: boolean
   category: 'today' | 'earlier'

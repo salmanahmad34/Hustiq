@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 .env
 .env.*
+
+# Firebase Service Account Credentials
+Firebase Admin SDK/
+*.json
+

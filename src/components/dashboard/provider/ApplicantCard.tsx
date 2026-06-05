@@ -46,13 +46,33 @@ export const ApplicantCard = memo(({ applicant }: ApplicantCardProps) => {
   const isCompleted = completedAppIds.includes(applicant.id)
   const { payWorker } = useWallet()
 
-  const handleCompleteJob = () => {
+  const handleCompleteJob = async () => {
     completeApplication(applicant.id)
     const payoutAmount = (applicant as any).payout || 500
     const payCategory = (applicant as any).category || 'Hospitality'
     payWorker(applicant.name, applicant.jobApplied, payoutAmount, payCategory)
+    
+    const isMock = !applicant.studentId || applicant.studentId.startsWith('00000000-') || applicant.id.startsWith('sim-')
+    if (isSupabaseConfigured() && !isMock) {
+      try {
+        await useNotifications.getState().addNotification({
+          title: 'Job Completed! 🏆',
+          message: `Your job "${applicant.jobApplied}" has been marked completed by the provider.`,
+          type: 'job_completed',
+          isPriority: true,
+          category: 'today',
+          role: 'student',
+          actionPath: '/jobs',
+          actionText: 'View Details'
+        }, applicant.studentId)
+      } catch (err) {
+        console.error('Failed to create job completed notification:', err)
+      }
+    }
+    
     useUiStore.getState().addToast(`Job completed! Paid ₹${payoutAmount} to ${applicant.name} offline.`, 'success')
   }
+
 
   const handleAccept = async () => {
     try {

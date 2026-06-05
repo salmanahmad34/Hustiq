@@ -333,3 +333,52 @@ BEGIN
       WITH CHECK (auth.uid() = user_id);
   END IF;
 END $$;
+
+-- ========================================================================
+-- 9. TRIGGERS & REALTIME FOR NOTIFICATIONS
+-- ========================================================================
+
+-- Enable realtime for the notifications table
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Ignore error if we cannot configure publication without superuser privileges
+    NULL;
+END $$;
+
+-- Function to notify all students when a new job is posted
+create or replace function public.handle_new_job_posted()
+returns trigger as $$
+declare
+  student_record record;
+begin
+  for student_record in 
+    select id from public.profiles where role = 'student'
+  loop
+    insert into public.notifications (user_id, type, title, content, is_important, metadata)
+    values (
+      student_record.id,
+      'system',
+      'New Nearby Job Posted! 📍',
+      'A new gig "' || new.title || '" is available near your location.',
+      new.is_urgent,
+      jsonb_build_object('jobId', new.id, 'actionPath', '/dashboard', 'actionText', 'View Gig')
+    );
+  end loop;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger definition
+drop trigger if exists on_job_posted on public.jobs;
+create trigger on_job_posted
+  after insert on public.jobs
+  for each row execute procedure public.handle_new_job_posted();
+
