@@ -4,13 +4,13 @@ import { supabase } from '@/services/supabase/supabaseClient'
 import { isSupabaseConfigured } from '@/services/supabase/auth'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAGNHEZ4s4r5b-s3QrGqaD__0NI8x3JQto",
-  authDomain: "hirix-cd2a2.firebaseapp.com",
-  projectId: "hirix-cd2a2",
-  storageBucket: "hirix-cd2a2.firebasestorage.app",
-  messagingSenderId: "437122380749",
-  appId: "1:437122380749:web:9d5d1a14e3db8ea0c18a84",
-  measurementId: "G-0ZJWWL7YDJ"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
 }
 
 // Initialize Firebase App
@@ -36,8 +36,19 @@ export const registerFCM = async (userId: string) => {
   }
 
   try {
-    // 1. Verify and Register the Service Worker explicitly
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+    // 1. Construct dynamic registration parameters to pass config to the service worker
+    const params = new URLSearchParams({
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
+    }).toString()
+
+    // Register the Service Worker explicitly with the configuration query string
+    const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, {
       scope: '/'
     })
     console.log('[FCM] Service Worker registered successfully:', registration)
@@ -52,7 +63,7 @@ export const registerFCM = async (userId: string) => {
     // 3. Generate token using VAPID key
     const token = await getToken(messaging, {
       serviceWorkerRegistration: registration,
-      vapidKey: 'BBpwYQI_YWgz2okGHhYInJ1WjvV_KQWEl56mkfwBLTDrl-7XWH7Gyvvw3-FIZd9GH15fziEBb-ZK00yJ05Tl-X8'
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || ''
     })
 
     if (token) {

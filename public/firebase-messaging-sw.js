@@ -2,14 +2,16 @@
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
+// Parse query parameters passed during registration
+const urlParams = new URLSearchParams(self.location.search);
 const firebaseConfig = {
-  apiKey: "AIzaSyAGNHEZ4s4r5b-s3QrGqaD__0NI8x3JQto",
-  authDomain: "hirix-cd2a2.firebaseapp.com",
-  projectId: "hirix-cd2a2",
-  storageBucket: "hirix-cd2a2.firebasestorage.app",
-  messagingSenderId: "437122380749",
-  appId: "1:437122380749:web:9d5d1a14e3db8ea0c18a84",
-  measurementId: "G-0ZJWWL7YDJ"
+  apiKey: urlParams.get('apiKey') || '',
+  authDomain: urlParams.get('authDomain') || '',
+  projectId: urlParams.get('projectId') || '',
+  storageBucket: urlParams.get('storageBucket') || '',
+  messagingSenderId: urlParams.get('messagingSenderId') || '',
+  appId: urlParams.get('appId') || '',
+  measurementId: urlParams.get('measurementId') || ''
 };
 
 // Initialize Firebase compat inside the service worker
