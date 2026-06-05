@@ -12,7 +12,8 @@ import {
   checkEmailExists,
   verifyEmailOtp,
   requestPasswordReset,
-  updatePassword
+  updatePassword,
+  signInWithGoogle
 } from '@/services/supabase/auth'
 import { useUiStore } from '@/store/uiStore'
 
@@ -32,6 +33,7 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: (role?: 'student' | 'provider') => Promise<void>
   signup: (email: string, password: string, name: string, role: 'student' | 'provider') => Promise<{ needsVerification: boolean }>
   verifyOtp: (email: string, token: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
@@ -103,6 +105,33 @@ export const useAuth = create<AuthState>()(
             hasShownSplash: false,
             error: errorMessage
           })
+          throw err
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      // ============================================
+      // GOOGLE LOGIN ACTION
+      // ============================================
+      loginWithGoogle: async (role?: 'student' | 'provider') => {
+        set({ isLoading: true, error: null })
+        try {
+          if (role) {
+            localStorage.setItem('oauth_signup_role', role)
+            console.log('[useAuth] Google OAuth initiated with role:', role)
+          } else {
+            localStorage.removeItem('oauth_signup_role')
+            console.log('[useAuth] Google OAuth initiated for login (no role chosen)')
+          }
+
+          const { error: oAuthError } = await signInWithGoogle()
+          if (oAuthError) throw oAuthError
+        } catch (err: any) {
+          console.error("Google OAuth Error:", err)
+          const errorMessage = err.message || 'Google authentication failed'
+          set({ error: errorMessage })
+          useUiStore.getState().addToast(errorMessage, 'error')
           throw err
         } finally {
           set({ isLoading: false })

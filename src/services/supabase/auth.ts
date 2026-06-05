@@ -355,7 +355,20 @@ export const recoverSession = async () => {
 export const buildUserSession = async (userId: string, email: string): Promise<UserSession | null> => {
   try {
     console.log('[auth.ts] buildUserSession called:', { userId, email })
-    const profile = await getProfile(userId)
+    
+    // Check if there is a pending role selection from Google OAuth signup
+    const oauthSignupRole = typeof window !== 'undefined' ? (localStorage.getItem('oauth_signup_role') as 'student' | 'provider' | null) : null
+    
+    let profile = await getProfile(userId)
+
+    if (profile && oauthSignupRole && profile.role !== oauthSignupRole) {
+      console.log('[auth.ts] OAuth signup role mismatch found. Updating DB profile role to:', oauthSignupRole)
+      const updatedProfile = await updateProfile(userId, { role: oauthSignupRole })
+      if (updatedProfile) {
+        profile = updatedProfile
+      }
+      localStorage.removeItem('oauth_signup_role')
+    }
 
     if (!profile) {
       console.warn('[auth.ts] Profile missing in DB. Attempting to auto-create or use fallback...')
@@ -367,6 +380,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       const fallbackBio = metadata.bio || ''
       const fallbackPhone = metadata.phone || ''
       const fallbackAvatar = metadata.avatar_url || metadata.avatarUrl || ''
+      const targetRole = oauthSignupRole || metadata.role || 'student'
       
       // Try to create the profile row automatically
       const { data: newProfile, error: insertError } = await supabase
@@ -376,7 +390,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
           email,
           full_name: fallbackName,
           name: fallbackName,
-          role: metadata.role || 'student', // use metadata role or default
+          role: targetRole,
           avatar_url: fallbackAvatar,
           bio: fallbackBio,
           phone: fallbackPhone,
@@ -391,13 +405,17 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         .select()
         .single()
         
+      if (oauthSignupRole) {
+        localStorage.removeItem('oauth_signup_role')
+      }
+      
       if (insertError) {
         console.error('[auth.ts] Profile auto-creation failed, using temporary session:', insertError.message)
         // Return temporary session fallback
         return {
           id: userId,
           email,
-          role: metadata.role || 'student',
+          role: targetRole,
           full_name: fallbackName,
           name: fallbackName,
           avatar_url: fallbackAvatar,
