@@ -38,7 +38,7 @@ END $$;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'SELECT') THEN
-    CREATE POLICY "SELECT" ON public.profiles FOR SELECT USING (auth.uid() = id);
+    CREATE POLICY "SELECT" ON public.profiles FOR SELECT USING (auth.uid() is not null);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'INSERT') THEN
     CREATE POLICY "INSERT" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
