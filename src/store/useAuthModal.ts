@@ -12,8 +12,8 @@ interface AuthModalState {
 
 export const useAuthModal = create<AuthModalState>((set) => ({
   isOpen: false,
-  mode: 'signup',
-  openModal: (mode = 'signup') => set({ isOpen: true, mode }),
+  mode: 'login',
+  openModal: (mode = 'login') => set({ isOpen: true, mode }),
   closeModal: () => set({ isOpen: false }),
   toggleMode: () => set((state) => ({ mode: state.mode === 'login' ? 'signup' : 'login' }))
 }))

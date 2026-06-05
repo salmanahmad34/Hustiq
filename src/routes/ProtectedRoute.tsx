@@ -23,10 +23,10 @@ export const ProtectedRoute = () => {
     )
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to landing page if not authenticated
   if (!isAuthenticated) {
-    console.log('[ProtectedRoute] Not authenticated, redirecting to login.')
-    return <Navigate to={ROUTES.LOGIN} replace />
+    console.log('[ProtectedRoute] Not authenticated, redirecting to landing page.')
+    return <Navigate to={ROUTES.HOME} replace />
   }
 
   // Redirect to splash if not yet shown during this session, unless already visiting it

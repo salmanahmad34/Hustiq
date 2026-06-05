@@ -68,7 +68,7 @@ export const LandingNavbar = () => {
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4">
           <Link to={ROUTES.LOGIN} className="text-sm font-medium hover:text-foreground/80 transition-colors">
-            Log in
+            Sign In
           </Link>
           <Link 
             to={ROUTES.SIGNUP} 
@@ -114,7 +114,7 @@ export const LandingNavbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-center text-lg font-medium py-2"
                 >
-                  Log in
+                  Sign In
                 </Link>
                 <Link 
                   to={ROUTES.SIGNUP}

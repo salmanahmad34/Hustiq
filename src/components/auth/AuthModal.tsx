@@ -104,7 +104,7 @@ export const AuthModal = () => {
                 <p className="text-muted-foreground">
                   {mode === 'signup' 
                     ? 'Enter your details to start earning.' 
-                    : 'Log in to manage your gigs.'}
+                    : 'Sign in to manage your gigs.'}
                 </p>
               </div>
 
@@ -184,7 +184,7 @@ export const AuthModal = () => {
                   onClick={toggleMode}
                   className="ml-2 font-bold text-foreground hover:text-primary transition-colors focus:outline-none"
                 >
-                  {mode === 'signup' ? 'Log in' : 'Sign up'}
+                  {mode === 'signup' ? 'Sign in' : 'Sign up'}
                 </button>
               </div>
 

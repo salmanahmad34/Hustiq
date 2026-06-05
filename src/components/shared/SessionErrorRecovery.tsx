@@ -20,7 +20,7 @@ export const SessionErrorRecovery = ({ error, onDismiss }: SessionErrorProps) =>
   const handleLogout = async () => {
     try {
       await logout()
-      navigate(ROUTES.LOGIN)
+      navigate(ROUTES.HOME)
     } catch (err) {
       console.error('Logout failed:', err)
     }

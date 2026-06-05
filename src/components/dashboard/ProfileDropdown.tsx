@@ -26,9 +26,9 @@ export const ProfileDropdown = ({ isMobile = false }: ProfileDropdownProps) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsOpen(false)
-    logout()
+    await logout()
     navigate(ROUTES.HOME)
   }
 
