@@ -9,11 +9,11 @@ import {
   recoverSession, 
   buildUserSession, 
   updateProfile as updateProfileInDb,
-  checkEmailExists,
   verifyEmailOtp,
   requestPasswordReset,
   updatePassword,
-  signInWithGoogle
+  signInWithGoogle,
+  getUserProvider
 } from '@/services/supabase/auth'
 import { useUiStore } from '@/store/uiStore'
 
@@ -68,16 +68,20 @@ export const useAuth = create<AuthState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null })
         try {
-          // 1. Verify if the email is registered
-          let exists = true
+          // 1. Verify if the email is registered and check provider
+          let provider: string | null = null
           try {
-            exists = await checkEmailExists(email)
+            provider = await getUserProvider(email)
           } catch (e) {
-            console.warn('[useAuth] Email existence check failed/skipped:', e)
+            console.warn('[useAuth] Email check failed/skipped:', e)
           }
 
-          if (!exists) {
+          if (!provider) {
             throw new Error('No account found with this email.')
+          }
+
+          if (provider === 'google') {
+            throw new Error('This account already exists with Google. Please continue with Google Sign In.')
           }
 
           // 2. Real Supabase Login
@@ -144,17 +148,22 @@ export const useAuth = create<AuthState>()(
         try {
           console.log('[useAuth] Initiating signup process for:', { email, name, role })
           
-          // 1. Verify if email already exists
-          let exists = false
+          // 1. Verify if email already exists and identify provider
+          let provider: string | null = null
           try {
-            exists = await checkEmailExists(email)
+            provider = await getUserProvider(email)
           } catch (e: any) {
             console.warn('[useAuth] Email existence check failed/skipped:', e)
           }
 
-          if (exists) {
-            const existsError = new Error('This email is already registered. Please sign in.')
-            console.error('[useAuth] Signup Error: Email is already registered.', email)
+          if (provider) {
+            let existsError: Error
+            if (provider === 'google') {
+              existsError = new Error('This account already exists with Google. Please continue with Google Sign In.')
+            } else {
+              existsError = new Error('Account already exists. Please sign in.')
+            }
+            console.error('[useAuth] Signup Error: Email is already registered with provider:', provider)
             throw existsError
           }
 

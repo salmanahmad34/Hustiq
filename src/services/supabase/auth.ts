@@ -599,3 +599,35 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
   }
 }
 
+/**
+ * Get the authentication provider for a given email address
+ * @param email - User email to check
+ * @returns string | null provider name or null if user does not exist
+ */
+export const getUserProvider = async (email: string): Promise<string | null> => {
+  if (!isSupabaseConfigured()) return null
+
+  try {
+    const { data, error } = await supabase.rpc('get_user_provider', { email_to_check: email })
+    if (error) {
+      console.warn('[auth.ts] get_user_provider RPC failed, checking profiles table instead:', error.message)
+      // Fallback: check profiles table by email
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .limit(1)
+
+      if (profileError) {
+        throw profileError
+      }
+      return profileData && profileData.length > 0 ? 'email' : null
+    }
+    return data
+  } catch (error) {
+    console.error('Error in getUserProvider:', error)
+    return null
+  }
+}
+
+

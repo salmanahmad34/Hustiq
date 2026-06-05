@@ -292,6 +292,24 @@ begin
 end;
 $$ language plpgsql security definer;
 
+-- RPC TO DETERMINE AUTHENTICATION PROVIDER OF AN EMAIL (Bypasses RLS securely)
+-- ========================================================================
+create or replace function public.get_user_provider(email_to_check text)
+returns text as $$
+declare
+  user_provider text;
+begin
+  select i.provider into user_provider
+  from auth.identities i
+  join auth.users u on i.user_id = u.id
+  where u.email = email_to_check
+  limit 1;
+  
+  return user_provider;
+end;
+$$ language plpgsql security definer;
+
+
 -- ========================================================================
 -- 8. USER PUSH TOKENS TABLE (FCM Push Tokens)
 -- ========================================================================
