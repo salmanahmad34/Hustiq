@@ -55,7 +55,7 @@ export const CTASection = () => {
                 whileTap={{ scale: 0.98 }}
                 className="w-full flex items-center justify-center gap-2 bg-background text-foreground px-8 py-4 rounded-xl font-bold text-lg transition-colors hover:bg-background/90 shadow-2xl"
               >
-                Create Free Account
+                Sign Up
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </Link>

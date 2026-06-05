@@ -74,7 +74,7 @@ export const LandingNavbar = () => {
             to={ROUTES.SIGNUP} 
             className="text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/90 transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
           >
-            Get Started
+            Sign Up
           </Link>
         </div>
 
@@ -121,7 +121,7 @@ export const LandingNavbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-center text-lg font-medium bg-primary text-primary-foreground py-3 rounded-xl shadow-soft"
                 >
-                  Get Started
+                  Sign Up
                 </Link>
               </div>
             </div>

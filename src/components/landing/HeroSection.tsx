@@ -94,7 +94,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
             className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-4"
           >
-            <Link to={ROUTES.SIGNUP} className="w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg hover:opacity-90 transition-opacity shadow-soft-lg flex items-center justify-center gap-2 group shadow-primary/20">
+            <Link to={ROUTES.LOGIN} className="w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg hover:opacity-90 transition-opacity shadow-soft-lg flex items-center justify-center gap-2 group shadow-primary/20">
               Get Started
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
