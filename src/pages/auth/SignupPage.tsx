@@ -212,7 +212,7 @@ export const SignupPage = () => {
 
           <button
             type="submit"
-            className="h-13 bg-foreground text-background hover:bg-primary hover:text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm"
+            className="w-full h-16 bg-foreground text-background hover:bg-primary hover:text-primary-foreground font-bold text-[22px] rounded-[22px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -245,7 +245,7 @@ export const SignupPage = () => {
 
           <button
             type="submit"
-            className="h-13 bg-foreground text-background hover:bg-primary hover:text-primary-foreground font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm"
+            className="w-full h-16 bg-foreground text-background hover:bg-primary hover:text-primary-foreground font-bold text-[22px] rounded-[22px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm"
             disabled={isLoading}
           >
             {isLoading ? (
