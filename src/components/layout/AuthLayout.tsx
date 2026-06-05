@@ -2,10 +2,12 @@ import { Outlet, Link } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { ZivaroBrandIcon } from '@/components/brand/ZivaroBrandIcon'
 import { ArrowLeft } from 'lucide-react'
+import { ToastContainer } from '@/components/ui/ToastContainer'
 
 export const AuthLayout = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 relative overflow-hidden">
+      <ToastContainer />
       {/* Background subtle gradients */}
       <div className="absolute top-[-20%] left-[-10%] w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />

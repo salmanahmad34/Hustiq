@@ -14,6 +14,7 @@ import {
   requestPasswordReset,
   updatePassword
 } from '@/services/supabase/auth'
+import { useUiStore } from '@/store/uiStore'
 
 
 // ============================================
@@ -109,28 +110,35 @@ export const useAuth = create<AuthState>()(
       },
 
       // ============================================
-      // SIGNUP ACTION
-      // ============================================
       signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
         set({ isLoading: true, error: null })
         try {
+          console.log('[useAuth] Initiating signup process for:', { email, name, role })
+          
           // 1. Verify if email already exists
           let exists = false
           try {
             exists = await checkEmailExists(email)
-          } catch (e) {
+          } catch (e: any) {
             console.warn('[useAuth] Email existence check failed/skipped:', e)
           }
 
           if (exists) {
-            throw new Error('This email is already registered. Please sign in.')
+            const existsError = new Error('This email is already registered. Please sign in.')
+            console.error('[useAuth] Signup Error: Email is already registered.', email)
+            throw existsError
           }
 
           // 2. Real Supabase Signup
           const data = await signUpUser(email, password, name, role)
-          if (!data || !data.user) throw new Error('Signup failed')
+          console.log('[useAuth] signUpUser response:', data)
+          
+          if (!data || !data.user) {
+            throw new Error('Signup failed: User data not returned from Supabase.')
+          }
 
           const needsVerification = data.session === null
+          console.log('[useAuth] Needs OTP email confirmation:', needsVerification)
 
           if (needsVerification) {
             // Keep user logged out on the client side since verification is pending
@@ -159,6 +167,8 @@ export const useAuth = create<AuthState>()(
           })
           return { needsVerification: false }
         } catch (err: any) {
+          console.error("Signup Error:", err)
+          
           let errorMessage = err.message || 'Signup failed'
           const lowerMsg = errorMessage.toLowerCase()
           if (
@@ -168,17 +178,44 @@ export const useAuth = create<AuthState>()(
             lowerMsg.includes('email already registered')
           ) {
             errorMessage = 'This email is already registered. Please sign in.'
-          } else if (lowerMsg.includes('invalid email') || lowerMsg.includes('email is invalid') || lowerMsg.includes('invalid_email')) {
+          } else if (
+            lowerMsg.includes('invalid email') || 
+            lowerMsg.includes('email is invalid') || 
+            lowerMsg.includes('invalid_email') ||
+            lowerMsg.includes('invalid email address')
+          ) {
             errorMessage = 'Please enter a valid email address.'
-          } else if (lowerMsg.includes('weak password') || lowerMsg.includes('password should be at least 6 characters') || lowerMsg.includes('password_too_weak')) {
+          } else if (
+            lowerMsg.includes('weak password') || 
+            lowerMsg.includes('password should be at least 6 characters') || 
+            lowerMsg.includes('password_too_weak') ||
+            lowerMsg.includes('password too short') ||
+            lowerMsg.includes('password must be')
+          ) {
             errorMessage = 'Password must be at least 6 characters long.'
+          } else if (
+            lowerMsg.includes('confirmation required') ||
+            lowerMsg.includes('confirm email') ||
+            lowerMsg.includes('email confirmation required')
+          ) {
+            errorMessage = 'Email confirmation required. Please check your inbox for the verification code.'
+          } else if (
+            lowerMsg.includes('profile creation failed') ||
+            lowerMsg.includes('profile failed')
+          ) {
+            errorMessage = 'Profile creation failed. Please contact support.'
           }
+          
           set({
             isAuthenticated: false,
             user: null,
             hasShownSplash: false,
             error: errorMessage
           })
+          
+          // Trigger visual Toast alert
+          useUiStore.getState().addToast(errorMessage, 'error')
+          
           throw new Error(errorMessage)
         } finally {
           set({ isLoading: false })
@@ -191,12 +228,20 @@ export const useAuth = create<AuthState>()(
       verifyOtp: async (email: string, token: string) => {
         set({ isLoading: true, error: null })
         try {
+          console.log('[useAuth] Initiating OTP verification:', { email, token })
           const data = await verifyEmailOtp(email, token)
-          if (!data || !data.user) throw new Error('Verification failed. Invalid code.')
+          console.log('[useAuth] verifyOtp response:', data)
+          
+          if (!data || !data.user) {
+            throw new Error('Verification failed. Invalid code.')
+          }
 
           // After confirmation, build/get profile
           const userSession = await buildUserSession(data.user.id, data.user.email || email)
-          if (!userSession) throw new Error('Failed to retrieve user profile from database')
+          if (!userSession) {
+            console.error('[useAuth] Profile creation failed during buildUserSession for user:', data.user.id)
+            throw new Error('Profile creation failed. Please contact support.')
+          }
 
           set({
             isAuthenticated: true,
@@ -205,6 +250,8 @@ export const useAuth = create<AuthState>()(
             error: null
           })
         } catch (err: any) {
+          console.error("Verification Error:", err)
+          
           let errorMessage = err.message || 'Verification failed. Invalid code.'
           const lowerMsg = errorMessage.toLowerCase()
           if (lowerMsg.includes('expired')) {
@@ -216,8 +263,18 @@ export const useAuth = create<AuthState>()(
             lowerMsg.includes('verify_otp_failed')
           ) {
             errorMessage = 'Verification code is incorrect. Please try again.'
+          } else if (
+            lowerMsg.includes('profile creation failed') ||
+            lowerMsg.includes('profile failed')
+          ) {
+            errorMessage = 'Profile creation failed. Please contact support.'
           }
+          
           set({ error: errorMessage })
+          
+          // Trigger visual Toast alert
+          useUiStore.getState().addToast(errorMessage, 'error')
+          
           throw new Error(errorMessage)
         } finally {
           set({ isLoading: false })
