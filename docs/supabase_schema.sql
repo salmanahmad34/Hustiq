@@ -224,3 +224,22 @@ begin
   );
 end;
 $$ language plpgsql security definer;
+
+-- ========================================================================
+-- 8. USER PUSH TOKENS TABLE (FCM Push Tokens)
+-- ========================================================================
+create table if not exists public.user_push_tokens (
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  token text primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS
+alter table public.user_push_tokens enable row level security;
+
+-- RLS Policies
+create policy "Users can manage their own push tokens."
+  on public.user_push_tokens for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

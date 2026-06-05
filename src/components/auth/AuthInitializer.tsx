@@ -33,6 +33,10 @@ export const AuthInitializer = ({ children }: { children: React.ReactNode }) => 
       if (user.role === 'student') {
         useSavedJobs.getState().loadSavedJobs(user.id)
       }
+      // 5. Register FCM Push Notifications
+      import('@/services/firebase/fcm').then(({ registerFCM }) => {
+        registerFCM(user.id)
+      }).catch(err => console.error('[AuthInitializer] Failed to register FCM:', err))
     } else {
       useNotifications.getState().unsubscribeFromNotifications()
     }

@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageCircle, Wallet, Compass, Plus, LayoutGrid } from 'lucide-react'
+import { Home, MessageCircle, Wallet, Compass, Plus, LayoutGrid, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -14,6 +14,8 @@ import { SessionErrorRecovery } from '@/components/shared/SessionErrorRecovery'
 import { BetaFeedbackModal } from '@/components/shared/BetaFeedbackModal'
 import { ToastContainer } from '@/components/ui/ToastContainer'
 import { motion } from 'framer-motion'
+import { useNotifications } from '@/store/useNotifications'
+import { NotificationDropdown } from '@/components/dashboard/NotificationDropdown'
 
 interface NavItem {
   name: string
@@ -26,6 +28,7 @@ const STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
   { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Notifications', href: ROUTES.NOTIFICATIONS, icon: Bell },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
@@ -33,6 +36,7 @@ const STUDENT_NAV: NavItem[] = [
 const PROVIDER_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Notifications', href: ROUTES.NOTIFICATIONS, icon: Bell },
   { name: 'Post a Job', href: '#', icon: Plus, action: 'post-job' },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
@@ -57,9 +61,13 @@ export const DashboardLayout = () => {
   const location = useLocation()
   const { user, error, clearError } = useAuth()
   const { open: openPostJob } = usePostJob()
+  const { notifications } = useNotifications()
   
   const navItems = user?.role === 'provider' ? PROVIDER_NAV : STUDENT_NAV
   const mobileNavItems = user?.role === 'provider' ? MOBILE_PROVIDER_NAV : MOBILE_STUDENT_NAV
+
+  const activeRole = user?.role || 'student'
+  const unreadCount = notifications.filter(n => n.role === activeRole && n.isUnread).length
 
   const isChatRoute = 
     location.pathname.startsWith('/chat/') || 
@@ -85,6 +93,7 @@ export const DashboardLayout = () => {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.href
+            const isNotifications = item.name === 'Notifications'
 
             if (item.action === 'post-job') {
               return (
@@ -109,14 +118,21 @@ export const DashboardLayout = () => {
                 to={item.href}
                 id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
                 className={cn(
-                  "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive 
                     ? "bg-primary/10 text-primary" 
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span>{item.name}</span>
+                <div className="flex items-center space-x-3">
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </div>
+                {isNotifications && unreadCount > 0 && (
+                  <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-1.5 py-0.5 rounded-full min-w-[18px] text-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -147,6 +163,23 @@ export const DashboardLayout = () => {
                   <Plus className="w-4 h-4" />
                 </button>
               )}
+              
+              <div className="relative">
+                <button
+                  id="notification-bell-btn"
+                  onClick={() => useNotifications.getState().toggleOpen()}
+                  className="w-8 h-8 rounded-full bg-muted/40 hover:bg-muted/60 text-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform relative"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationDropdown />
+              </div>
+
               <ProfileDropdown isMobile={true} />
             </div>
           </header>
