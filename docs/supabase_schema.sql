@@ -244,6 +244,11 @@ END $$;
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
+  -- Do not create profiles for unconfirmed users
+  if new.email_confirmed_at is null then
+    return new;
+  end if;
+
   insert into public.profiles (id, email, full_name, name, role, onboarding_completed, avatar_url, bio, phone, metadata)
   values (
     new.id,
@@ -267,10 +272,10 @@ begin
 end;
 $$ language plpgsql security definer;
 
--- Bind trigger execution to auth.users inserts
+-- Bind trigger execution to auth.users inserts and updates
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
-  after insert on auth.users
+  after insert or update on auth.users
   for each row execute procedure public.handle_new_user();
 
 -- ========================================================================

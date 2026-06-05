@@ -67,7 +67,7 @@ export const SignupPage = () => {
       trackSignupCompleted(`usr-${Date.now()}`, role, name)
       
       if (result && result.needsVerification) {
-        setShowVerification(true)
+        navigate(ROUTES.LOGIN)
       } else {
         navigate(ROUTES.SPLASH)
       }

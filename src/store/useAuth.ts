@@ -131,13 +131,9 @@ export const useAuth = create<AuthState>()(
 
           // 2. Real Supabase Signup
           const data = await signUpUser(email, password, name, role)
-          console.log('[useAuth] signUpUser response:', data)
-          
-          if (!data || !data.user) {
-            throw new Error('Signup failed: User data not returned from Supabase.')
-          }
+          console.log("Signup response", data)
 
-          const needsVerification = data.session === null
+          const needsVerification = !data || data.session === null
           console.log('[useAuth] Needs OTP email confirmation:', needsVerification)
 
           if (needsVerification) {
@@ -148,15 +144,22 @@ export const useAuth = create<AuthState>()(
               hasShownSplash: false,
               error: null
             })
+            // Trigger visual Toast alert for success
+            useUiStore.getState().addToast('Account created successfully. Please check your email and verify your account.', 'success')
             return { needsVerification: true }
+          }
+
+          const userObj = data?.user || data?.session?.user
+          if (!userObj) {
+            throw new Error('Signup failed: User data not found.')
           }
 
           // Set user session if automatically confirmed
           set({
             isAuthenticated: true,
             user: {
-              id: data.user.id,
-              email: data.user.email || email,
+              id: userObj.id,
+              email: userObj.email || email,
               role: role,
               name: name,
               onboarding_completed: false,
