@@ -364,6 +364,30 @@ app.post('/api/send-notification', async (req, res) => {
   }
 });
 
+// Endpoint to retrieve FCM push tokens for a user
+app.get('/api/get-push-tokens', async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing "userId" query parameter.' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('user_push_tokens')
+      .select('token')
+      .eq('user_id', userId);
+
+    if (error) {
+      throw error;
+    }
+
+    const tokens = data ? data.map(r => r.token) : [];
+    res.json({ tokens });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Test endpoint to trigger a notification to a specific user
 app.get('/api/test-notification', async (req, res) => {
   const { userId, title, body } = req.query;

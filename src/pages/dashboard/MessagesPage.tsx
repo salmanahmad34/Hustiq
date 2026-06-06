@@ -111,7 +111,7 @@ export const MessagesPage = () => {
   // Fetch individual conversation history when activeId changes
   useEffect(() => {
     if (user?.id && activeId) {
-      const isMock = user.id.startsWith('00000000-') || activeId.startsWith('sim-')
+      const isMock = activeId.startsWith('sim-')
       if (isSupabaseConfigured() && !isMock) {
         fetchConversation(user.id, activeId)
       } else {
@@ -220,7 +220,7 @@ export const MessagesPage = () => {
   const handleSendMessage = async (content: string) => {
     if (!user?.id || !activeId) return
 
-    const isMock = user.id.startsWith('00000000-') || activeId.startsWith('conv-') || activeId.startsWith('sim-')
+    const isMock = activeId.startsWith('conv-') || activeId.startsWith('sim-')
 
     if (isSupabaseConfigured() && !isMock) {
       await sendMessage({

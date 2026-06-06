@@ -332,7 +332,7 @@ export const useAuth = create<AuthState>()(
         set({ isLoading: true, error: null })
         try {
           const state = get()
-          const isRealSession = state.user && !state.user.id.startsWith('00000000-')
+          const isRealSession = state.user && !state.user.id.startsWith('mock-') && !state.user.id.startsWith('demo-')
           
           if (isRealSession) {
             await signOutUser()
@@ -407,7 +407,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       refreshProfile: async () => {
         const state = get()
-        if (!state.user || state.user.id.startsWith('00000000-')) return
+        if (!state.user || state.user.id.startsWith('mock-') || state.user.id.startsWith('demo-')) return
 
         try {
           const userSession = await buildUserSession(state.user.id, state.user.email)
@@ -430,7 +430,7 @@ export const useAuth = create<AuthState>()(
 
         set({ isLoading: true, error: null })
         try {
-          const isRealSession = !state.user.id.startsWith('00000000-')
+          const isRealSession = !state.user.id.startsWith('mock-') && !state.user.id.startsWith('demo-')
           
           if (isRealSession) {
             await updateProfileInDb(state.user.id, updates)

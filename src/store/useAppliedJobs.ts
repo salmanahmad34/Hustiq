@@ -32,7 +32,7 @@ export const useAppliedJobs = create<AppliedJobsState>((set, get) => ({
   })),
   isApplied: (id) => !!get().appliedJobs[id],
   loadAppliedJobs: async (userId, role) => {
-    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-')
     if (!isSupabaseConfigured() || isMock) return
 
     try {

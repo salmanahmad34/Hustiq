@@ -27,7 +27,7 @@ export const useSavedJobs = create<SavedJobsState>()(
         }))
 
         try {
-          const isMock = !studentId || studentId.startsWith('mock-') || studentId.startsWith('demo-') || studentId.startsWith('00000000-')
+          const isMock = !studentId || studentId.startsWith('mock-') || studentId.startsWith('demo-')
           if (isSupabaseConfigured() && !isMock) {
             await saveJobToDb(studentId, job.id)
           }
@@ -44,7 +44,7 @@ export const useSavedJobs = create<SavedJobsState>()(
         })
 
         try {
-          const isMock = !studentId || studentId.startsWith('mock-') || studentId.startsWith('demo-') || studentId.startsWith('00000000-')
+          const isMock = !studentId || studentId.startsWith('mock-') || studentId.startsWith('demo-')
           if (isSupabaseConfigured() && !isMock) {
             await unsaveJobFromDb(studentId, id)
           }
@@ -59,7 +59,7 @@ export const useSavedJobs = create<SavedJobsState>()(
         Object.values(get().savedJobs).sort((a, b) => b.savedAt - a.savedAt),
 
       loadSavedJobs: async (studentId) => {
-        const isMock = !studentId || studentId.startsWith('mock-') || studentId.startsWith('demo-') || studentId.startsWith('00000000-')
+        const isMock = !studentId || studentId.startsWith('mock-') || studentId.startsWith('demo-')
         if (!isSupabaseConfigured() || isMock) return
 
         try {

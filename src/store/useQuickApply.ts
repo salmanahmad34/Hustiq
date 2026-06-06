@@ -36,7 +36,7 @@ export const useQuickApply = create<QuickApplyState>((set, get) => ({
 
     const { user } = useAuth.getState()
     const studentId = user?.id || 'demo-user-123'
-    const isMock = !studentId || studentId.startsWith('demo-') || studentId.startsWith('mock-') || studentId.startsWith('00000000-')
+    const isMock = !studentId || studentId.startsWith('demo-') || studentId.startsWith('mock-')
 
     if (isSupabaseConfigured() && !isMock) {
       const application = {

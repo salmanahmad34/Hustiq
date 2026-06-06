@@ -83,7 +83,7 @@ export const useNotifications = create<NotificationsState>((set, get) => ({
   })),
 
   loadNotifications: async (userId, role) => {
-    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-')
     if (!isSupabaseConfigured() || isMock) return
 
     try {
@@ -127,7 +127,7 @@ export const useNotifications = create<NotificationsState>((set, get) => ({
     }))
 
     try {
-      const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+      const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-')
       if (isSupabaseConfigured() && userId && !isMock) {
         await createNotificationInDb(
           userId, 
@@ -150,7 +150,7 @@ export const useNotifications = create<NotificationsState>((set, get) => ({
       currentChannel.unsubscribe()
     }
 
-    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+    const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-')
     if (!isSupabaseConfigured() || isMock) return
 
     const channel = supabase

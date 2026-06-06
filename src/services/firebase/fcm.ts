@@ -107,7 +107,7 @@ export const registerFCM = async (userId: string, forceRequest = false) => {
       console.log('[FCM] Token resolved successfully.')
       console.log("FCM Token:", token)
       
-      const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
+      const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-')
       if (isSupabaseConfigured() && !isMock) {
         // 4. Save token to Supabase user_push_tokens table
         const { error } = await (supabase as any)
