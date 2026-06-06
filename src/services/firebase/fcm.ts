@@ -199,15 +199,22 @@ export const getCurrentFCMToken = async () => {
   }
 }
 
-/**
- * Trigger a test notification via the backend test-notification endpoint
- */
-export const sendTestNotification = async (userId: string) => {
+export const sendTestNotification = async (userId: string): Promise<any> => {
   try {
     const res = await fetch(`/api/test-notification?userId=${userId}`)
-    const data = await res.json()
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to send test notification')
+    let data: any
+    try {
+      data = await res.json()
+    } catch (parseErr) {
+      throw new Error('Failed to parse server response')
+    }
+
+    if (!res.ok || (data && data.error)) {
+      const errorObj = data?.error
+      const errorMsg = typeof errorObj === 'object' && errorObj
+        ? (errorObj.message || JSON.stringify(errorObj))
+        : (errorObj || 'Failed to send test notification')
+      throw new Error(errorMsg)
     }
     return data
   } catch (err: any) {

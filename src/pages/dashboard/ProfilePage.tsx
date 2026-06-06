@@ -100,9 +100,9 @@ export const ProfilePage = () => {
       
       useUiStore.getState().addToast('Test notification sent successfully!', 'success')
     } catch (err: any) {
-      console.log('[FCM Profile Test] Failed to trigger test notification:', err.message)
+      console.error('[FCM Profile Test] Failed to trigger test notification:', err)
       const { useUiStore } = await import('@/store/uiStore')
-      useUiStore.getState().addToast(err.message || 'Failed to send test notification.', 'error')
+      useUiStore.getState().addToast(err.message, 'error')
     }
   }
 

@@ -76,12 +76,12 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
  * Reusable function to send push notifications to a user via Firebase Admin SDK
  */
 export async function sendPushNotification({ userId, title, body, data = {} }) {
-  console.log('[FCM SEND] Recipient User ID:', userId);
+  console.log(`[FCM SEND] Recipient User ID: ${userId}`);
 
   if (!firebaseAdminApp) {
     const initError = 'Firebase Admin not initialized';
-    console.log('[FCM SEND] Error:', initError);
-    return { success: false, error: initError };
+    console.log(`[FCM SEND] Error: ${JSON.stringify({ message: initError })}`);
+    return { success: false, error: { message: initError } };
   }
 
   try {
@@ -92,17 +92,18 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
       .eq('user_id', userId);
 
     if (tokenError) {
-      console.log('[FCM SEND] Error:', tokenError.message);
-      return { success: false, error: tokenError.message };
+      console.log(`[FCM SEND] Error: ${JSON.stringify(tokenError)}`);
+      return { success: false, error: tokenError };
     }
 
-    if (!tokenRecords || tokenRecords.length === 0) {
-      console.log('[FCM SEND] Token Found: None');
-      return { success: true, message: 'No registered tokens found' };
-    }
+    const tokens = tokenRecords ? tokenRecords.map(r => r.token) : [];
+    console.log(`[FCM SEND] Token Found: ${JSON.stringify(tokens)}`);
 
-    const tokens = tokenRecords.map(r => r.token);
-    console.log('[FCM SEND] Token Found:', tokens);
+    if (tokens.length === 0) {
+      const errorMsg = 'No registered tokens found';
+      console.log(`[FCM SEND] Error: ${JSON.stringify({ message: errorMsg })}`);
+      return { success: false, error: { message: errorMsg } };
+    }
 
     // 2. Build and send the multicast message
     const messagePayload = {
@@ -146,48 +147,53 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
       }
     };
 
-    console.log('[FCM SEND] Payload:', JSON.stringify(messagePayload));
+    console.log(`[FCM SEND] Payload: ${JSON.stringify(messagePayload)}`);
     const response = await admin.messaging().sendEachForMulticast(messagePayload);
-    console.log('[FCM SEND] Firebase Response:', JSON.stringify(response));
+    console.log(`[FCM SEND] Firebase Response: ${JSON.stringify(response)}`);
 
     // 3. Stale token management: identify and remove stale or invalid tokens
     const tokensToDelete = [];
+    let firstError = null;
     response.responses.forEach((resp, idx) => {
-      if (resp.success) {
-        console.log(`[FCM] Notification Sent successfully to token: "${tokens[idx]}"`);
-      } else {
+      if (!resp.success) {
         const error = resp.error;
-        console.log('[FCM SEND] Error:', error.message || error);
+        console.log(`[FCM SEND] Error: ${JSON.stringify(error)}`);
+        if (!firstError) {
+          firstError = error;
+        }
         
         if (
           error.code === 'messaging/invalid-registration-token' ||
           error.code === 'messaging/registration-token-not-registered'
         ) {
-          console.log(`[Push Notification] Stale or invalid token identified for deletion: "${tokens[idx]}"`);
           tokensToDelete.push(tokens[idx]);
         }
       }
     });
 
     if (tokensToDelete.length > 0) {
-      console.log(`[Push Notification] Deleting ${tokensToDelete.length} stale token(s) from database...`);
       const { error: deleteError } = await supabase
         .from('user_push_tokens')
         .delete()
         .in('token', tokensToDelete);
+    }
 
-      if (deleteError) {
-        console.error('[Push Notification] Error deleting stale tokens from Supabase:', deleteError.message);
-      } else {
-        console.log('[Push Notification] Stale tokens successfully deleted from Supabase.');
-      }
+    if (firstError) {
+      return { success: false, error: firstError };
     }
 
     return { success: true, response };
 
   } catch (err) {
-    console.log('[FCM SEND] Error:', err.message || err);
-    return { success: false, error: err.message || err };
+    const errorDetails = {
+      message: err.message,
+      code: err.code,
+      errorInfo: err.errorInfo,
+      stack: err.stack,
+      ...err
+    };
+    console.log(`[FCM SEND] Error: ${JSON.stringify(errorDetails)}`);
+    return { success: false, error: errorDetails };
   }
 }
 
@@ -376,7 +382,7 @@ app.get('/api/test-notification', async (req, res) => {
   if (result.success) {
     res.json({ message: 'Test notification triggered successfully.', result });
   } else {
-    res.status(500).json({ error: result.error || 'Failed to trigger test notification.', details: result });
+    res.status(500).json({ error: result.error });
   }
 });
 
