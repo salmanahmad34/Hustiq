@@ -129,3 +129,34 @@ export const registerFCM = async (userId: string) => {
     console.error('[FCM] Error occurred during registration:', err)
   }
 }
+
+export const getCurrentFCMToken = async () => {
+  if (!messaging) {
+    console.warn('[FCM] Messaging instance not initialized.')
+    return null
+  }
+  try {
+    const params = new URLSearchParams({
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAGNHEZ4s4r5b-s3QrGqaD__0NI8x3JQto',
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'hirix-cd2a2.firebaseapp.com',
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'hirix-cd2a2',
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'hirix-cd2a2.firebasestorage.app',
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '437122380749',
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:437122380749:web:9d5d1a14e3db8ea0c18a84',
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-0ZJWWL7YDJ'
+    }).toString()
+
+    const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, {
+      scope: '/'
+    })
+    
+    return await getToken(messaging, {
+      serviceWorkerRegistration: registration,
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || 'BBpwYQI_YWgz2okGHhYInJ1WjvV_KQWEl56mkfwBLTDrl-7XWH7Gyvvw3-FIZd9GH15fziEBb-ZK00yJ05Tl-X8'
+    })
+  } catch (err) {
+    console.error('[FCM] Error getting current token:', err)
+    return null
+  }
+}
+

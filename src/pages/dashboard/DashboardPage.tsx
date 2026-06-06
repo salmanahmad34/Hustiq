@@ -11,6 +11,8 @@ import { useAppliedJobs } from '@/store/useAppliedJobs'
 import { FirstTimeGuidance } from '@/components/shared/FirstTimeGuidance'
 import { useJobs } from '@/store/useJobs'
 import { useAuth } from '@/store/useAuth'
+import { useUiStore } from '@/store/uiStore'
+
 
 const MOCK_JOBS: Job[] = [
   {
@@ -124,6 +126,48 @@ export const DashboardPage = () => {
   const { jobs, fetchJobs } = useJobs()
   const isApplied = useAppliedJobs((state) => state.isApplied)
 
+  const handleSendDirectFCMTest = async () => {
+    try {
+      const { getCurrentFCMToken } = await import('@/services/firebase/fcm')
+      const token = await getCurrentFCMToken()
+      
+      console.log("Current Token:", token)
+      
+      if (!token) {
+        useUiStore.getState().addToast('No FCM token generated. Make sure notifications are allowed.', 'error')
+        return
+      }
+
+      console.log("Sending Notification...")
+      useUiStore.getState().addToast('Sending Direct Token Push...', 'info')
+
+      const response = await fetch('/api/send-to-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          token: token,
+          title: 'HustiQ Test',
+          body: 'Notification system is working successfully.'
+        })
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        console.log("Notification Sent:", data.response)
+        useUiStore.getState().addToast('Push delivered successfully!', 'success')
+      } else {
+        console.error("Notification Failed:", data.error)
+        useUiStore.getState().addToast(data.error || 'Push delivery failed.', 'error')
+      }
+    } catch (err: any) {
+      console.error("Notification Failed:", err)
+      useUiStore.getState().addToast(err.message || 'Direct Push Delivery Failed.', 'error')
+    }
+  }
+
   const [tourState, setTourState] = useState({ dismissed: true, progress: 0 })
 
   useEffect(() => {
@@ -235,6 +279,26 @@ export const DashboardPage = () => {
       </div>
 
       <div className="flex flex-col space-y-16">
+        {/* Temporary FCM Direct Test Banner */}
+        <div className="glass-card p-5 rounded-3xl border border-primary/20 bg-primary/[0.01] shadow-soft-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-3xl text-left relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[40px] bg-primary/10 pointer-events-none" />
+          <div className="flex-1 min-w-0 z-10">
+            <span className="text-[10px] uppercase font-extrabold tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full inline-block mb-2 border border-primary/20">
+              FCM Test Suite
+            </span>
+            <h4 className="text-base font-black text-foreground tracking-tight">Direct Token Push Verification</h4>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              Verify FCM notifications end-to-end by fetching your device token and calling the backend test router.
+            </p>
+          </div>
+          <button 
+            onClick={handleSendDirectFCMTest}
+            className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 px-5 rounded-full text-xs font-black transition-all flex items-center justify-center gap-2 shadow-sm z-10 border border-primary/25"
+          >
+            <span>Send Test Notification</span>
+          </button>
+        </div>
+
         {!tourState.dismissed && tourState.progress < 100 && (
           <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden text-left">
             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl pointer-events-none" />

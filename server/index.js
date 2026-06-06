@@ -268,6 +268,73 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.post('/api/send-to-token', async (req, res) => {
+  const { token, title, body, data } = req.body;
+
+  if (!token || !body) {
+    return res.status(400).json({ error: 'Missing token or body in request payload.' });
+  }
+
+  console.log(`[FCM] Notification Sending to Token: ${token}`);
+
+  if (!firebaseAdminApp) {
+    console.error('[FCM] Notification Failed: Firebase Admin is not initialized.');
+    return res.status(500).json({ error: 'Firebase Admin not initialized' });
+  }
+
+  try {
+    const messagePayload = {
+      token: token,
+      notification: {
+        title: title || 'HustiQ Test',
+        body: body
+      },
+      data: data ? {
+        ...data,
+        ...Object.fromEntries(
+          Object.entries(data).map(([key, val]) => [key, String(val)])
+        )
+      } : {},
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          visibility: 'public'
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1
+          }
+        }
+      },
+      webpush: {
+        headers: {
+          Urgency: 'high'
+        },
+        notification: {
+          title: title || 'HustiQ Test',
+          body: body,
+          icon: '/favicon.svg'
+        }
+      }
+    };
+
+    console.log(`[Push Notification] Sending single message via FCM to token...`);
+    const response = await admin.messaging().send(messagePayload);
+    console.log(`[FCM] Firebase Response:`, response);
+    console.log(`[Push Notification] Message ID:`, response);
+
+    res.json({ message: 'Notification sent successfully to token.', messageId: response, response });
+  } catch (err) {
+    console.error('[FCM] Notification Failed. Unexpected error occurred:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/send-notification', async (req, res) => {
   const { userId, title, body, data } = req.body;
 
