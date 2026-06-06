@@ -36,10 +36,10 @@ let messaging: any = null
 try {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     messaging = getMessaging(app)
-    console.log("FCM Messaging Initialized")
+    console.log('[FCM] Messaging service initialized successfully.')
   }
 } catch (err) {
-  console.warn('[FCM] Firebase Messaging is not supported or failed to initialize:', err)
+  console.log('[FCM] Push notifications are not supported in this browser environment.')
 }
 
 /**
@@ -49,22 +49,21 @@ try {
 export const registerFCM = async (userId: string, forceRequest = false) => {
   if (typeof window === 'undefined') return
 
-  console.log('[FCM] Current notification permission:', Notification.permission)
+  console.log('[FCM] Current notification permission state:', Notification.permission)
 
-  if (!messaging) {
-    console.warn('[FCM] Messaging instance not initialized.')
-    return
-  }
-
-  // If permission is denied, log and stop
   if (Notification.permission === 'denied') {
-    console.warn('[FCM] Notification permission is denied. Directing user to browser settings.')
+    console.log('[FCM] Notification permission is denied by the user. Skipping token registration.')
     return
   }
 
   // If permission is default and we aren't forcing the request, do not trigger prompt
   if (Notification.permission === 'default' && !forceRequest) {
-    console.log('[FCM] Notification permission is default and forceRequest is false. Skipping permission prompt.')
+    console.log('[FCM] Notification permission is default and not requested. Skipping prompt.')
+    return
+  }
+
+  if (!messaging) {
+    console.log('[FCM] Messaging is currently unavailable or unsupported.')
     return
   }
 
@@ -84,17 +83,17 @@ export const registerFCM = async (userId: string, forceRequest = false) => {
     const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, {
       scope: '/'
     })
-    console.log('[FCM] Service Worker registered successfully:', registration)
+    console.log('[FCM] Service Worker registered under root scope (/).')
 
     // 2. Request Notification Permission if default and forced
     let permission: NotificationPermission = Notification.permission
     if (permission === 'default' && forceRequest) {
       permission = await Notification.requestPermission()
-      console.log('[FCM] Notification permission request result:', permission)
+      console.log('[FCM] Requesting notification permission. Result:', permission)
     }
 
     if (permission !== 'granted') {
-      console.warn('[FCM] Notification permission denied or not selected:', permission)
+      console.log('[FCM] Notification permission was not granted (status:', permission + ')')
       return
     }
 
@@ -105,7 +104,7 @@ export const registerFCM = async (userId: string, forceRequest = false) => {
     })
 
     if (token) {
-      console.log('[FCM] Token generated successfully:', token)
+      console.log('[FCM] Token resolved successfully.')
       console.log("FCM Token:", token)
       
       const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
@@ -120,27 +119,27 @@ export const registerFCM = async (userId: string, forceRequest = false) => {
           })
 
         if (error) {
-          console.error('[FCM] Error saving token to Supabase:', error.message)
+          console.log('[FCM] Supabase database sync warning:', error.message)
         } else {
-          console.log('[FCM] Token successfully persisted in Supabase table user_push_tokens')
+          console.log('[FCM] Device token synchronized in Supabase user_push_tokens table.')
         }
       } else {
-        console.log('[FCM] Skipping token persistence for mock or unconfigured database session.')
+        console.log('[FCM] Database synchronization skipped (mock or guest user session).')
       }
     } else {
-      console.warn('[FCM] No registration token returned.')
+      console.log('[FCM] Device registration token is currently empty.')
     }
 
     // 5. Handle foreground notifications
     onMessage(messaging, (payload) => {
-      console.log('[FCM] Foreground message received:', payload)
+      console.log('[FCM] Foreground notification received:', payload)
       
       const { notification, data } = payload
       if (notification) {
         // Trigger a global UI toast
         import('@/store/uiStore').then(({ useUiStore }) => {
           useUiStore.getState().addToast(notification.title || 'New alert', 'success')
-        }).catch(err => console.warn('[FCM] Could not trigger toast:', err))
+        }).catch(() => console.log('[FCM] Dynamic UI toast could not be loaded.'))
 
         // Save notification into our local state/store
         import('@/store/useNotifications').then(({ useNotifications }) => {
@@ -154,18 +153,25 @@ export const registerFCM = async (userId: string, forceRequest = false) => {
             actionPath: data?.actionPath,
             actionText: data?.actionText
           }, userId)
-        }).catch(err => console.warn('[FCM] Could not add notification to store:', err))
+        }).catch(() => console.log('[FCM] Notification store update skipped.'))
       }
     })
 
   } catch (err) {
-    console.error('[FCM] Error occurred during registration:', err)
+    console.log('[FCM] Device registration completed with warning.')
   }
 }
 
 export const getCurrentFCMToken = async () => {
+  if (typeof window === 'undefined') return null
+  
+  if (Notification.permission !== 'granted') {
+    console.log('[FCM] Notification permission is not granted. Skipping token request.')
+    return null
+  }
+
   if (!messaging) {
-    console.warn('[FCM] Messaging instance not initialized.')
+    console.log('[FCM] Messaging is currently unavailable.')
     return null
   }
   try {
@@ -188,7 +194,7 @@ export const getCurrentFCMToken = async () => {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || 'BBpwYQI_YWgz2okGHhYInJ1WjvV_KQWEl56mkfwBLTDrl-7XWH7Gyvvw3-FIZd9GH15fziEBb-ZK00yJ05Tl-X8'
     })
   } catch (err) {
-    console.error('[FCM] Error getting current token:', err)
+    console.log('[FCM] Registration token is currently unavailable.')
     return null
   }
 }

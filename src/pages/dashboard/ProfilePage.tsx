@@ -7,6 +7,7 @@ import { TrustBanner } from '@/components/trust/TrustSystem'
 import { ReputationSummary } from '@/components/reviews/ReviewDisplay'
 import { useAuth } from '@/store/useAuth'
 import { usePostJob } from '@/store/usePostJob'
+import { BrowserSettingsGuideModal } from '@/components/shared/BrowserSettingsGuideModal'
 
 // Spring physics for snappy app-like feel
 const springTransition = { type: "spring" as const, stiffness: 400, damping: 30 }
@@ -36,11 +37,42 @@ export const ProfilePage = () => {
 
   // Notification Permission State
   const [permissionState, setPermissionState] = useState<NotificationPermission>('default')
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
+
+  const getPermissionLabel = (state: NotificationPermission) => {
+    if (state === 'granted') return 'Granted'
+    if (state === 'denied') return 'Denied'
+    return 'Not Requested'
+  }
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+
+    const updatePermission = () => {
       setPermissionState(Notification.permission)
-      console.log('[FCM] Current notification permission state in Profile:', Notification.permission)
+    }
+
+    updatePermission()
+
+    window.addEventListener('focus', updatePermission)
+    document.addEventListener('visibilitychange', updatePermission)
+    const interval = setInterval(updatePermission, 2000)
+
+    let permissionStatus: PermissionStatus | null = null
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        permissionStatus = status
+        status.onchange = updatePermission
+      }).catch(() => {})
+    }
+
+    return () => {
+      window.removeEventListener('focus', updatePermission)
+      document.removeEventListener('visibilitychange', updatePermission)
+      clearInterval(interval)
+      if (permissionStatus) {
+        permissionStatus.onchange = null
+      }
     }
   }, [])
 
@@ -53,7 +85,24 @@ export const ProfilePage = () => {
         setPermissionState(Notification.permission)
       }
     } catch (err) {
-      console.error('[FCM Permission] Failed to enable:', err)
+      console.log('[FCM Permission] Enable notification failed.')
+    }
+  }
+
+  const handleSendTestPushFromProfile = async () => {
+    if (!user?.id) return
+    try {
+      const { useUiStore } = await import('@/store/uiStore')
+      useUiStore.getState().addToast('Triggering test push notification...', 'info')
+      const res = await fetch(`/api/test-notification?userId=${user.id}`)
+      const data = await res.json()
+      if (res.ok) {
+        useUiStore.getState().addToast('Test notification sent successfully!', 'success')
+      } else {
+        useUiStore.getState().addToast(data.error || 'Failed to send test notification.', 'error')
+      }
+    } catch (err) {
+      console.log('[FCM Profile Test] Failed to trigger test notification.')
     }
   }
 
@@ -404,49 +453,79 @@ export const ProfilePage = () => {
               variants={itemVariants}
               className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
             >
-              <div className="flex items-start justify-between">
-                <div className={`p-3 rounded-xl transition-transform ${
-                  permissionState === 'granted' ? 'bg-emerald-500/10 text-emerald-500' :
-                  permissionState === 'denied' ? 'bg-rose-500/10 text-rose-500' :
-                  'bg-primary/10 text-primary'
-                }`}>
-                  <Bell className="w-6 h-6" />
+              <div>
+                <div className="flex items-start justify-between">
+                  <div className={`p-3 rounded-xl transition-transform ${
+                    permissionState === 'granted' ? 'bg-emerald-500/10 text-emerald-500' :
+                    permissionState === 'denied' ? 'bg-rose-500/10 text-rose-500 animate-pulse' :
+                    'bg-primary/10 text-primary'
+                  }`}>
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                    permissionState === 'granted' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                    permissionState === 'denied' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                    'bg-muted text-muted-foreground border border-border/60'
+                  }`}>
+                    {getPermissionLabel(permissionState)}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                  permissionState === 'granted' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
-                  permissionState === 'denied' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
-                  'bg-muted text-muted-foreground border border-border/60'
-                }`}>
-                  {permissionState}
-                </span>
-              </div>
-              <div className="mt-8 flex-1 flex flex-col justify-between">
-                <div>
+                <div className="mt-8">
                   <h3 className="font-bold text-lg text-foreground">Notification Settings</h3>
                   
                   {permissionState === 'granted' && (
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                       Push notifications are active! You will receive instant alerts for accepted applications, new nearby gigs, and incoming messages.
                     </p>
                   )}
                   {permissionState === 'denied' && (
-                    <p className="text-xs text-rose-500 font-semibold mt-1.5 leading-relaxed">
-                      Notifications are blocked. Please enable notifications in your browser settings to receive job updates and messages.
-                    </p>
+                    <div className="space-y-3 mt-2">
+                      <p className="text-xs text-rose-500 font-semibold leading-relaxed">
+                        Notifications are currently blocked in your browser.
+                      </p>
+                      <div className="p-3 bg-rose-500/[0.02] border border-rose-500/10 rounded-xl space-y-1.5">
+                        <h4 className="text-[9px] font-extrabold uppercase tracking-wider text-rose-500 leading-none">To unblock:</h4>
+                        <ol className="list-decimal pl-4 text-[10px] text-muted-foreground space-y-1">
+                          <li>Click the <strong>Lock icon</strong> (🔒) in your browser address bar.</li>
+                          <li>Find <strong>Notifications</strong> under site settings.</li>
+                          <li>Set permission to <strong>Allow</strong>.</li>
+                        </ol>
+                      </div>
+                    </div>
                   )}
                   {permissionState === 'default' && (
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                       Stay updated on shift invitations, payout status, and new applicant matching alerts instantly.
                     </p>
                   )}
                 </div>
+              </div>
 
+              <div className="mt-5 flex flex-col gap-2">
                 {permissionState === 'default' && (
                   <button
                     onClick={handleEnableNotifications}
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-xl text-xs font-black transition-all shadow-sm border border-primary/20 mt-4 text-center"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 px-4 rounded-xl text-xs font-black transition-all shadow-sm border border-primary/20 text-center"
                   >
                     Enable Notifications
+                  </button>
+                )}
+
+                {permissionState === 'denied' && (
+                  <button
+                    onClick={() => setIsGuideOpen(true)}
+                    className="w-full bg-rose-500 hover:bg-rose-600 text-white py-2.5 px-4 rounded-xl text-xs font-black transition-all shadow-sm border border-rose-600 text-center"
+                  >
+                    Open Browser Notification Settings
+                  </button>
+                )}
+
+                {permissionState === 'granted' && (
+                  <button
+                    onClick={handleSendTestPushFromProfile}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 px-4 rounded-xl text-xs font-black transition-all shadow-sm border border-emerald-600 text-center"
+                  >
+                    Send Test Notification
                   </button>
                 )}
               </div>
@@ -658,6 +737,7 @@ export const ProfilePage = () => {
           </div>
         </motion.div>
       )}
+      <BrowserSettingsGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </div>
   )
 }

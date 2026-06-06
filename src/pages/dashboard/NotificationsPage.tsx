@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useNotifications } from '@/store/useNotifications'
 import { useAuth } from '@/store/useAuth'
 import { useUiStore } from '@/store/uiStore'
+import { BrowserSettingsGuideModal } from '@/components/shared/BrowserSettingsGuideModal'
 import { 
   Briefcase, 
   Info, 
@@ -29,6 +30,40 @@ export const NotificationsPage = () => {
   const { user } = useAuth()
   const activeRole = user?.role || 'student'
   const isProvider = activeRole === 'provider'
+
+  const [permissionState, setPermissionState] = useState<NotificationPermission>('default')
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+
+    const updatePermission = () => {
+      setPermissionState(Notification.permission)
+    }
+
+    updatePermission()
+
+    window.addEventListener('focus', updatePermission)
+    document.addEventListener('visibilitychange', updatePermission)
+    const interval = setInterval(updatePermission, 2000)
+
+    let permissionStatus: PermissionStatus | null = null
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        permissionStatus = status
+        status.onchange = updatePermission
+      }).catch(() => {})
+    }
+
+    return () => {
+      window.removeEventListener('focus', updatePermission)
+      document.removeEventListener('visibilitychange', updatePermission)
+      clearInterval(interval)
+      if (permissionStatus) {
+        permissionStatus.onchange = null
+      }
+    }
+  }, [])
 
   const { 
     notifications, 
@@ -226,6 +261,41 @@ export const NotificationsPage = () => {
           </button>
         )}
       </div>
+
+      {/* Browser Settings Guide Modal */}
+      <BrowserSettingsGuideModal 
+        isOpen={isGuideOpen} 
+        onClose={() => setIsGuideOpen(false)} 
+      />
+
+      {/* Denied Permission Alert Banner */}
+      {permissionState === 'denied' && (
+        <div 
+          onClick={() => setIsGuideOpen(true)}
+          className="glass-card p-5 rounded-3xl border border-rose-500/25 bg-rose-500/[0.01] shadow-soft-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full text-left cursor-pointer hover:bg-rose-500/[0.03] transition-all relative overflow-hidden group animate-fade-in animate-duration-300"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[40px] bg-rose-500/10 pointer-events-none group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-4 min-w-0 z-10">
+            <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl shrink-0 group-hover:scale-105 transition-transform">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] uppercase font-extrabold tracking-widest text-rose-500 bg-rose-500/10 px-3 py-1 rounded-full inline-block mb-2 border border-rose-500/20">
+                Permission Blocked
+              </span>
+              <h4 className="text-base font-black text-foreground tracking-tight">Notifications are currently blocked in your browser.</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                Click here to enable notifications and receive real-time gig updates and messages.
+              </p>
+            </div>
+          </div>
+          <button 
+            className="shrink-0 bg-rose-500 hover:bg-rose-600 text-white py-2.5 px-5 rounded-full text-xs font-black transition-all flex items-center justify-center gap-2 shadow-sm z-10 border border-rose-600"
+          >
+            Enable Notifications
+          </button>
+        </div>
+      )}
 
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
@@ -428,7 +498,7 @@ export const NotificationsPage = () => {
             </p>
 
             <div className="flex flex-col gap-2.5 mt-1">
-              {import.meta.env.DEV && (
+              {import.meta.env.DEV && permissionState === 'granted' && (
                 <>
                   <button 
                     onClick={handleSendTestNotification}
