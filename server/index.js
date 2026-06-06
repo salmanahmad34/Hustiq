@@ -70,12 +70,13 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
  * Reusable function to send push notifications to a user via Firebase Admin SDK
  */
 export async function sendPushNotification({ userId, title, body, data = {} }) {
+  console.log(`[FCM] Notification Sending to User ID: ${userId}`);
   console.log(`[Push Notification] Attempting to send to User ID: ${userId}`);
   console.log(`[Push Notification] Title: "${title}", Body: "${body}"`);
   console.log(`[Push Notification] Payload Data:`, data);
 
   if (!firebaseAdminApp) {
-    console.error('[Push Notification] Error: Firebase Admin is not initialized.');
+    console.error('[FCM] Notification Failed: Firebase Admin is not initialized.');
     return { success: false, error: 'Firebase Admin not initialized' };
   }
 
@@ -92,11 +93,13 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
     }
 
     if (!tokenRecords || tokenRecords.length === 0) {
+      console.log(`[FCM] Token Found - Count: 0`);
       console.log(`[Push Notification] No registered FCM tokens found for User ID: ${userId}`);
       return { success: true, message: 'No registered tokens found' };
     }
 
     const tokens = tokenRecords.map(r => r.token);
+    console.log(`[FCM] Token Found - Count: ${tokens.length}`);
     console.log(`[Push Notification] Found ${tokens.length} token(s) for User ID: ${userId}:`, tokens);
 
     // 2. Build and send the multicast message
@@ -143,14 +146,16 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
 
     console.log(`[Push Notification] Sending multicast message via FCM...`);
     const response = await admin.messaging().sendEachForMulticast(messagePayload);
-    console.log(`[Push Notification] Firebase SDK multicast response:`, JSON.stringify(response));
+    console.log(`[FCM] Firebase Response:`, JSON.stringify(response));
 
     // 3. Stale token management: identify and remove stale or invalid tokens
     const tokensToDelete = [];
     response.responses.forEach((resp, idx) => {
-      if (!resp.success) {
+      if (resp.success) {
+        console.log(`[FCM] Notification Sent successfully to token: "${tokens[idx]}"`);
+      } else {
         const error = resp.error;
-        console.error(`[Push Notification] Failed delivery to token "${tokens[idx]}":`, error);
+        console.error(`[FCM] Notification Failed for token: "${tokens[idx]}" Error:`, error);
         
         if (
           error.code === 'messaging/invalid-registration-token' ||
@@ -179,7 +184,7 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
     return { success: true, response };
 
   } catch (err) {
-    console.error('[Push Notification] Unexpected error occurred:', err);
+    console.error('[FCM] Notification Failed. Unexpected error occurred:', err);
     return { success: false, error: err.message };
   }
 }

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useNotifications } from '@/store/useNotifications'
 import { useAuth } from '@/store/useAuth'
+import { useUiStore } from '@/store/uiStore'
 import { 
   Briefcase, 
   Info, 
@@ -156,6 +157,29 @@ export const NotificationsPage = () => {
       })
     }
   }
+
+  const handleSendTestNotification = async () => {
+    if (!user?.id) {
+      useUiStore.getState().addToast('Please login first to send a test notification.', 'error')
+      return
+    }
+
+    try {
+      useUiStore.getState().addToast('Triggering test push notification...', 'info')
+      const res = await fetch(`/api/test-notification?userId=${user.id}`)
+      const data = await res.json()
+      
+      if (res.ok) {
+        useUiStore.getState().addToast('Test notification sent successfully!', 'success')
+      } else {
+        useUiStore.getState().addToast(data.error || 'Failed to send test notification.', 'error')
+      }
+    } catch (err) {
+      console.error('[FCM Test] Error:', err)
+      useUiStore.getState().addToast('Network error triggering test notification.', 'error')
+    }
+  }
+
 
   // Animation constants
   const containerVariants = {
@@ -404,6 +428,20 @@ export const NotificationsPage = () => {
             </p>
 
             <div className="flex flex-col gap-2.5 mt-1">
+              <button 
+                onClick={handleSendTestNotification}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow-sm border border-primary/20"
+              >
+                <span>Send Test Notification</span>
+              </button>
+
+              <div className="relative my-1 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border/30"></div>
+                </div>
+                <span className="relative px-2 bg-card text-[9px] font-extrabold uppercase tracking-widest text-muted-foreground/60">Or Mock Viewport</span>
+              </div>
+
               {!isProvider ? (
                 <>
                   <button 
