@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Edit2, Wallet, Camera, Bookmark, Rocket, Zap, ChevronUp, Plus, User } from 'lucide-react'
+import { MapPin, BadgeCheck, Mail, Phone, Building2, Briefcase, GraduationCap, Edit2, Wallet, Camera, Bookmark, Rocket, Zap, ChevronUp, Plus, User, Bell } from 'lucide-react'
 import { TrustBanner } from '@/components/trust/TrustSystem'
 import { ReputationSummary } from '@/components/reviews/ReviewDisplay'
 import { useAuth } from '@/store/useAuth'
@@ -33,6 +33,29 @@ export const ProfilePage = () => {
 
   // Hub/Editor toggle
   const [showProfileEditor, setShowProfileEditor] = useState(false)
+
+  // Notification Permission State
+  const [permissionState, setPermissionState] = useState<NotificationPermission>('default')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPermissionState(Notification.permission)
+      console.log('[FCM] Current notification permission state in Profile:', Notification.permission)
+    }
+  }, [])
+
+  const handleEnableNotifications = async () => {
+    if (!user?.id) return
+    try {
+      const { registerFCM } = await import('@/services/firebase/fcm')
+      await registerFCM(user.id, true)
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        setPermissionState(Notification.permission)
+      }
+    } catch (err) {
+      console.error('[FCM Permission] Failed to enable:', err)
+    }
+  }
 
   // Form states
   const [fullName, setFullName] = useState(user?.full_name || user?.name || '')
@@ -375,6 +398,60 @@ export const ProfilePage = () => {
                 </p>
               </div>
             </motion.div>
+
+            {/* Card 7: Notification Settings */}
+            <motion.div
+              variants={itemVariants}
+              className="glass-card p-6 rounded-2xl border border-border/40 hover:border-primary/20 hover:bg-primary/5 transition-all flex flex-col justify-between group shadow-sm hover:shadow-lg text-left"
+            >
+              <div className="flex items-start justify-between">
+                <div className={`p-3 rounded-xl transition-transform ${
+                  permissionState === 'granted' ? 'bg-emerald-500/10 text-emerald-500' :
+                  permissionState === 'denied' ? 'bg-rose-500/10 text-rose-500' :
+                  'bg-primary/10 text-primary'
+                }`}>
+                  <Bell className="w-6 h-6" />
+                </div>
+                <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                  permissionState === 'granted' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                  permissionState === 'denied' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                  'bg-muted text-muted-foreground border border-border/60'
+                }`}>
+                  {permissionState}
+                </span>
+              </div>
+              <div className="mt-8 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">Notification Settings</h3>
+                  
+                  {permissionState === 'granted' && (
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                      Push notifications are active! You will receive instant alerts for accepted applications, new nearby gigs, and incoming messages.
+                    </p>
+                  )}
+                  {permissionState === 'denied' && (
+                    <p className="text-xs text-rose-500 font-semibold mt-1.5 leading-relaxed">
+                      Notifications are blocked. Please enable notifications in your browser settings to receive job updates and messages.
+                    </p>
+                  )}
+                  {permissionState === 'default' && (
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                      Stay updated on shift invitations, payout status, and new applicant matching alerts instantly.
+                    </p>
+                  )}
+                </div>
+
+                {permissionState === 'default' && (
+                  <button
+                    onClick={handleEnableNotifications}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-xl text-xs font-black transition-all shadow-sm border border-primary/20 mt-4 text-center"
+                  >
+                    Enable Notifications
+                  </button>
+                )}
+              </div>
+            </motion.div>
+
           </div>
 
           {/* Reputation Summary */}

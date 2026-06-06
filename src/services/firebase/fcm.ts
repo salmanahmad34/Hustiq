@@ -34,9 +34,25 @@ try {
  * Register FCM Service Worker, Request notification permissions,
  * Generate push token, save it to Supabase, and setup foreground listener.
  */
-export const registerFCM = async (userId: string) => {
+export const registerFCM = async (userId: string, forceRequest = false) => {
+  if (typeof window === 'undefined') return
+
+  console.log('[FCM] Current notification permission:', Notification.permission)
+
   if (!messaging) {
     console.warn('[FCM] Messaging instance not initialized.')
+    return
+  }
+
+  // If permission is denied, log and stop
+  if (Notification.permission === 'denied') {
+    console.warn('[FCM] Notification permission is denied. Directing user to browser settings.')
+    return
+  }
+
+  // If permission is default and we aren't forcing the request, do not trigger prompt
+  if (Notification.permission === 'default' && !forceRequest) {
+    console.log('[FCM] Notification permission is default and forceRequest is false. Skipping permission prompt.')
     return
   }
 
@@ -58,8 +74,13 @@ export const registerFCM = async (userId: string) => {
     })
     console.log('[FCM] Service Worker registered successfully:', registration)
 
-    // 2. Request Notification Permission
-    const permission = await Notification.requestPermission()
+    // 2. Request Notification Permission if default and forced
+    let permission: NotificationPermission = Notification.permission
+    if (permission === 'default' && forceRequest) {
+      permission = await Notification.requestPermission()
+      console.log('[FCM] Notification permission request result:', permission)
+    }
+
     if (permission !== 'granted') {
       console.warn('[FCM] Notification permission denied or not selected:', permission)
       return
