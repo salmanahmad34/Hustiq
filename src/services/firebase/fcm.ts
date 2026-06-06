@@ -15,6 +15,18 @@ const firebaseConfig = {
 
 console.log("Firebase Config:", firebaseConfig)
 
+// Validate critical Firebase configuration parameters
+const missingKeys: string[] = []
+if (!firebaseConfig.projectId) missingKeys.push('projectId')
+if (!firebaseConfig.messagingSenderId) missingKeys.push('messagingSenderId')
+if (!firebaseConfig.appId) missingKeys.push('appId')
+
+if (missingKeys.length > 0) {
+  console.error(`[FCM] Missing critical Firebase Configuration values: ${missingKeys.join(', ')}. FCM will not function properly.`)
+} else {
+  console.log('[FCM] Critical Firebase configuration parameters validated successfully.')
+}
+
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig)
 console.log("Firebase App Initialized")

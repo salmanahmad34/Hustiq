@@ -53,10 +53,16 @@ if (!supabaseUrl) {
   console.error('[Supabase Client] SUPABASE_URL or VITE_SUPABASE_URL is missing!');
 }
 
-// Fallback to anon key if service key is missing
-const supabaseKey = supabaseServiceKey || process.env.VITE_SUPABASE_ANON_KEY;
-if (!supabaseServiceKey) {
-  console.warn('[Supabase Client] SUPABASE_SERVICE_ROLE_KEY missing. Server will run with anon key and might have RLS limits.');
+const isPlaceholder = !supabaseServiceKey || 
+  supabaseServiceKey === 'your_supabase_service_role_key_here' || 
+  supabaseServiceKey.trim() === '';
+
+// Fallback to anon key if service key is missing or is placeholder
+const supabaseKey = isPlaceholder ? process.env.VITE_SUPABASE_ANON_KEY : supabaseServiceKey;
+if (isPlaceholder) {
+  console.warn('[Supabase Client] SUPABASE_SERVICE_ROLE_KEY missing or placeholder. Server will run with anon key.');
+} else {
+  console.log('[Supabase Client] SUPABASE_SERVICE_ROLE_KEY loaded successfully.');
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
