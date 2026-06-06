@@ -4,22 +4,27 @@ import { supabase } from '@/services/supabase/supabaseClient'
 import { isSupabaseConfigured } from '@/services/supabase/auth'
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAGNHEZ4s4r5b-s3QrGqaD__0NI8x3JQto',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'hirix-cd2a2.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'hirix-cd2a2',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'hirix-cd2a2.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '437122380749',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:437122380749:web:9d5d1a14e3db8ea0c18a84',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-0ZJWWL7YDJ'
 }
+
+console.log("Firebase Config:", firebaseConfig)
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig)
+console.log("Firebase App Initialized")
+
 let messaging: any = null
 
 try {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     messaging = getMessaging(app)
+    console.log("FCM Messaging Initialized")
   }
 } catch (err) {
   console.warn('[FCM] Firebase Messaging is not supported or failed to initialize:', err)
@@ -38,13 +43,13 @@ export const registerFCM = async (userId: string) => {
   try {
     // 1. Construct dynamic registration parameters to pass config to the service worker
     const params = new URLSearchParams({
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-      appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAGNHEZ4s4r5b-s3QrGqaD__0NI8x3JQto',
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'hirix-cd2a2.firebaseapp.com',
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'hirix-cd2a2',
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'hirix-cd2a2.firebasestorage.app',
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '437122380749',
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:437122380749:web:9d5d1a14e3db8ea0c18a84',
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-0ZJWWL7YDJ'
     }).toString()
 
     // Register the Service Worker explicitly with the configuration query string
@@ -68,6 +73,7 @@ export const registerFCM = async (userId: string) => {
 
     if (token) {
       console.log('[FCM] Token generated successfully:', token)
+      console.log("FCM Token:", token)
       
       const isMock = !userId || userId.startsWith('mock-') || userId.startsWith('demo-') || userId.startsWith('00000000-')
       if (isSupabaseConfigured() && !isMock) {
