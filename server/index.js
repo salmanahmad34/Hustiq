@@ -76,14 +76,12 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
  * Reusable function to send push notifications to a user via Firebase Admin SDK
  */
 export async function sendPushNotification({ userId, title, body, data = {} }) {
-  console.log(`[FCM] Notification Sending to User ID: ${userId}`);
-  console.log(`[Push Notification] Attempting to send to User ID: ${userId}`);
-  console.log(`[Push Notification] Title: "${title}", Body: "${body}"`);
-  console.log(`[Push Notification] Payload Data:`, data);
+  console.log('[FCM SEND] Recipient User ID:', userId);
 
   if (!firebaseAdminApp) {
-    console.error('[FCM] Notification Failed: Firebase Admin is not initialized.');
-    return { success: false, error: 'Firebase Admin not initialized' };
+    const initError = 'Firebase Admin not initialized';
+    console.log('[FCM SEND] Error:', initError);
+    return { success: false, error: initError };
   }
 
   try {
@@ -94,19 +92,17 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
       .eq('user_id', userId);
 
     if (tokenError) {
-      console.error('[Push Notification] Error fetching tokens from Supabase:', tokenError.message);
+      console.log('[FCM SEND] Error:', tokenError.message);
       return { success: false, error: tokenError.message };
     }
 
     if (!tokenRecords || tokenRecords.length === 0) {
-      console.log(`[FCM] Token Found - Count: 0`);
-      console.log(`[Push Notification] No registered FCM tokens found for User ID: ${userId}`);
+      console.log('[FCM SEND] Token Found: None');
       return { success: true, message: 'No registered tokens found' };
     }
 
     const tokens = tokenRecords.map(r => r.token);
-    console.log(`[FCM] Token Found - Count: ${tokens.length}`);
-    console.log(`[Push Notification] Found ${tokens.length} token(s) for User ID: ${userId}:`, tokens);
+    console.log('[FCM SEND] Token Found:', tokens);
 
     // 2. Build and send the multicast message
     const messagePayload = {
@@ -150,9 +146,9 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
       }
     };
 
-    console.log(`[Push Notification] Sending multicast message via FCM...`);
+    console.log('[FCM SEND] Payload:', JSON.stringify(messagePayload));
     const response = await admin.messaging().sendEachForMulticast(messagePayload);
-    console.log(`[FCM] Firebase Response:`, JSON.stringify(response));
+    console.log('[FCM SEND] Firebase Response:', JSON.stringify(response));
 
     // 3. Stale token management: identify and remove stale or invalid tokens
     const tokensToDelete = [];
@@ -161,7 +157,7 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
         console.log(`[FCM] Notification Sent successfully to token: "${tokens[idx]}"`);
       } else {
         const error = resp.error;
-        console.error(`[FCM] Notification Failed for token: "${tokens[idx]}" Error:`, error);
+        console.log('[FCM SEND] Error:', error.message || error);
         
         if (
           error.code === 'messaging/invalid-registration-token' ||
@@ -190,8 +186,8 @@ export async function sendPushNotification({ userId, title, body, data = {} }) {
     return { success: true, response };
 
   } catch (err) {
-    console.error('[FCM] Notification Failed. Unexpected error occurred:', err);
-    return { success: false, error: err.message };
+    console.log('[FCM SEND] Error:', err.message || err);
+    return { success: false, error: err.message || err };
   }
 }
 
@@ -374,13 +370,13 @@ app.get('/api/test-notification', async (req, res) => {
   const result = await sendPushNotification({
     userId,
     title: title || 'HustiQ Test',
-    body: body || 'This is a test notification from the HustiQ server.'
+    body: body || 'Push notifications are working successfully.'
   });
 
   if (result.success) {
     res.json({ message: 'Test notification triggered successfully.', result });
   } else {
-    res.status(500).json({ error: 'Failed to trigger test notification.', details: result });
+    res.status(500).json({ error: result.error || 'Failed to trigger test notification.', details: result });
   }
 });
 

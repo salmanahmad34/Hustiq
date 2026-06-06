@@ -199,3 +199,20 @@ export const getCurrentFCMToken = async () => {
   }
 }
 
+/**
+ * Trigger a test notification via the backend test-notification endpoint
+ */
+export const sendTestNotification = async (userId: string) => {
+  try {
+    const res = await fetch(`/api/test-notification?userId=${userId}`)
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to send test notification')
+    }
+    return data
+  } catch (err: any) {
+    console.log('[FCM sendTestNotification] Failed:', err.message || err)
+    throw err
+  }
+}
+

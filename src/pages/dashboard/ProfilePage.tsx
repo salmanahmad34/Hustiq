@@ -94,15 +94,15 @@ export const ProfilePage = () => {
     try {
       const { useUiStore } = await import('@/store/uiStore')
       useUiStore.getState().addToast('Triggering test push notification...', 'info')
-      const res = await fetch(`/api/test-notification?userId=${user.id}`)
-      const data = await res.json()
-      if (res.ok) {
-        useUiStore.getState().addToast('Test notification sent successfully!', 'success')
-      } else {
-        useUiStore.getState().addToast(data.error || 'Failed to send test notification.', 'error')
-      }
-    } catch (err) {
-      console.log('[FCM Profile Test] Failed to trigger test notification.')
+      
+      const { sendTestNotification } = await import('@/services/firebase/fcm')
+      await sendTestNotification(user.id)
+      
+      useUiStore.getState().addToast('Test notification sent successfully!', 'success')
+    } catch (err: any) {
+      console.log('[FCM Profile Test] Failed to trigger test notification:', err.message)
+      const { useUiStore } = await import('@/store/uiStore')
+      useUiStore.getState().addToast(err.message || 'Failed to send test notification.', 'error')
     }
   }
 

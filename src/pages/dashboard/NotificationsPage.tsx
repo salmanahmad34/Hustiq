@@ -201,17 +201,13 @@ export const NotificationsPage = () => {
 
     try {
       useUiStore.getState().addToast('Triggering test push notification...', 'info')
-      const res = await fetch(`/api/test-notification?userId=${user.id}`)
-      const data = await res.json()
+      const { sendTestNotification } = await import('@/services/firebase/fcm')
+      await sendTestNotification(user.id)
       
-      if (res.ok) {
-        useUiStore.getState().addToast('Test notification sent successfully!', 'success')
-      } else {
-        useUiStore.getState().addToast(data.error || 'Failed to send test notification.', 'error')
-      }
-    } catch (err) {
+      useUiStore.getState().addToast('Test notification sent successfully!', 'success')
+    } catch (err: any) {
       console.error('[FCM Test] Error:', err)
-      useUiStore.getState().addToast('Network error triggering test notification.', 'error')
+      useUiStore.getState().addToast(err.message || 'Failed to send test notification.', 'error')
     }
   }
 
