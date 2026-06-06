@@ -359,7 +359,41 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
     // Check if there is a pending role selection from Google OAuth signup
     const oauthSignupRole = typeof window !== 'undefined' ? (localStorage.getItem('oauth_signup_role') as 'student' | 'provider' | null) : null
     
-    let profile = await getProfile(userId)
+    // Search profiles by auth user id OR email
+    let { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (!profile && email) {
+      const { data: profileByEmail } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (profileByEmail) {
+        profile = profileByEmail
+        console.log('Profile found')
+        // Link the auth user to the existing profile by updating id
+        try {
+          const { error: updateIdError } = await supabase
+            .from('profiles')
+            .update({ id: userId })
+            .eq('email', email)
+          if (!updateIdError) {
+            profile.id = userId
+          } else {
+            console.error('Failed to link profile ID:', updateIdError)
+          }
+        } catch (err) {
+          console.error('Error linking profile ID:', err)
+        }
+      }
+    } else if (profile) {
+      console.log('Profile found')
+    }
 
     if (profile && profile.metadata) {
       if (profile.metadata.status === 'suspended') {
@@ -370,93 +404,87 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       }
     }
 
-    if (profile && oauthSignupRole && profile.role !== oauthSignupRole) {
-      console.log('[auth.ts] OAuth signup role mismatch found. Updating DB profile role to:', oauthSignupRole)
-      const updatedProfile = await updateProfile(userId, { role: oauthSignupRole })
-      if (updatedProfile) {
-        profile = updatedProfile
+    // Rule: If profile does not exist: Create profile once.
+    if (!profile) {
+      // Check auth user exists
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        throw new Error('No authenticated user session found')
       }
-      localStorage.removeItem('oauth_signup_role')
+
+      // Check if email already exists in profiles table before inserting (Never create profile if email already exists)
+      if (email) {
+        const { data: existingEmailProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', email)
+          .maybeSingle()
+
+        if (existingEmailProfile) {
+          profile = existingEmailProfile
+          console.log('Profile found')
+          // Link ID
+          try {
+            const { error: updateIdError } = await supabase
+              .from('profiles')
+              .update({ id: userId })
+              .eq('email', email)
+            if (!updateIdError) {
+              profile.id = userId
+            }
+          } catch (err) {
+            console.error('Error linking profile ID:', err)
+          }
+        }
+      }
+
+      // If still no profile, create it once
+      if (!profile) {
+        const metadata = currentUser.user_metadata || {}
+        const fallbackName = metadata.name || metadata.full_name || email.split('@')[0]
+        const fallbackBio = metadata.bio || ''
+        const fallbackPhone = metadata.phone || ''
+        const fallbackAvatar = metadata.avatar_url || metadata.avatarUrl || ''
+        const targetRole = oauthSignupRole || metadata.role || 'student'
+        
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email,
+            full_name: fallbackName,
+            name: fallbackName,
+            role: targetRole,
+            avatar_url: fallbackAvatar,
+            bio: fallbackBio,
+            phone: fallbackPhone,
+            onboarding_completed: metadata.onboarding_completed || false,
+            metadata: {
+              ...metadata,
+              bio: fallbackBio,
+              phone: fallbackPhone,
+              avatarUrl: fallbackAvatar
+            }
+          })
+          .select()
+          .single()
+
+        if (insertError) {
+          console.error('[auth.ts] Profile auto-creation failed:', insertError.message)
+          throw insertError
+        }
+
+        profile = newProfile
+        console.log('Profile created')
+      }
     }
 
-    if (!profile) {
-      console.warn('[auth.ts] Profile missing in DB. Attempting to auto-create or use fallback...')
-      
-      // Get current user to access OAuth metadata
-      const currentUser = await getCurrentUser()
-      const metadata = currentUser?.user_metadata || {}
-      const fallbackName = metadata.name || metadata.full_name || email.split('@')[0]
-      const fallbackBio = metadata.bio || ''
-      const fallbackPhone = metadata.phone || ''
-      const fallbackAvatar = metadata.avatar_url || metadata.avatarUrl || ''
-      const targetRole = oauthSignupRole || metadata.role || 'student'
-      
-      // Try to create the profile row automatically
-      const { data: newProfile, error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email,
-          full_name: fallbackName,
-          name: fallbackName,
-          role: targetRole,
-          avatar_url: fallbackAvatar,
-          bio: fallbackBio,
-          phone: fallbackPhone,
-          onboarding_completed: metadata.onboarding_completed || false,
-          metadata: {
-            ...metadata,
-            bio: fallbackBio,
-            phone: fallbackPhone,
-            avatarUrl: fallbackAvatar
-          }
-        })
-        .select()
-        .single()
-        
-      if (oauthSignupRole) {
+    // Role must always come from profiles table
+    console.log('Role loaded')
+
+    if (oauthSignupRole) {
+      if (typeof window !== 'undefined') {
         localStorage.removeItem('oauth_signup_role')
-      }
-      
-      if (insertError) {
-        console.error('[auth.ts] Profile auto-creation failed, using temporary session:', insertError.message)
-        // Return temporary session fallback
-        return {
-          id: userId,
-          email,
-          role: targetRole,
-          full_name: fallbackName,
-          name: fallbackName,
-          avatar_url: fallbackAvatar,
-          bio: fallbackBio,
-          phone: fallbackPhone,
-          onboarding_completed: metadata.onboarding_completed || false,
-          metadata: {
-            ...metadata,
-            bio: fallbackBio,
-            phone: fallbackPhone,
-            avatarUrl: fallbackAvatar
-          }
-        }
-      }
-      
-      console.log('[auth.ts] Profile auto-created successfully:', newProfile)
-      return {
-        id: userId,
-        email,
-        role: newProfile.role,
-        full_name: newProfile.full_name || newProfile.name || fallbackName,
-        name: newProfile.full_name || newProfile.name || fallbackName,
-        avatar_url: newProfile.avatar_url || fallbackAvatar,
-        bio: newProfile.bio || fallbackBio,
-        phone: newProfile.phone || fallbackPhone,
-        onboarding_completed: newProfile.onboarding_completed,
-        metadata: {
-          ...newProfile.metadata,
-          bio: newProfile.bio || fallbackBio,
-          phone: newProfile.phone || fallbackPhone,
-          avatarUrl: newProfile.avatar_url || fallbackAvatar
-        }
       }
     }
 

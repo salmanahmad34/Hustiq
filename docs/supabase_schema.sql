@@ -266,7 +266,7 @@ begin
   set 
     email = excluded.email,
     full_name = excluded.full_name,
-    role = excluded.role,
+    role = coalesce(profiles.role, excluded.role),
     avatar_url = excluded.avatar_url;
   return new;
 end;
