@@ -28,7 +28,9 @@ export const AuthInitializer = ({ children }: { children: React.ReactNode }) => 
       // 2. Subscribe to realtime updates
       useNotifications.getState().subscribeToNotifications(user.id, user.role)
       // 3. Load applied jobs
-      useAppliedJobs.getState().loadAppliedJobs(user.id, user.role)
+      if (user.role === 'student' || user.role === 'provider') {
+        useAppliedJobs.getState().loadAppliedJobs(user.id, user.role)
+      }
       // 4. Load saved jobs for students
       if (user.role === 'student') {
         useSavedJobs.getState().loadSavedJobs(user.id)

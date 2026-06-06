@@ -13,4 +13,5 @@ export const ROUTES = {
   WALLET: '/wallet',
   RECOMMENDATIONS: '/discover',
   GROWTH: '/growth',
+  ADMIN: '/admin',
 } as const;

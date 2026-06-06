@@ -171,7 +171,7 @@ export const signUpUser = async (
   email: string,
   password: string,
   name: string,
-  role: 'student' | 'provider'
+  role: 'student' | 'provider' | 'admin'
 ) => {
   verifySupabaseConfiguration()
 
@@ -360,6 +360,15 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
     const oauthSignupRole = typeof window !== 'undefined' ? (localStorage.getItem('oauth_signup_role') as 'student' | 'provider' | null) : null
     
     let profile = await getProfile(userId)
+
+    if (profile && profile.metadata) {
+      if (profile.metadata.status === 'suspended') {
+        throw new Error('Your account has been suspended by the administrator.')
+      }
+      if (profile.metadata.status === 'deleted') {
+        throw new Error('No account found with this email.')
+      }
+    }
 
     if (profile && oauthSignupRole && profile.role !== oauthSignupRole) {
       console.log('[auth.ts] OAuth signup role mismatch found. Updating DB profile role to:', oauthSignupRole)

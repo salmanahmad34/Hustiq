@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
-import { Home, MessageCircle, Wallet, Compass, Plus, LayoutGrid, Bell } from 'lucide-react'
+import { Home, MessageCircle, Wallet, Compass, Plus, LayoutGrid, Bell, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JobDetailsPanel } from '@/components/dashboard/JobDetailsPanel'
 import { QuickApplyModal } from '@/components/dashboard/QuickApplyModal'
@@ -42,6 +43,15 @@ const PROVIDER_NAV: NavItem[] = [
   { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
 
+const ADMIN_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Admin Panel', href: ROUTES.ADMIN, icon: Shield },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Notifications', href: ROUTES.NOTIFICATIONS, icon: Bell },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
+]
+
 const MOBILE_STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
@@ -57,14 +67,54 @@ const MOBILE_PROVIDER_NAV: NavItem[] = [
   { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
 
+const MOBILE_ADMIN_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Admin', href: ROUTES.ADMIN, icon: Shield },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
+]
+
 export const DashboardLayout = () => {
   const location = useLocation()
-  const { user, error, clearError } = useAuth()
+  const { user, error, clearError, updateUserProfile } = useAuth()
   const { open: openPostJob } = usePostJob()
   const { notifications } = useNotifications()
+
+  // Track active status for analytics (DAU/WAU tracking)
+  useEffect(() => {
+    if (user?.id && user?.role) {
+      const now = new Date().toISOString()
+      const lastActive = user.metadata?.last_active_at
+      const fiveMinsMs = 1000 * 60 * 5
+
+      const shouldUpdate = !lastActive || (Date.now() - new Date(lastActive).getTime() > fiveMinsMs)
+
+      if (shouldUpdate) {
+        console.log('[DashboardLayout] Updating active telemetry for user:', user.id)
+        updateUserProfile({
+          metadata: {
+            ...(user.metadata || {}),
+            last_active_at: now
+          }
+        }).catch(err => {
+          console.warn('[DashboardLayout] Failed to update user activity telemetry:', err)
+        })
+      }
+    }
+  }, [user?.id, user?.role])
   
-  const navItems = user?.role === 'provider' ? PROVIDER_NAV : STUDENT_NAV
-  const mobileNavItems = user?.role === 'provider' ? MOBILE_PROVIDER_NAV : MOBILE_STUDENT_NAV
+  const navItems = user?.role === 'admin' 
+    ? ADMIN_NAV 
+    : user?.role === 'provider' 
+      ? PROVIDER_NAV 
+      : STUDENT_NAV
+
+  const mobileNavItems = user?.role === 'admin' 
+    ? MOBILE_ADMIN_NAV 
+    : user?.role === 'provider' 
+      ? MOBILE_PROVIDER_NAV 
+      : MOBILE_STUDENT_NAV
 
   const activeRole = user?.role || 'student'
   const unreadCount = notifications.filter(n => n.role === activeRole && n.isUnread).length

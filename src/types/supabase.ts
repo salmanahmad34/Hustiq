@@ -12,7 +12,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           name: string | null
-          role: 'student' | 'provider'
+          role: 'student' | 'provider' | 'admin'
           avatar_url: string | null
           bio: string | null
           phone: string | null
@@ -25,7 +25,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           name?: string | null
-          role?: 'student' | 'provider'
+          role?: 'student' | 'provider' | 'admin'
           avatar_url?: string | null
           bio?: string | null
           phone?: string | null
@@ -38,7 +38,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           name?: string | null
-          role?: 'student' | 'provider'
+          role?: 'student' | 'provider' | 'admin'
           avatar_url?: string | null
           bio?: string | null
           phone?: string | null

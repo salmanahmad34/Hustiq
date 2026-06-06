@@ -278,7 +278,7 @@ export const ProfilePage = () => {
                   </div>
 
                   <TrustBanner
-                    role={user?.role ?? 'student'}
+                    role={user?.role === 'admin' ? 'student' : (user?.role ?? 'student')}
                     isVerified={true}
                     trustScore={88}
                     responseRate={isProvider ? 94 : undefined}
@@ -528,6 +528,28 @@ export const ProfilePage = () => {
                     Send Test Notification
                   </button>
                 )}
+
+                {/* Developer Role Toggler */}
+                <button
+                  onClick={async () => {
+                    const nextRole = user?.role === 'admin' ? 'student' : 'admin'
+                    try {
+                      await updateUserProfile({ role: nextRole })
+                      const { useUiStore } = await import('@/store/uiStore')
+                      useUiStore.getState().addToast(`Role toggled to ${nextRole}!`, 'success')
+                      if (nextRole === 'admin') {
+                        navigate('/admin')
+                      } else {
+                        navigate('/dashboard')
+                      }
+                    } catch (err) {
+                      console.error('Failed to toggle role:', err)
+                    }
+                  }}
+                  className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 py-2.5 px-4 rounded-xl text-xs font-bold transition-all border border-indigo-200/50 dark:border-indigo-900/30 text-center mt-2"
+                >
+                  {user?.role === 'admin' ? 'Switch Role to Student' : 'Switch Role to Admin (Demo)'}
+                </button>
               </div>
             </motion.div>
 

@@ -11,7 +11,7 @@ export interface Profile {
   email?: string
   full_name?: string
   name?: string
-  role: 'student' | 'provider'
+  role: 'student' | 'provider' | 'admin'
   avatar_url?: string
   bio?: string
   phone?: string
@@ -24,7 +24,7 @@ export interface ProfileUpdate {
   email?: string
   full_name?: string
   name?: string
-  role?: 'student' | 'provider'
+  role?: 'student' | 'provider' | 'admin'
   avatar_url?: string
   bio?: string
   phone?: string
@@ -239,7 +239,7 @@ export interface UserSession {
   email: string
   full_name?: string
   name?: string
-  role: 'student' | 'provider'
+  role: 'student' | 'provider' | 'admin'
   avatar_url?: string
   bio?: string
   phone?: string

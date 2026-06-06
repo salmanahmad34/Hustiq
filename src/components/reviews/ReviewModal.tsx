@@ -103,7 +103,7 @@ export const ReviewModal = ({
   const { submitReview } = useReviews()
   const isSelf = user?.id === subjectId
 
-  const activeRole: ReviewerRole = reviewerRole ?? user?.role ?? 'student'
+  const activeRole: ReviewerRole = reviewerRole ?? (user?.role === 'admin' ? 'student' : user?.role) ?? 'student'
   const availableTags =
     activeRole === 'student' ? PROVIDER_REVIEW_TAGS : STUDENT_REVIEW_TAGS
 

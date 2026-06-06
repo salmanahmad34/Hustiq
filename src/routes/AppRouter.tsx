@@ -11,6 +11,7 @@ import { AuthLayout } from '@/components/layout/AuthLayout'
 // Route Wrappers
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicRoute } from '@/routes/PublicRoute'
+import { AdminRoute } from '@/routes/AdminRoute'
 
 // Production-safe chunk load error handler
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
@@ -48,6 +49,7 @@ const WalletPage = lazyWithRetry(() => import('@/pages/dashboard/WalletPage').th
 const RecommendationsPage = lazyWithRetry(() => import('@/pages/dashboard/RecommendationsPage').then(m => ({ default: m.RecommendationsPage })))
 const GrowthPage = lazyWithRetry(() => import('@/pages/dashboard/GrowthPage').then(m => ({ default: m.GrowthPage })))
 const SplashPage = lazyWithRetry(() => import('@/pages/auth/SplashPage').then(m => ({ default: m.SplashPage })))
+const AdminDashboardPage = lazyWithRetry(() => import('@/pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })))
 
 const PageLoader = () => (
   <div className="w-full h-full min-h-[50vh] flex items-center justify-center">
@@ -190,6 +192,20 @@ const router = createBrowserRouter([
               },
             ],
           },
+          {
+            element: <AdminRoute />,
+            children: [
+              {
+                element: <DashboardLayout />,
+                children: [
+                  {
+                    path: ROUTES.ADMIN,
+                    element: withSuspense(AdminDashboardPage),
+                  }
+                ]
+              }
+            ]
+          }
         ],
       },
       {

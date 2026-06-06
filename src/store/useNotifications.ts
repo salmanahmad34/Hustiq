@@ -26,7 +26,7 @@ export interface NotificationItem {
     | 'system'
   isPriority: boolean
   category: 'today' | 'earlier'
-  role: 'student' | 'provider'
+  role: 'student' | 'provider' | 'admin'
   actionPath?: string
   actionText?: string
 }
@@ -42,13 +42,13 @@ interface NotificationsState {
   markAsRead: (id: string) => Promise<void>
   markAllAsRead: () => void
   deleteNotification: (id: string) => void
-  loadNotifications: (userId: string, role: 'student' | 'provider') => Promise<void>
+  loadNotifications: (userId: string, role: 'student' | 'provider' | 'admin') => Promise<void>
   
   // Realtime Simulation Actions
   addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'isUnread'>, userId?: string) => Promise<void>
 
   // Realtime Subscription Actions
-  subscribeToNotifications: (userId: string, role: 'student' | 'provider') => void
+  subscribeToNotifications: (userId: string, role: 'student' | 'provider' | 'admin') => void
   unsubscribeFromNotifications: () => void
 }
 

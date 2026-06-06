@@ -33,8 +33,8 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<void>
-  loginWithGoogle: (role?: 'student' | 'provider') => Promise<void>
-  signup: (email: string, password: string, name: string, role: 'student' | 'provider') => Promise<{ needsVerification: boolean }>
+  loginWithGoogle: (role?: 'student' | 'provider' | 'admin') => Promise<void>
+  signup: (email: string, password: string, name: string, role: 'student' | 'provider' | 'admin') => Promise<{ needsVerification: boolean }>
   verifyOtp: (email: string, token: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
   resetPassword: (password: string) => Promise<void>
@@ -118,7 +118,7 @@ export const useAuth = create<AuthState>()(
       // ============================================
       // GOOGLE LOGIN ACTION
       // ============================================
-      loginWithGoogle: async (role?: 'student' | 'provider') => {
+      loginWithGoogle: async (role?: 'student' | 'provider' | 'admin') => {
         set({ isLoading: true, error: null })
         try {
           if (role) {
@@ -143,7 +143,7 @@ export const useAuth = create<AuthState>()(
       },
 
       // ============================================
-      signup: async (email: string, password: string, name: string, role: 'student' | 'provider') => {
+      signup: async (email: string, password: string, name: string, role: 'student' | 'provider' | 'admin') => {
         set({ isLoading: true, error: null })
         try {
           console.log('[useAuth] Initiating signup process for:', { email, name, role })
