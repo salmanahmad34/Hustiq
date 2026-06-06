@@ -59,6 +59,7 @@ create table if not exists public.jobs (
   is_urgent boolean default false,
   is_premium boolean default false,
   is_verified boolean default false,
+  is_active boolean default true,
   location text,
   distance text,
   timing text,

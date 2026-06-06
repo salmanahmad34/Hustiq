@@ -1,6 +1,6 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, AlertCircle, IndianRupee, MoreHorizontal, Power } from 'lucide-react'
+import { Users, AlertCircle, IndianRupee, MoreHorizontal, Power, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ActiveJob {
@@ -18,6 +18,7 @@ interface ActiveJob {
 interface ActiveJobCardProps {
   job: ActiveJob
   index: number
+  onToggleActive: () => Promise<void>
 }
 
 const itemVariants = {
@@ -25,7 +26,19 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } }
 } as const
 
-export const ActiveJobCard = memo(({ job }: ActiveJobCardProps) => {
+export const ActiveJobCard = memo(({ job, onToggleActive }: ActiveJobCardProps) => {
+  const [isToggling, setIsToggling] = useState(false)
+
+  const handleToggle = async () => {
+    if (isToggling) return
+    setIsToggling(true)
+    try {
+      await onToggleActive()
+    } finally {
+      setIsToggling(false)
+    }
+  }
+
   return (
     <motion.div 
       variants={itemVariants}
@@ -91,12 +104,22 @@ export const ActiveJobCard = memo(({ job }: ActiveJobCardProps) => {
         <button className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
           View Applicants
         </button>
-        <button className={cn(
-          "text-sm font-bold flex items-center gap-1.5 transition-colors",
-          job.isActive ? "text-muted-foreground hover:text-red-500" : "text-muted-foreground hover:text-emerald-500"
-        )}>
-          <Power className="w-4 h-4" />
-          {job.isActive ? "Close Job" : "Reactivate"}
+        <button
+          onClick={handleToggle}
+          disabled={isToggling}
+          className={cn(
+            "text-sm font-bold flex items-center gap-1.5 transition-colors disabled:opacity-60",
+            job.isActive ? "text-muted-foreground hover:text-red-500" : "text-muted-foreground hover:text-emerald-500"
+          )}
+        >
+          {isToggling ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Power className="w-4 h-4" />
+          )}
+          {isToggling
+            ? (job.isActive ? 'Closing...' : 'Reactivating...')
+            : (job.isActive ? 'Close Job' : 'Reactivate')}
         </button>
       </div>
 

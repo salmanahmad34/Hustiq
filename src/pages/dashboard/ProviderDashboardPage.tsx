@@ -20,7 +20,7 @@ export const ProviderDashboardPage = () => {
   const { open: openPostJob } = usePostJob()
   const { toggleOpen, notifications } = useNotifications()
   const { user } = useAuth()
-  const { jobs, fetchProviderJobs, isLoading: isLoadingJobs } = useJobs()
+  const { jobs, fetchProviderJobs, isLoading: isLoadingJobs, toggleJobActive } = useJobs()
   const { applications, fetchProviderApplications, isLoading: isLoadingApps } = useApplications()
 
   const [tourState, setTourState] = useState({ dismissed: true, progress: 0 })
@@ -66,7 +66,7 @@ export const ProviderDashboardPage = () => {
       applicantsCount: jobApps.length,
       newApplicants: newApps,
       isUrgent: job.is_urgent || false,
-      isActive: true,
+      isActive: job.is_active !== false, // default true if field doesn't exist yet
       payout: job.payout,
       payoutType: job.payout_type,
       postedDate: new Date(job.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
@@ -232,6 +232,7 @@ export const ProviderDashboardPage = () => {
                     key={job.id}
                     job={job}
                     index={index}
+                    onToggleActive={() => toggleJobActive(job.id, job.isActive)}
                   />
                 ))
               )}

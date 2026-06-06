@@ -45,6 +45,7 @@ export interface Job {
   is_urgent: boolean
   is_premium: boolean
   is_verified: boolean
+  is_active: boolean
   location?: string
   distance?: string
   timing?: string
@@ -82,6 +83,7 @@ export interface JobUpdate {
   is_urgent?: boolean
   is_premium?: boolean
   is_verified?: boolean
+  is_active?: boolean
   location?: string
   distance?: string
   timing?: string

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { fetchAllJobs, fetchProviderJobs, fetchJobById } from '@/services/supabase/db'
+import { fetchAllJobs, fetchProviderJobs, fetchJobById, updateJob } from '@/services/supabase/db'
 import type { Job } from '@/types/database'
 
 interface JobsState {
@@ -13,6 +13,7 @@ interface JobsState {
   fetchJobs: (forceRefresh?: boolean) => Promise<void>
   fetchProviderJobs: (providerId: string) => Promise<void>
   getJobById: (jobId: string) => Promise<Job | null>
+  toggleJobActive: (jobId: string, currentlyActive: boolean) => Promise<void>
   clearError: () => void
 }
 
@@ -66,6 +67,26 @@ export const useJobs = create<JobsState>()(
       } catch (err: any) {
         set({ error: err.message || 'Failed to fetch job' })
         return null
+      }
+    },
+
+    toggleJobActive: async (jobId: string, currentlyActive: boolean) => {
+      const newActive = !currentlyActive
+      // Optimistic update
+      set(state => ({
+        jobs: state.jobs.map(j => j.id === jobId ? { ...j, is_active: newActive } : j)
+      }))
+      try {
+        console.log(`[JOB] Toggling job ${jobId} → is_active: ${newActive}`)
+        const updated = await updateJob(jobId, { is_active: newActive })
+        if (!updated) throw new Error('Update returned null')
+        console.log(`[JOB] Job ${jobId} is now ${newActive ? 'active' : 'closed'}`)
+      } catch (err: any) {
+        console.error('[JOB] Toggle failed, reverting:', err)
+        // Revert on failure
+        set(state => ({
+          jobs: state.jobs.map(j => j.id === jobId ? { ...j, is_active: currentlyActive } : j)
+        }))
       }
     },
 
