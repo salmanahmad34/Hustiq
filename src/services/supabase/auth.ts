@@ -99,6 +99,16 @@ export const updateProfile = async (
     if (existingProfile) {
       // Perform UPDATE
       const updatePayload = { ...updates }
+      
+      // Prevent admin role from being demoted or overwritten
+      const existingEmail = existingProfile.email ? existingProfile.email.trim().toLowerCase() : ''
+      const isExistingAdmin = existingEmail === 'ahmadsalman9939@gmail.com' || existingProfile.role === 'admin'
+      
+      if (isExistingAdmin && updatePayload.role && updatePayload.role !== 'admin') {
+        console.warn(`[auth.ts] Security Check: Blocked attempt to change admin role for user ${userId} to ${updatePayload.role}`)
+        updatePayload.role = 'admin'
+      }
+
       console.log('[auth.ts] Profile exists. Executing UPDATE:', {
         auth_user_id: userId,
         profile_id: userId,
@@ -117,6 +127,13 @@ export const updateProfile = async (
     } else {
       // Perform INSERT
       const insertPayload = { id: userId, ...updates }
+      
+      // Force admin role if email matches
+      const cleanEmail = insertPayload.email ? insertPayload.email.trim().toLowerCase() : ''
+      if (cleanEmail === 'ahmadsalman9939@gmail.com') {
+        insertPayload.role = 'admin'
+      }
+
       console.log('[auth.ts] Profile does not exist. Executing INSERT:', {
         auth_user_id: userId,
         profile_id: userId,
@@ -359,6 +376,9 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
     // Check if there is a pending role selection from Google OAuth signup
     const oauthSignupRole = typeof window !== 'undefined' ? (localStorage.getItem('oauth_signup_role') as 'student' | 'provider' | null) : null
     
+    const cleanEmail = email ? email.trim().toLowerCase() : ''
+    const isAdminEmail = cleanEmail === 'ahmadsalman9939@gmail.com'
+    
     // Search profiles by auth user id OR email
     let { data: profile, error: fetchError } = await supabase
       .from('profiles')
@@ -366,22 +386,62 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       .eq('id', userId)
       .maybeSingle()
 
-    if (!profile && email) {
+    // Task 10: Prevent duplicate accounts
+    // If a profile exists for this ID, check if there's an existing profile with the same email but a different ID.
+    // This happens if they originally signed up via email/password, and then signed in via Google (triggering handle_new_user to create a new profile for the new google UID).
+    if (profile && cleanEmail) {
+      const { data: duplicateProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .ilike('email', cleanEmail)
+        .neq('id', userId)
+        .maybeSingle()
+
+      if (duplicateProfile) {
+        console.log('[Signup] Found duplicate/existing profile for email:', cleanEmail, 'reusing existing profile:', duplicateProfile.id)
+        // Discard the new blank profile created by the trigger
+        try {
+          await supabase.from('profiles').delete().eq('id', userId)
+        } catch (err) {
+          console.error('[Signup] Failed to delete duplicate new profile:', err)
+        }
+        
+        // Update the existing profile to use the new Google userId
+        try {
+          const { error: updateIdError } = await supabase
+            .from('profiles')
+            .update({ id: userId })
+            .eq('id', duplicateProfile.id)
+          
+          if (!updateIdError) {
+            profile = { ...duplicateProfile, id: userId }
+          } else {
+            console.error('[Signup] Failed to update existing profile ID:', updateIdError)
+            profile = duplicateProfile
+          }
+        } catch (err) {
+          console.error('[Signup] Error linking existing profile ID:', err)
+          profile = duplicateProfile
+        }
+      }
+    }
+
+    if (!profile && cleanEmail) {
       const { data: profileByEmail } = await supabase
         .from('profiles')
         .select('*')
-        .eq('email', email)
+        .ilike('email', cleanEmail)
         .maybeSingle()
 
       if (profileByEmail) {
         profile = profileByEmail
-        console.log('[Signup] Existing profile found with role:', profileByEmail.role)
+        console.log('[Signup] Existing profile found by email with role:', profileByEmail.role)
         // Link the auth user to the existing profile by updating id
         try {
           const { error: updateIdError } = await supabase
             .from('profiles')
             .update({ id: userId })
-            .eq('email', email)
+            .eq('id', profileByEmail.id)
           if (!updateIdError) {
             profile.id = userId
           } else {
@@ -413,11 +473,11 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       }
 
       // Check if email already exists in profiles table before inserting (Never create profile if email already exists)
-      if (email) {
+      if (cleanEmail) {
         const { data: existingEmailProfile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('email', email)
+          .ilike('email', cleanEmail)
           .maybeSingle()
 
         if (existingEmailProfile) {
@@ -428,7 +488,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
             const { error: updateIdError } = await supabase
               .from('profiles')
               .update({ id: userId })
-              .eq('email', email)
+              .eq('id', existingEmailProfile.id)
             if (!updateIdError) {
               profile.id = userId
             }
@@ -441,17 +501,21 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       // If still no profile, create it once
       if (!profile) {
         const metadata = currentUser.user_metadata || {}
-        const fallbackName = metadata.name || metadata.full_name || email.split('@')[0]
+        const fallbackName = metadata.name || metadata.full_name || cleanEmail.split('@')[0]
         const fallbackBio = metadata.bio || ''
         const fallbackPhone = metadata.phone || ''
         const fallbackAvatar = metadata.avatar_url || metadata.avatarUrl || ''
-        const targetRole = oauthSignupRole || metadata.role || 'student'
+        let targetRole = oauthSignupRole || metadata.role || 'student'
+        
+        if (isAdminEmail) {
+          targetRole = 'admin'
+        }
         
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
             id: userId,
-            email,
+            email: cleanEmail || email,
             full_name: fallbackName,
             name: fallbackName,
             role: targetRole,
@@ -479,8 +543,37 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
       }
     }
 
-    // Role must always come from profiles table
-    console.log('Role loaded')
+    // Task 6: If email is ahmadsalman9939@gmail.com, force admin privileges
+    if (isAdminEmail && profile.role !== 'admin') {
+      console.log(`[auth.ts] Forcing admin role for: ${cleanEmail}. Current database role is: ${profile.role}`)
+      const { error: updateRoleError } = await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', userId)
+      if (!updateRoleError) {
+        profile.role = 'admin'
+        console.log('[auth.ts] Successfully forced database role to admin.')
+      } else {
+        console.error('[auth.ts] Failed to force database role to admin:', updateRoleError)
+      }
+    }
+
+    // Also update if they chose a role on signup, but trigger created a default student profile
+    if (oauthSignupRole && profile.role !== 'admin' && profile.role !== oauthSignupRole) {
+      console.log(`[auth.ts] Aligning database role to selected signup role: ${oauthSignupRole}`)
+      const { error: updateRoleError } = await supabase
+        .from('profiles')
+        .update({ role: oauthSignupRole })
+        .eq('id', userId)
+      if (!updateRoleError) {
+        profile.role = oauthSignupRole
+        console.log('[auth.ts] Successfully updated database role.')
+      } else {
+        console.error('[auth.ts] Failed to update database role:', updateRoleError)
+      }
+    }
+
+    console.log('Role loaded:', profile.role)
 
     if (oauthSignupRole) {
       if (typeof window !== 'undefined') {
@@ -490,10 +583,10 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
 
     const session = {
       id: userId,
-      email,
+      email: cleanEmail || email,
       role: profile.role,
-      full_name: profile.full_name || profile.name || email.split('@')[0],
-      name: profile.full_name || profile.name || email.split('@')[0],
+      full_name: profile.full_name || profile.name || cleanEmail.split('@')[0],
+      name: profile.full_name || profile.name || cleanEmail.split('@')[0],
       avatar_url: profile.avatar_url || profile.metadata?.avatarUrl || '',
       bio: profile.bio || profile.metadata?.bio || '',
       phone: profile.phone || profile.metadata?.phone || '',
@@ -505,6 +598,13 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         avatarUrl: profile.avatar_url || profile.metadata?.avatarUrl || '',
       }
     }
+    
+    // Task 12: Display current user role in console for debugging
+    console.log(`%c[Auth System] User Session Built Successfully!`, 'color: #10B981; font-weight: bold;')
+    console.log(`%cUser Email: ${session.email}`, 'color: #3B82F6;')
+    console.log(`%cUser Role:  ${session.role}`, 'color: #F59E0B; font-weight: bold;')
+    console.log(`%cUser ID:    ${session.id}`, 'color: #6B7280;')
+
     console.log('[auth.ts] buildUserSession success:', session)
     return session
   } catch (error) {
