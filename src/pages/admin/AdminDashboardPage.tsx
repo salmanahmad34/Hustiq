@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, Briefcase, FileText, Bell, BarChart3,
   MessageSquare, Bot, Search, Trash2, Lock, Unlock, Star, CheckCircle2,
-  XCircle, RefreshCw, Send, Shield, ChevronDown, Eye, EyeOff,
-  AlertTriangle, Activity, Database, TrendingUp, UserCheck, UserX,
+  XCircle, RefreshCw, Send, Shield, Eye, EyeOff,
+  AlertTriangle, Activity, Database, TrendingUp, UserCheck,
   Loader2, X, Sparkles, ClipboardList, Package
 } from 'lucide-react'
 import {
