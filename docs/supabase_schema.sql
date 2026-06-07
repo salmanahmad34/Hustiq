@@ -9,12 +9,13 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
   email text unique,
-  role text check (role in ('student', 'provider')) not null default 'student',
+  role text check (role in ('student', 'provider', 'admin')) not null default 'student',
   full_name text,
   name text, -- Kept for backward compatibility
   avatar_url text,
   bio text,
   phone text,
+  is_suspended boolean default false,
   onboarding_completed boolean default false,
   metadata jsonb default '{}'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -383,3 +384,71 @@ create trigger on_job_posted
   after insert on public.jobs
   for each row execute procedure public.handle_new_job_posted();
 
+
+-- ========================================================================
+-- ADMIN PANEL MIGRATION
+-- Run this block in Supabase SQL Editor to enable the admin panel.
+-- ========================================================================
+
+-- 1. Add is_suspended column to profiles (if it does not already exist)
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS is_suspended boolean DEFAULT false;
+
+-- 2. Admin helper function: returns true if the calling JWT belongs to an admin
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 3. Profiles: admin can read & update any row
+DROP POLICY IF EXISTS "Admin can read all profiles" ON public.profiles;
+CREATE POLICY "Admin can read all profiles"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() = id OR public.is_admin());
+
+DROP POLICY IF EXISTS "Admin can update any profile" ON public.profiles;
+CREATE POLICY "Admin can update any profile"
+  ON public.profiles FOR UPDATE
+  USING (auth.uid() = id OR public.is_admin());
+
+-- 4. Jobs: admin can read & manage all jobs
+DROP POLICY IF EXISTS "Admin can manage all jobs" ON public.jobs;
+CREATE POLICY "Admin can manage all jobs"
+  ON public.jobs FOR ALL
+  USING (auth.uid() = provider_id OR public.is_admin());
+
+-- 5. Applications: admin can read & manage all applications
+DROP POLICY IF EXISTS "Admin can manage all applications" ON public.applications;
+CREATE POLICY "Admin can manage all applications"
+  ON public.applications FOR ALL
+  USING (
+    auth.uid() = student_id
+    OR EXISTS (
+      SELECT 1 FROM public.jobs
+      WHERE jobs.id = applications.job_id AND jobs.provider_id = auth.uid()
+    )
+    OR public.is_admin()
+  );
+
+-- 6. Notifications: admin can read & manage all notifications
+DROP POLICY IF EXISTS "Admin can manage all notifications" ON public.notifications;
+CREATE POLICY "Admin can manage all notifications"
+  ON public.notifications FOR ALL
+  USING (auth.uid() = user_id OR public.is_admin());
+
+-- 7. Messages: admin can read & manage all messages
+DROP POLICY IF EXISTS "Admin can manage all messages" ON public.messages;
+CREATE POLICY "Admin can manage all messages"
+  ON public.messages FOR ALL
+  USING (auth.uid() = sender_id OR auth.uid() = recipient_id OR public.is_admin());
+
+-- 8. Push tokens: admin can read all push tokens for broadcast
+DROP POLICY IF EXISTS "Admin can read all push tokens" ON public.user_push_tokens;
+CREATE POLICY "Admin can read all push tokens"
+  ON public.user_push_tokens FOR SELECT
+  USING (auth.uid() = user_id OR public.is_admin());

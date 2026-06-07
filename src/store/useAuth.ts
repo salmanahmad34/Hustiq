@@ -123,7 +123,7 @@ export const useAuth = create<AuthState>()(
         try {
           if (role) {
             localStorage.setItem('oauth_signup_role', role)
-            console.log('[useAuth] Google OAuth initiated with role:', role)
+            console.log('[Signup] Google signup started with role:', role)
           } else {
             localStorage.removeItem('oauth_signup_role')
             console.log('[useAuth] Google OAuth initiated for login (no role chosen)')

@@ -50,6 +50,7 @@ const RecommendationsPage = lazyWithRetry(() => import('@/pages/dashboard/Recomm
 const GrowthPage = lazyWithRetry(() => import('@/pages/dashboard/GrowthPage').then(m => ({ default: m.GrowthPage })))
 const SplashPage = lazyWithRetry(() => import('@/pages/auth/SplashPage').then(m => ({ default: m.SplashPage })))
 const AdminDashboardPage = lazyWithRetry(() => import('@/pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })))
+import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage'
 
 const PageLoader = () => (
   <div className="w-full h-full min-h-[50vh] flex items-center justify-center">
@@ -210,7 +211,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/auth/callback',
-        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+        element: <AuthCallbackPage />,
       },
       {
         path: '/deshboard',

@@ -375,7 +375,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
 
       if (profileByEmail) {
         profile = profileByEmail
-        console.log('Profile found')
+        console.log('[Signup] Existing profile found with role:', profileByEmail.role)
         // Link the auth user to the existing profile by updating id
         try {
           const { error: updateIdError } = await supabase
@@ -392,7 +392,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         }
       }
     } else if (profile) {
-      console.log('Profile found')
+      console.log('[Signup] Existing profile found with role:', profile.role)
     }
 
     if (profile && profile.metadata) {
@@ -422,7 +422,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
 
         if (existingEmailProfile) {
           profile = existingEmailProfile
-          console.log('Profile found')
+          console.log('[Signup] Existing profile found with role:', existingEmailProfile.role)
           // Link ID
           try {
             const { error: updateIdError } = await supabase
@@ -475,7 +475,7 @@ export const buildUserSession = async (userId: string, email: string): Promise<U
         }
 
         profile = newProfile
-        console.log('Profile created')
+        console.log('[Signup] Profile created with role:', targetRole)
       }
     }
 
