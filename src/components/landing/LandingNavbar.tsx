@@ -31,13 +31,14 @@ export const LandingNavbar = () => {
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={cn(
-        'fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-7xl transition-all duration-300 rounded-full border bg-background/70 backdrop-blur-md shadow-soft',
+        'fixed left-1/2 -translate-x-1/2 z-50 w-max max-w-[720px] transition-all duration-300 rounded-full border shadow-[0_8px_30px_rgba(0,0,0,0.08)]',
+        'bg-white/85 dark:bg-black/85 backdrop-blur-[20px] border-white/40 dark:border-white/10',
         isScrolled 
-          ? 'top-2 py-2.5 bg-background/85 border-border/50 shadow-md scale-[0.98]' 
-          : 'top-4 py-3 bg-background/60 border-border/30'
+          ? 'top-2 py-0 scale-[0.98]' 
+          : 'top-4 py-0'
       )}
     >
-      <div className="relative w-full px-5 lg:px-8 flex items-center justify-between h-14">
+      <div className="relative flex items-center justify-between h-14 px-6 gap-8 lg:gap-16">
         {/* Logo */}
         <Link to={ROUTES.HOME} className="flex items-center gap-3 group shrink-0">
           <div className="relative flex items-center justify-center w-8 h-8">
@@ -51,8 +52,8 @@ export const LandingNavbar = () => {
           </span>
         </Link>
 
-        {/* Desktop Nav - Perfectly centered absolute */}
-        <nav className="hidden lg:flex items-center space-x-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        {/* Desktop Nav - Centered */}
+        <nav className="hidden lg:flex items-center space-x-8 shrink-0">
           {navLinks.map((link) => (
             <a 
               key={link.name}
@@ -74,7 +75,7 @@ export const LandingNavbar = () => {
             to={ROUTES.SIGNUP} 
             className="text-sm font-semibold bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/95 transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
           >
-            Sign Up
+            Get Started
           </Link>
         </div>
 
@@ -96,7 +97,7 @@ export const LandingNavbar = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-[calc(100%+12px)] left-0 right-0 lg:hidden border border-border/40 bg-background/95 backdrop-blur-xl rounded-[2rem] shadow-xl overflow-hidden z-50 p-6 flex flex-col space-y-4"
+            className="fixed top-[80px] left-4 right-4 lg:hidden border border-border/40 bg-background/95 backdrop-blur-xl rounded-[2rem] shadow-xl overflow-hidden z-50" p-6 flex flex-col space-y-4"
           >
             <div className="flex flex-col space-y-1">
               {navLinks.map((link) => (
@@ -123,7 +124,7 @@ export const LandingNavbar = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-center text-base font-semibold bg-primary text-primary-foreground py-3.5 rounded-full shadow-soft"
               >
-                Sign Up
+                Get Started
               </Link>
             </div>
           </motion.div>
