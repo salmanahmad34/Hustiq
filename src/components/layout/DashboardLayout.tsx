@@ -25,7 +25,32 @@ interface NavItem {
   action?: string
 }
 
+const STUDENT_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Discover', href: ROUTES.RECOMMENDATIONS, icon: Compass },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Notifications', href: ROUTES.NOTIFICATIONS, icon: Bell },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
+]
 
+const PROVIDER_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Notifications', href: ROUTES.NOTIFICATIONS, icon: Bell },
+  { name: 'Post a Job', href: '#', icon: Plus, action: 'post-job' },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
+]
+
+const ADMIN_NAV: NavItem[] = [
+  { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
+  { name: 'Admin Panel', href: ROUTES.ADMIN, icon: Shield },
+  { name: 'Messages', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Notifications', href: ROUTES.NOTIFICATIONS, icon: Bell },
+  { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
+  { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
+]
 
 const MOBILE_STUDENT_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
@@ -38,7 +63,6 @@ const MOBILE_STUDENT_NAV: NavItem[] = [
 const MOBILE_PROVIDER_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
-  { name: 'Post', href: '#', icon: Plus, action: 'post-job' },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
@@ -80,6 +104,12 @@ export const DashboardLayout = () => {
     }
   }, [user?.id, user?.role])
   
+  const navItems = user?.role === 'admin' 
+    ? ADMIN_NAV 
+    : user?.role === 'provider' 
+      ? PROVIDER_NAV 
+      : STUDENT_NAV
+
   const mobileNavItems = user?.role === 'admin' 
     ? MOBILE_ADMIN_NAV 
     : user?.role === 'provider' 
@@ -95,7 +125,7 @@ export const DashboardLayout = () => {
     (location.pathname.startsWith('/messages/') && location.pathname !== '/messages')
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden w-full">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
       <JobDetailsPanel />
       <QuickApplyModal />
       <PostJobModal />
@@ -103,53 +133,112 @@ export const DashboardLayout = () => {
       {error && <SessionErrorRecovery error={error} onDismiss={clearError} />}
       <BetaFeedbackModal />
       <ToastContainer />
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 flex-col border-r border-border/40 bg-card px-4 py-6">
+        <div className="flex items-center gap-2.5 px-2 mb-8">
+          <ZivaroBrandIcon size="md" className="text-primary" />
+          <Link to={ROUTES.DASHBOARD} className="font-bold text-2xl gradient-text">HustiQ</Link>
+        </div>
+        <nav className="flex-1 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = location.pathname === item.href
+            const isNotifications = item.name === 'Notifications'
 
-      {/* Top Floating Utility Header */}
-      {!isChatRoute && (
-        <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-7xl h-14 bg-card/85 backdrop-blur-[20px] border border-border/40 rounded-full px-5 flex items-center justify-between shadow-soft">
-          <Link to={ROUTES.DASHBOARD} className="flex items-center gap-2 font-bold text-xl gradient-text shrink-0">
-            <ZivaroBrandIcon size="sm" className="text-primary" />
-            <span className="hidden sm:inline">HustiQ</span>
-          </Link>
+            if (item.action === 'post-job') {
+              return (
+                <button
+                  key={item.name}
+                  onClick={openPostJob}
+                  id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
+                  className={cn(
+                    "flex items-center w-full space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left",
+                    "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </button>
+              )
+            }
 
-          <div className="flex items-center gap-3">
-            {user?.role === 'provider' && (
-              <button
-                onClick={openPostJob}
-                className="bg-primary text-primary-foreground text-sm font-semibold h-9 px-3 sm:px-5 rounded-full flex items-center gap-1.5 shadow-soft hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
+                className={cn(
+                  "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActive 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                )}
               >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Post a Job</span>
-              </button>
-            )}
-
-            <div className="relative">
-              <button
-                id="notification-bell-btn"
-                onClick={() => useNotifications.getState().toggleOpen()}
-                className="w-9 h-9 rounded-full bg-muted/40 hover:bg-muted/60 text-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform relative notification-bell-btn"
-              >
-                <Bell className="w-4.5 h-4.5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                <div className="flex items-center space-x-3">
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </div>
+                {isNotifications && unreadCount > 0 && (
+                  <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-1.5 py-0.5 rounded-full min-w-[18px] text-center animate-pulse">
                     {unreadCount}
                   </span>
                 )}
-              </button>
-              <NotificationDropdown />
-            </div>
-
-            <ProfileDropdown isMobile={true} />
-          </div>
-        </header>
-      )}
+              </Link>
+            )
+          })}
+        </nav>
+        <div className="mt-auto w-full">
+          <ProfileDropdown />
+        </div>
+      </aside>
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col min-w-0">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 md:pb-0",
+        isChatRoute ? "pb-0" : "pb-[calc(4.5rem+env(safe-area-inset-bottom))]"
+      )}>
+        {/* Mobile Topbar */}
+        {!isChatRoute && (
+          <header className="md:hidden sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md px-4 h-14 flex items-center justify-between">
+            <Link to={ROUTES.DASHBOARD} className="flex items-center gap-2 font-bold text-xl gradient-text">
+              <ZivaroBrandIcon size="sm" className="text-primary" />
+              HustiQ
+            </Link>
+            <div className="flex items-center gap-3">
+              {user?.role === 'provider' && (
+                <button
+                  onClick={openPostJob}
+                  className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+              
+              <div className="relative">
+                <button
+                  id="notification-bell-btn"
+                  onClick={() => useNotifications.getState().toggleOpen()}
+                  className="w-8 h-8 rounded-full bg-muted/40 hover:bg-muted/60 text-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform relative"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationDropdown />
+              </div>
+
+              <ProfileDropdown isMobile={true} />
+            </div>
+          </header>
+        )}
+
         {/* Page Content */}
         <main className={cn(
-          "flex-1 overflow-auto",
-          isChatRoute ? "p-0" : "p-4 md:p-8 pt-[88px] md:pt-[96px] pb-[104px] md:pb-[112px]"
+          "flex-1 overflow-x-hidden overflow-y-auto",
+          isChatRoute ? "p-0" : "p-4 md:p-8"
         )}>
           <div className={cn(
             "max-w-[1600px] mx-auto w-full h-full",
@@ -160,47 +249,40 @@ export const DashboardLayout = () => {
         </main>
       </div>
 
-      {/* Bottom Floating iOS-style Navigation Dock */}
+      {/* Mobile Bottom Navigation */}
       {!isChatRoute && (
-        <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-max pointer-events-none">
-          <div className="bg-background/85 backdrop-blur-[20px] border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full px-4 h-[72px] flex items-center justify-center gap-3 pointer-events-auto relative">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] pointer-events-none">
+          <div className="bg-background/90 backdrop-blur-2xl border-t border-border/50 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-3xl flex items-center justify-around px-2 h-[68px] pointer-events-auto relative">
             {mobileNavItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
-
-              if (item.action === 'post-job') {
-                return (
-                  <button
-                    key={item.name}
-                    onClick={openPostJob}
-                    className="w-12 h-12 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors relative group"
-                  >
-                    <Icon className="w-6 h-6 transition-all duration-300" />
-                  </button>
-                )
-              }
 
               return (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={cn(
-                    "relative w-12 h-12 flex items-center justify-center rounded-full transition-colors duration-300 z-10",
-                    isActive ? "text-background" : "text-muted-foreground hover:text-foreground"
-                  )}
+                  className="flex flex-col items-center justify-center w-16 h-full relative group pt-1"
                 >
-                  <Icon 
-                    className={cn(
-                      "w-6 h-6 transition-all duration-300",
-                      isActive ? "scale-110" : ""
-                    )} 
-                    strokeWidth={isActive ? 2.5 : 2}
-                  />
-                  {/* Active Indicator Bubble */}
+                  <div className="relative flex flex-col items-center justify-center">
+                    <Icon 
+                      className={cn(
+                        "w-5 h-5 transition-all duration-300",
+                        isActive ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
+                      )} 
+                      strokeWidth={isActive ? 2.5 : 2}
+                    />
+                    <span className={cn(
+                      "text-[10px] font-semibold transition-colors duration-300 whitespace-nowrap mt-1",
+                      isActive ? "text-primary font-bold" : "text-muted-foreground"
+                    )}>
+                      {item.name}
+                    </span>
+                  </div>
+                  {/* Active Indicator Bar */}
                   {isActive && (
                     <motion.div 
-                      layoutId="activeDockIndicator"
-                      className="absolute inset-0 bg-foreground rounded-full -z-10"
+                      layoutId="activeTabIndicator"
+                      className="absolute bottom-1.5 w-6 h-1 rounded-full bg-gradient-to-r from-primary to-accent"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}

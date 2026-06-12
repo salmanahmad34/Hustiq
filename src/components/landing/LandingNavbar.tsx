@@ -31,101 +31,104 @@ export const LandingNavbar = () => {
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={cn(
-        'fixed left-1/2 -translate-x-1/2 z-50 w-max max-w-[720px] transition-all duration-300 rounded-full border shadow-[0_8px_30px_rgba(0,0,0,0.08)]',
-        'bg-white/85 dark:bg-black/85 backdrop-blur-[20px] border-white/40 dark:border-white/10',
+        'fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 border-b',
         isScrolled 
-          ? 'top-2 py-0 scale-[0.98]' 
-          : 'top-4 py-0'
+          ? 'bg-background/80 backdrop-blur-md border-border/40 py-3 shadow-sm' 
+          : 'bg-background/40 backdrop-blur-md border-border/20 py-5 shadow-none'
       )}
     >
-      <div className="relative flex items-center justify-between h-14 px-6 gap-8 lg:gap-16">
-        {/* Logo */}
-        <Link to={ROUTES.HOME} className="flex items-center gap-3 group shrink-0">
-          <div className="relative flex items-center justify-center w-8 h-8">
-            {/* Geometric upward growth symbol */}
-            <div className="absolute w-4 h-4 border-[2.5px] border-foreground rounded-[3px] transition-colors duration-300 group-hover:border-primary" />
-            <div className="absolute w-4 h-4 border-[2.5px] border-foreground/40 rounded-[3px] translate-x-1.5 -translate-y-1.5 transition-all duration-300 group-hover:border-primary/50 group-hover:translate-x-2.5 group-hover:-translate-y-2.5" />
-            <div className="absolute w-1.5 h-1.5 bg-primary rounded-[2px] translate-x-1.5 -translate-y-1.5 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-4 group-hover:-translate-y-4" />
-          </div>
-          <span className="font-sans font-bold text-[22px] tracking-tighter text-foreground uppercase">
-            HustiQ
-          </span>
-        </Link>
+      <div className="container max-w-screen-2xl mx-auto px-4 md:px-8 flex items-center justify-between">
+        {/* Logo (Left) */}
+        <div className="flex-1 flex justify-start">
+          <Link to={ROUTES.HOME} className="flex items-center gap-3 group">
+            <div className="relative flex items-center justify-center w-8 h-8">
+              {/* Geometric upward growth symbol */}
+              <div className="absolute w-4 h-4 border-[2.5px] border-foreground rounded-[3px] transition-colors duration-300 group-hover:border-primary" />
+              <div className="absolute w-4 h-4 border-[2.5px] border-foreground/40 rounded-[3px] translate-x-1.5 -translate-y-1.5 transition-all duration-300 group-hover:border-primary/50 group-hover:translate-x-2.5 group-hover:-translate-y-2.5" />
+              <div className="absolute w-1.5 h-1.5 bg-primary rounded-[2px] translate-x-1.5 -translate-y-1.5 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-4 group-hover:-translate-y-4" />
+            </div>
+            <span className="font-sans font-bold text-[22px] tracking-tighter text-foreground uppercase">
+              HustiQ
+            </span>
+          </Link>
+        </div>
 
-        {/* Desktop Nav - Centered */}
-        <nav className="hidden lg:flex items-center space-x-8 shrink-0">
+        {/* Desktop Nav (Center) */}
+        <nav className="hidden md:flex items-center justify-center space-x-8">
           {navLinks.map((link) => (
             <a 
               key={link.name}
               href={link.href} 
-              className="text-sm font-semibold text-foreground/75 hover:text-primary transition-colors relative group"
+              className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors relative group py-1.5"
             >
               {link.name}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
         </nav>
 
-        {/* Desktop Actions */}
-        <div className="hidden lg:flex items-center space-x-4 shrink-0">
-          <Link to={ROUTES.LOGIN} className="text-sm font-semibold text-foreground/80 hover:text-primary transition-colors">
-            Sign In
-          </Link>
-          <Link 
-            to={ROUTES.SIGNUP} 
-            className="text-sm font-semibold bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/95 transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
-          >
-            Get Started
-          </Link>
-        </div>
+        {/* Actions (Right) */}
+        <div className="flex-1 flex justify-end items-center">
+          <div className="hidden md:flex items-center space-x-5">
+            <Link to={ROUTES.LOGIN} className="text-sm font-semibold text-foreground/80 hover:text-primary transition-colors">
+              Sign In
+            </Link>
+            <Link 
+              to={ROUTES.SIGNUP} 
+              className="text-sm font-semibold bg-primary text-primary-foreground px-6 py-2.5 rounded-full hover:bg-primary/90 transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 active:translate-y-0"
+            >
+              Sign Up
+            </Link>
+          </div>
 
-        {/* Mobile Toggle */}
-        <button 
-          className="lg:hidden p-2 -mr-2 text-foreground flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+          {/* Mobile Toggle */}
+          <button 
+            className="md:hidden p-2 -mr-2 text-foreground focus:outline-none transition-transform active:scale-90"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-[80px] left-4 right-4 lg:hidden border border-border/40 bg-background/95 backdrop-blur-xl rounded-[2rem] shadow-xl overflow-hidden z-50" p-6 flex flex-col space-y-4"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="md:hidden overflow-hidden border-t border-border/20 w-full bg-background/95 backdrop-blur-xl absolute top-full left-0 right-0 shadow-lg"
           >
-            <div className="flex flex-col space-y-1">
+            <div className="container px-4 py-6 flex flex-col space-y-4">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-base font-semibold text-foreground/80 hover:text-primary py-2.5 border-b border-border/10 last:border-0 transition-colors"
+                  className="text-base font-semibold text-foreground/80 hover:text-primary py-1.5 transition-colors"
                 >
                   {link.name}
                 </a>
               ))}
-            </div>
-            <div className="pt-4 border-t border-border/20 flex flex-col space-y-3">
-              <Link 
-                to={ROUTES.LOGIN} 
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center text-base font-semibold py-3 rounded-full hover:bg-muted transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link 
-                to={ROUTES.SIGNUP}
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center text-base font-semibold bg-primary text-primary-foreground py-3.5 rounded-full shadow-soft"
-              >
-                Get Started
-              </Link>
+              <div className="pt-4 border-t border-border/25 flex flex-col space-y-3">
+                <Link 
+                  to={ROUTES.LOGIN} 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-center text-base font-semibold py-2.5 text-foreground/85 hover:text-primary transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to={ROUTES.SIGNUP}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-center text-base font-semibold bg-primary text-primary-foreground py-3 rounded-xl shadow-soft hover:bg-primary/90 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

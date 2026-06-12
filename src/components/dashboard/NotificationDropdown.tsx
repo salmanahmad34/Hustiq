@@ -34,7 +34,7 @@ export const NotificationDropdown = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         // Prevent closing if they clicked the toggle button itself
-        if (!(event.target as Element).closest('.notification-bell-btn')) {
+        if (!(event.target as Element).closest('#notification-bell-btn')) {
           close()
         }
       }
