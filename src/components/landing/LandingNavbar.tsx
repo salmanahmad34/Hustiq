@@ -31,15 +31,15 @@ export const LandingNavbar = () => {
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={cn(
-        'fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl transition-all duration-300 rounded-full border bg-background/70 backdrop-blur-md shadow-soft',
+        'fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-7xl transition-all duration-300 rounded-full border bg-background/70 backdrop-blur-md shadow-soft',
         isScrolled 
           ? 'top-2 py-2.5 bg-background/85 border-border/50 shadow-md scale-[0.98]' 
           : 'top-4 py-3 bg-background/60 border-border/30'
       )}
     >
-      <div className="w-full px-5 md:px-6 flex items-center justify-between">
+      <div className="relative w-full px-5 lg:px-8 flex items-center justify-between h-14">
         {/* Logo */}
-        <Link to={ROUTES.HOME} className="flex items-center gap-3 group">
+        <Link to={ROUTES.HOME} className="flex items-center gap-3 group shrink-0">
           <div className="relative flex items-center justify-center w-8 h-8">
             {/* Geometric upward growth symbol */}
             <div className="absolute w-4 h-4 border-[2.5px] border-foreground rounded-[3px] transition-colors duration-300 group-hover:border-primary" />
@@ -51,13 +51,13 @@ export const LandingNavbar = () => {
           </span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-8">
+        {/* Desktop Nav - Perfectly centered absolute */}
+        <nav className="hidden lg:flex items-center space-x-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           {navLinks.map((link) => (
             <a 
               key={link.name}
               href={link.href} 
-              className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors relative group"
+              className="text-sm font-semibold text-foreground/75 hover:text-primary transition-colors relative group"
             >
               {link.name}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
@@ -66,13 +66,13 @@ export const LandingNavbar = () => {
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link to={ROUTES.LOGIN} className="text-sm font-medium hover:text-foreground/80 transition-colors">
+        <div className="hidden lg:flex items-center space-x-4 shrink-0">
+          <Link to={ROUTES.LOGIN} className="text-sm font-semibold text-foreground/80 hover:text-primary transition-colors">
             Sign In
           </Link>
           <Link 
             to={ROUTES.SIGNUP} 
-            className="text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/90 transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
+            className="text-sm font-semibold bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/95 transition-all shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
           >
             Sign Up
           </Link>
@@ -80,7 +80,7 @@ export const LandingNavbar = () => {
 
         {/* Mobile Toggle */}
         <button 
-          className="md:hidden p-2 -mr-2 text-foreground"
+          className="lg:hidden p-2 -mr-2 text-foreground flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -96,35 +96,35 @@ export const LandingNavbar = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-[calc(100%+8px)] left-0 right-0 md:hidden border border-border/40 bg-background/95 backdrop-blur-xl rounded-3xl shadow-xl overflow-hidden z-50"
+            className="absolute top-[calc(100%+12px)] left-0 right-0 lg:hidden border border-border/40 bg-background/95 backdrop-blur-xl rounded-[2rem] shadow-xl overflow-hidden z-50 p-6 flex flex-col space-y-4"
           >
-            <div className="container px-4 py-6 flex flex-col space-y-4">
+            <div className="flex flex-col space-y-1">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-lg font-medium text-foreground/80 hover:text-primary py-2 transition-colors"
+                  className="text-base font-semibold text-foreground/80 hover:text-primary py-2.5 border-b border-border/10 last:border-0 transition-colors"
                 >
                   {link.name}
                 </a>
               ))}
-              <div className="pt-4 border-t border-border/40 flex flex-col space-y-4">
-                <Link 
-                  to={ROUTES.LOGIN} 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-center text-lg font-medium py-2"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  to={ROUTES.SIGNUP}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-center text-lg font-medium bg-primary text-primary-foreground py-3 rounded-xl shadow-soft"
-                >
-                  Sign Up
-                </Link>
-              </div>
+            </div>
+            <div className="pt-4 border-t border-border/20 flex flex-col space-y-3">
+              <Link 
+                to={ROUTES.LOGIN} 
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-center text-base font-semibold py-3 rounded-full hover:bg-muted transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link 
+                to={ROUTES.SIGNUP}
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-center text-base font-semibold bg-primary text-primary-foreground py-3.5 rounded-full shadow-soft"
+              >
+                Sign Up
+              </Link>
             </div>
           </motion.div>
         )}

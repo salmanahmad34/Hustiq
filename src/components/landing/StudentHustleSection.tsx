@@ -139,7 +139,7 @@ export const StudentHustleSection = () => {
             <motion.div 
               animate={{ y: [0, 15, 0] }}
               transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
-              className="absolute z-30 bottom-10 -left-4 md:left-4 glass-card p-4 rounded-2xl border border-border shadow-soft-lg flex items-center gap-4 bg-background/90 backdrop-blur-md"
+              className="absolute z-30 bottom-10 left-2 sm:left-4 glass-card p-4 rounded-2xl border border-border shadow-soft-lg flex items-center gap-4 bg-background/90 backdrop-blur-md"
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <Target className="w-5 h-5 text-primary" />
@@ -154,7 +154,7 @@ export const StudentHustleSection = () => {
             <motion.div 
               animate={{ y: [0, -15, 0] }}
               transition={{ repeat: Infinity, duration: 7, ease: "easeInOut", delay: 2 }}
-              className="absolute z-10 top-16 -right-4 md:right-4 glass-card p-4 rounded-2xl border border-border shadow-soft-lg flex items-center gap-4 bg-background/90 backdrop-blur-md"
+              className="absolute z-10 top-16 right-2 sm:right-4 glass-card p-4 rounded-2xl border border-border shadow-soft-lg flex items-center gap-4 bg-background/90 backdrop-blur-md"
             >
               <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-accent" />

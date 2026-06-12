@@ -12,7 +12,7 @@ export const LandingLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col scroll-smooth">
+    <div className="min-h-screen bg-background flex flex-col scroll-smooth overflow-x-hidden w-full">
       <LandingNavbar />
       
       <main className="flex-1 w-full flex flex-col items-center">

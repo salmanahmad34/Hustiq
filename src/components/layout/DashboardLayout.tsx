@@ -63,6 +63,7 @@ const MOBILE_STUDENT_NAV: NavItem[] = [
 const MOBILE_PROVIDER_NAV: NavItem[] = [
   { name: 'Dashboard', href: ROUTES.DASHBOARD, icon: Home },
   { name: 'Chat', href: ROUTES.MESSAGES, icon: MessageCircle },
+  { name: 'Post', href: '#', icon: Plus, action: 'post-job' },
   { name: 'Wallet', href: ROUTES.WALLET, icon: Wallet },
   { name: 'Menu', href: ROUTES.PROFILE, icon: LayoutGrid },
 ]
@@ -131,7 +132,7 @@ export const DashboardLayout = () => {
     (location.pathname.startsWith('/messages/') && location.pathname !== '/messages')
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden w-full">
       <JobDetailsPanel />
       <QuickApplyModal />
       <PostJobModal />
@@ -263,38 +264,58 @@ export const DashboardLayout = () => {
 
       {/* Mobile Bottom Navigation */}
       {!isChatRoute && (
-        <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 pointer-events-none">
-          <div className="bg-background/85 backdrop-blur-xl border border-border/40 shadow-lg rounded-full flex items-center justify-around px-2 h-[60px] pointer-events-auto relative">
+        <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[520px] pointer-events-none">
+          <div className="bg-background/80 backdrop-blur-xl border border-border/40 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-[32px] flex items-center justify-around px-2 h-16 pointer-events-auto relative">
             {mobileNavItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
+
+              if (item.action === 'post-job') {
+                return (
+                  <button
+                    key={item.name}
+                    onClick={openPostJob}
+                    className="flex flex-col items-center justify-center flex-1 h-full relative group py-1.5 z-10 text-muted-foreground hover:text-foreground"
+                  >
+                    <div className="relative flex flex-col items-center justify-center">
+                      <Icon className="w-5 h-5 transition-all duration-300" />
+                      <span className="text-[10px] font-semibold transition-colors mt-0.5 whitespace-nowrap">
+                        {item.name}
+                      </span>
+                    </div>
+                  </button>
+                )
+              }
 
               return (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className="flex flex-col items-center justify-center w-14 h-full relative group pt-1"
+                  className={cn(
+                    "flex flex-col items-center justify-center flex-1 h-full relative group py-1.5 z-10",
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
                   <div className="relative flex flex-col items-center justify-center">
                     <Icon 
                       className={cn(
-                        "w-4.5 h-4.5 transition-all duration-300",
-                        isActive ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
+                        "w-5 h-5 transition-all duration-300",
+                        isActive ? "scale-110" : ""
                       )} 
                       strokeWidth={isActive ? 2.5 : 2}
                     />
                     <span className={cn(
-                      "text-[9px] font-semibold transition-colors duration-300 whitespace-nowrap mt-0.5",
-                      isActive ? "text-primary font-bold" : "text-muted-foreground"
+                      "text-[10px] font-semibold transition-colors duration-300 whitespace-nowrap mt-0.5",
+                      isActive ? "font-bold" : ""
                     )}>
                       {item.name}
                     </span>
                   </div>
-                  {/* Active Indicator Bar */}
+                  {/* Active Pill Indicator */}
                   {isActive && (
                     <motion.div 
                       layoutId="activeTabIndicator"
-                      className="absolute bottom-1 w-5 h-0.5 rounded-full bg-gradient-to-r from-primary to-accent"
+                      className="absolute inset-x-2 inset-y-1.5 bg-primary/10 dark:bg-primary/25 rounded-2xl -z-10"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
