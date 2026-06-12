@@ -31,13 +31,13 @@ export const LandingNavbar = () => {
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300',
+        'fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl transition-all duration-300 rounded-full border bg-background/70 backdrop-blur-md shadow-soft',
         isScrolled 
-          ? 'bg-background/80 backdrop-blur-md border-b border-border/40 py-3 shadow-sm' 
-          : 'bg-transparent py-5'
+          ? 'top-2 py-2.5 bg-background/85 border-border/50 shadow-md scale-[0.98]' 
+          : 'top-4 py-3 bg-background/60 border-border/30'
       )}
     >
-      <div className="container max-w-screen-2xl mx-auto px-4 md:px-8 flex items-center justify-between">
+      <div className="w-full px-5 md:px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to={ROUTES.HOME} className="flex items-center gap-3 group">
           <div className="relative flex items-center justify-center w-8 h-8">
@@ -92,10 +92,11 @@ export const LandingNavbar = () => {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-b border-border/40 bg-background/95 backdrop-blur-xl overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-[calc(100%+8px)] left-0 right-0 md:hidden border border-border/40 bg-background/95 backdrop-blur-xl rounded-3xl shadow-xl overflow-hidden z-50"
           >
             <div className="container px-4 py-6 flex flex-col space-y-4">
               {navLinks.map((link) => (

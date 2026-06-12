@@ -116,6 +116,12 @@ export const DashboardLayout = () => {
       ? MOBILE_PROVIDER_NAV 
       : MOBILE_STUDENT_NAV
 
+  const centerNavItems = navItems.filter(item => 
+    item.name !== 'Notifications' && 
+    item.name !== 'Menu' && 
+    item.action !== 'post-job'
+  )
+
   const activeRole = user?.role || 'student'
   const unreadCount = notifications.filter(n => n.role === activeRole && n.isUnread).length
 
@@ -125,7 +131,7 @@ export const DashboardLayout = () => {
     (location.pathname.startsWith('/messages/') && location.pathname !== '/messages')
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background flex flex-col">
       <JobDetailsPanel />
       <QuickApplyModal />
       <PostJobModal />
@@ -133,64 +139,70 @@ export const DashboardLayout = () => {
       {error && <SessionErrorRecovery error={error} onDismiss={clearError} />}
       <BetaFeedbackModal />
       <ToastContainer />
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border/40 bg-card px-4 py-6">
-        <div className="flex items-center gap-2.5 px-2 mb-8">
-          <ZivaroBrandIcon size="md" className="text-primary" />
-          <Link to={ROUTES.DASHBOARD} className="font-bold text-2xl gradient-text">HustiQ</Link>
-        </div>
-        <nav className="flex-1 space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = location.pathname === item.href
-            const isNotifications = item.name === 'Notifications'
 
-            if (item.action === 'post-job') {
+      {/* Desktop Floating Navbar */}
+      {!isChatRoute && (
+        <header className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-7xl h-16 bg-card/85 backdrop-blur-md border border-border/40 rounded-full px-6 items-center justify-between shadow-soft">
+          <Link to={ROUTES.DASHBOARD} className="flex items-center gap-2.5">
+            <ZivaroBrandIcon size="md" className="text-primary" />
+            <span className="font-bold text-2xl gradient-text">HustiQ</span>
+          </Link>
+
+          <nav className="flex items-center gap-2">
+            {centerNavItems.map((item) => {
+              const Icon = item.icon
+              const isActive = location.pathname === item.href
+
               return (
-                <button
-                  key={item.name}
-                  onClick={openPostJob}
+                <Link
+                  key={item.href}
+                  to={item.href}
                   id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
                   className={cn(
-                    "flex items-center w-full space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left",
-                    "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    "flex items-center gap-2 rounded-full px-4.5 py-2 text-sm font-semibold transition-all duration-200",
+                    isActive 
+                      ? "bg-primary/10 text-primary shadow-sm" 
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                   <span>{item.name}</span>
-                </button>
+                </Link>
               )
-            }
+            })}
+          </nav>
 
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                id={`${item.name.toLowerCase().replace(/\s+/g, '-')}-nav-link`}
-                className={cn(
-                  "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                )}
+          <div className="flex items-center gap-4">
+            {user?.role === 'provider' && (
+              <button
+                onClick={openPostJob}
+                className="bg-primary text-primary-foreground text-sm font-semibold px-5 py-2 rounded-full flex items-center gap-1.5 shadow-soft hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                <div className="flex items-center space-x-3">
-                  <Icon className="h-5 w-5" />
-                  <span>{item.name}</span>
-                </div>
-                {isNotifications && unreadCount > 0 && (
-                  <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-1.5 py-0.5 rounded-full min-w-[18px] text-center animate-pulse">
+                <Plus className="w-4 h-4" />
+                <span>Post a Job</span>
+              </button>
+            )}
+
+            <div className="relative">
+              <button
+                id="notification-bell-btn"
+                onClick={() => useNotifications.getState().toggleOpen()}
+                className="w-10 h-10 rounded-full bg-muted/40 hover:bg-muted/60 text-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform relative notification-bell-btn"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center animate-pulse">
                     {unreadCount}
                   </span>
                 )}
-              </Link>
-            )
-          })}
-        </nav>
-        <div className="mt-auto w-full">
-          <ProfileDropdown />
-        </div>
-      </aside>
+              </button>
+              <NotificationDropdown />
+            </div>
+
+            <ProfileDropdown isMobile={true} />
+          </div>
+        </header>
+      )}
 
       {/* Main Content Area */}
       <div className={cn(
@@ -199,30 +211,30 @@ export const DashboardLayout = () => {
       )}>
         {/* Mobile Topbar */}
         {!isChatRoute && (
-          <header className="md:hidden sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md px-4 h-14 flex items-center justify-between">
-            <Link to={ROUTES.DASHBOARD} className="flex items-center gap-2 font-bold text-xl gradient-text">
-              <ZivaroBrandIcon size="sm" className="text-primary" />
+          <header className="md:hidden fixed top-3 left-4 right-4 z-40 bg-background/80 backdrop-blur-md border border-border/40 rounded-full px-4 h-12 flex items-center justify-between shadow-md">
+            <Link to={ROUTES.DASHBOARD} className="flex items-center gap-2 font-bold text-lg gradient-text">
+              <ZivaroBrandIcon size="xs" className="text-primary" />
               HustiQ
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {user?.role === 'provider' && (
                 <button
                   onClick={openPostJob}
-                  className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform"
+                  className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                 </button>
               )}
               
               <div className="relative">
                 <button
-                  id="notification-bell-btn"
+                  id="notification-bell-btn-mobile"
                   onClick={() => useNotifications.getState().toggleOpen()}
-                  className="w-8 h-8 rounded-full bg-muted/40 hover:bg-muted/60 text-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform relative"
+                  className="w-7 h-7 rounded-full bg-muted/40 hover:bg-muted/60 text-foreground flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-transform relative notification-bell-btn"
                 >
-                  <Bell className="w-4 h-4" />
+                  <Bell className="w-3.5 h-3.5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse">
                       {unreadCount}
                     </span>
                   )}
@@ -238,7 +250,7 @@ export const DashboardLayout = () => {
         {/* Page Content */}
         <main className={cn(
           "flex-1 overflow-auto",
-          isChatRoute ? "p-0" : "p-4 md:p-8"
+          isChatRoute ? "p-0" : "p-4 md:p-8 pt-[76px] md:pt-[104px]"
         )}>
           <div className={cn(
             "max-w-[1600px] mx-auto w-full h-full",
@@ -251,8 +263,8 @@ export const DashboardLayout = () => {
 
       {/* Mobile Bottom Navigation */}
       {!isChatRoute && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] pointer-events-none">
-          <div className="bg-background/90 backdrop-blur-2xl border-t border-border/50 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-3xl flex items-center justify-around px-2 h-[68px] pointer-events-auto relative">
+        <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 pointer-events-none">
+          <div className="bg-background/85 backdrop-blur-xl border border-border/40 shadow-lg rounded-full flex items-center justify-around px-2 h-[60px] pointer-events-auto relative">
             {mobileNavItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
@@ -261,18 +273,18 @@ export const DashboardLayout = () => {
                 <Link
                   key={item.href}
                   to={item.href}
-                  className="flex flex-col items-center justify-center w-16 h-full relative group pt-1"
+                  className="flex flex-col items-center justify-center w-14 h-full relative group pt-1"
                 >
                   <div className="relative flex flex-col items-center justify-center">
                     <Icon 
                       className={cn(
-                        "w-5 h-5 transition-all duration-300",
+                        "w-4.5 h-4.5 transition-all duration-300",
                         isActive ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
                       )} 
                       strokeWidth={isActive ? 2.5 : 2}
                     />
                     <span className={cn(
-                      "text-[10px] font-semibold transition-colors duration-300 whitespace-nowrap mt-1",
+                      "text-[9px] font-semibold transition-colors duration-300 whitespace-nowrap mt-0.5",
                       isActive ? "text-primary font-bold" : "text-muted-foreground"
                     )}>
                       {item.name}
@@ -282,7 +294,7 @@ export const DashboardLayout = () => {
                   {isActive && (
                     <motion.div 
                       layoutId="activeTabIndicator"
-                      className="absolute bottom-1.5 w-6 h-1 rounded-full bg-gradient-to-r from-primary to-accent"
+                      className="absolute bottom-1 w-5 h-0.5 rounded-full bg-gradient-to-r from-primary to-accent"
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
